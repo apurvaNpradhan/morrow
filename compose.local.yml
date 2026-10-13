@@ -1,0 +1,99 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: morrow
+      POSTGRES_USER: morrow
+      POSTGRES_PASSWORD: morrow_local_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U morrow -d morrow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # S3-compatible storage for avatars; production uses Cloudflare R2 through
+  # the same S3_* variables. `minio-init` makes the buckets public-read, as the
+  # R2 bucket is. Ports differ from Callus's MinIO so both can run together.
+  minio:
+    # MinIO no longer publishes images; this is the last Bitnami build, pinned
+    # by digest. It carries both the server and the `mc` client.
+    image: bitnamilegacy/minio@sha256:8935e75fa5d11295c17171e4aa49efe390a1193cd7f12e4d21b92af9ffef09d7
+    restart: unless-stopped
+    # The image runs as uid 1001, which cannot write a fresh named volume.
+    user: "0:0"
+    entrypoint: ["/opt/bitnami/minio/bin/minio"]
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: morrow
+      MINIO_ROOT_PASSWORD: morrow_local_dev
+    ports:
+      - "127.0.0.1:9020:9000"
+      - "127.0.0.1:9021:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio-init:
+    image: bitnamilegacy/minio@sha256:8935e75fa5d11295c17171e4aa49efe390a1193cd7f12e4d21b92af9ffef09d7
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mc=/opt/bitnami/minio-client/bin/mc
+        $$mc alias set local http://minio:9000 morrow morrow_local_dev &&
+        for bucket in morrow morrow-test; do
+          $$mc mb --ignore-existing local/$$bucket &&
+          $$mc anonymous set download local/$$bucket
+        done
+
+  morrow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "1337:1337"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://morrow:morrow_local_dev@postgres:5432/morrow
+      AUTH_SECRET: ${AUTH_SECRET:-local-development-secret-change-before-deploying-000000}
+      MORROW_CLIENT_URL: ${MORROW_CLIENT_URL:-http://localhost:1337}
+      MAX_WORKSPACES_PER_USER: ${MAX_WORKSPACES_PER_USER:-3}
+      MORROW_EMAIL_CONSOLE: ${MORROW_EMAIL_CONSOLE:-false}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      REGISTRATION_OPEN: ${REGISTRATION_OPEN:-true}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      MORROW_TURNSTILE_SITE_KEY: ${MORROW_TURNSTILE_SITE_KEY:-}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      S3_REGION: ${S3_REGION:-auto}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:

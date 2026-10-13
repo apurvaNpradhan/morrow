@@ -1,0 +1,43 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	"ignore": ["tests/e2e/**"],
+	"ignoreExportsUsedInFile": true,
+	"ignoreIssues": {
+		"apps/web/src/design-system/ui/**": ["exports", "types"]
+	},
+	"workspaces": {
+		".": {
+			"entry": ["scripts/**/*.mjs"],
+			"ignoreDependencies": [
+				"drizzle-orm",
+				"@orpc/client",
+				"@orpc/server",
+				"pg",
+				"better-auth",
+				"esbuild"
+			]
+		},
+		"apps/api": {
+			"entry": [
+				"src/**/*.test.ts",
+				"../../tests/api-integration/**/*.ts",
+				"vitest.*.config.ts"
+			],
+			"project": ["src/**/*.ts"],
+			"ignoreDependencies": ["@orpc/client"]
+		},
+		"apps/web": {
+			"entry": ["src/routes/**/*.tsx", "src/**/*.test.{ts,tsx}"],
+			"project": ["src/**/*.{ts,tsx}"],
+			"ignoreDependencies": [
+				"tailwindcss",
+				"@fontsource-variable/inter",
+				"@fontsource-variable/geist-mono"
+			]
+		},
+		"packages/permissions": {
+			"ignoreDependencies": ["@morrow/typescript-config", "vite"]
+		},
+		"packages/email": {}
+	}
+}

@@ -1,0 +1,69 @@
+{
+  "name": "@morrow/api",
+  "type": "module",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "varlock run -- tsx watch src/index.ts",
+    "build": "vp run compile",
+    "lint": "vp check .",
+    "typecheck": "vp run check:types",
+    "test": "vp run test:run",
+    "test:coverage": "vp test run --config vitest.config.ts --coverage",
+    "test:unit": "vp run test:run",
+    "test:integration": "vp run test:integration:run",
+    "test:watch": "vp test --config vitest.config.ts",
+    "db:generate": "varlock run -- drizzle-kit generate",
+    "db:migrate": "varlock run -- drizzle-kit migrate",
+    "db:studio": "varlock run -- drizzle-kit studio"
+  },
+  "varlock": {
+    "loadPath": "../../"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1144.0",
+    "@aws-sdk/s3-request-presigner": "^3.1144.0",
+    "@better-auth/oauth-provider": "1.7.7",
+    "@hono/node-server": "^2.1.3",
+    "@modelcontextprotocol/server": "2.2.0",
+    "@morrow/email": "workspace:*",
+    "@morrow/i18n": "workspace:*",
+    "@morrow/permissions": "workspace:*",
+    "@orpc/server": "2.0.0-beta.43",
+    "@paralleldrive/cuid2": "^3.3.0",
+    "@sentry/node": "^11.1.0",
+    "@sentry/profiling-node": "^11.1.0",
+    "better-auth": "1.7.7",
+    "drizzle-kit": "^0.31.11",
+    "drizzle-orm": "^0.45.3",
+    "evlog": "^2.31.0",
+    "hono": "4.13.13",
+    "jose": "^6.1.0",
+    "pg": "^8.23.1",
+    "pg-boss": "^12.37.1",
+    "varlock": "^1.22.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@orpc/client": "2.0.0-beta.43",
+    "@types/node": "^26.6.2",
+    "@types/pg": "^8.23.1",
+    "@vitest/coverage-v8": "catalog:",
+    "esbuild": "0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "imports": {
+    "#api/*": "./src/*.ts"
+  }
+}

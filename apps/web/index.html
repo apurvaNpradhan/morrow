@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Morrow - Get ahead of tomorrow.</title>
+  <meta name="title" content="Morrow - Get ahead of tomorrow.">
+  <meta name="description" content="Get ahead of tomorrow.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://morrow.example.com">
+  <meta property="og:title" content="Morrow - Get ahead of tomorrow.">
+  <meta property="og:description" content="Get ahead of tomorrow.">
+  <meta property="og:image" content="https://assets.morrow.example.com/readme.png">
+
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://morrow.example.com">
+  <meta property="twitter:title" content="Morrow - Get ahead of tomorrow.">
+  <meta property="twitter:description" content="Get ahead of tomorrow.">
+  <meta property="twitter:image" content="https://assets.morrow.example.com/readme.png">
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="Morrow" />
+  <link rel="manifest" href="/site.webmanifest" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="application-name" content="Morrow">
+  <link rel="canonical" href="https://morrow.example.com">
+
+  <script>
+    if (window.location.hostname === 'demo.morrow.example.com') {
+      const script = document.createElement('script');
+      script.defer = true;
+      script.setAttribute('data-domain', 'demo.morrow.example.com');
+      script.src = 'https://plausible.morrow.example.com/js/script.js';
+      document.head.appendChild(script);
+    }
+
+    if (window.location.hostname === 'morrow.example.com') {
+      window.plausible = window.plausible || function () {
+        (window.plausible.q = window.plausible.q || []).push(arguments);
+      };
+      const script = document.createElement('script');
+      script.defer = true;
+      script.setAttribute('data-domain', 'morrow.example.com');
+      script.src = 'https://plausible.morrow.example.com/js/script.js';
+      document.head.appendChild(script);
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

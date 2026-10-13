@@ -1,0 +1,3 @@
+# Keep cloud-testing dependencies out of Morrow's production build graph.
+packages:
+  - .
