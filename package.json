@@ -1,0 +1,51 @@
+{
+  "name": "morrow",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "build": "vp run -r build",
+    "dev:services": "node scripts/dev-services.mjs",
+    "dev": "node scripts/dev-services.mjs && vp run build:dependencies && vp run -r --parallel dev",
+    "i18n:check": "node ./scripts/i18n/check.mjs",
+    "i18n:check:fix": "node ./scripts/i18n/check.mjs --fix",
+    "i18n:report": "node ./scripts/i18n/report.mjs",
+    "i18n:report:fix": "node ./scripts/i18n/report.mjs --fix",
+    "env:types": "varlock codegen --path .env.schema && (cd apps/web && varlock codegen)",
+    "lint": "vp check",
+    "knip": "knip",
+    "test": "vp run -r test",
+    "test:integration": "vp run -r test:integration",
+    "test:security": "node --test scripts/security/*.test.mjs scripts/lint/*.test.mjs",
+    "test:e2e": "pnpm --dir tests/e2e test",
+    "typecheck": "vp run -r typecheck",
+    "prepare": "husky",
+    "format": "vp fmt",
+    "build:dependencies": "vp run --filter \"@morrow/*^...\" build"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1144.0",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@hono/node-server": "2.1.3",
+    "@oxlint/plugins": "1.85.0",
+    "@types/node": "26.6.3",
+    "esbuild": "0.28.2",
+    "hono": "4.13.13",
+    "husky": "^9.1.7",
+    "knip": "^6.41.0",
+    "typescript": "7.0.2",
+    "varlock": "^1.22.0",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": "^24.11.0 || >=26.0.0"
+  },
+  "packageManager": "pnpm@10.32.1",
+  "version": "0.1.0",
+  "intent": {
+    "skills": [
+      "*"
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+	"name": "@morrow/i18n",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Locale list and the JSON resources; en-US.json is the only source of copy. Source-only: consumers compile it.",
+	"exports": {
+		".": "./resources.ts",
+		"./en-US.json": "./en-US.json"
+	},
+	"license": "UNLICENSED"
+}

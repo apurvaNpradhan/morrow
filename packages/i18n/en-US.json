@@ -1,0 +1,1014 @@
+{
+	"common": {
+		"actions": {
+			"cancel": "Cancel",
+			"close": "Close",
+			"clearAll": "Clear all",
+			"delete": "Delete",
+			"deleting": "Deleting...",
+			"markAllRead": "Mark all read",
+			"remove": "Remove"
+		},
+		"a11y": {
+			"toggleSidebar": "Toggle sidebar"
+		},
+		"sidebar": {
+			"title": "Sidebar",
+			"mobileDescription": "Displays the mobile sidebar."
+		},
+		"empty": {
+			"loading": "Loading..."
+		},
+		"pagination": {
+			"label": "Pagination",
+			"previous": "Previous",
+			"next": "Next",
+			"previousPage": "Go to previous page",
+			"nextPage": "Go to next page",
+			"morePages": "More pages"
+		},
+		"breadcrumb": {
+			"label": "Breadcrumb",
+			"more": "More"
+		},
+		"error": {
+			"title": "Something went wrong",
+			"description": "The page crashed unexpectedly. Refreshing usually fixes it.",
+			"troubleshooting": "Troubleshooting steps:",
+			"tryAgain": "Try Again",
+			"viewDeploymentGuide": "View Deployment Guide",
+			"refreshPage": "Refresh Page",
+			"messages": {
+				"cors": "Unable to connect to the server. Check your connection and try again.",
+				"network": "Network error. Please check your internet connection and try again.",
+				"auth": "Authentication failed. Please sign in again.",
+				"server": "Server error. Please try again later.",
+				"unknown": "An unexpected error occurred."
+			},
+			"troubleshootingSteps": {
+				"cors": {
+					"checkApiRunning": "Make sure your API server is running",
+					"checkApiUrl": "Check that VITE_API_URL in your frontend .env matches your API server URL",
+					"checkProtocol": "Ensure both frontend and API are using the same protocol (http/https)",
+					"checkAccessibility": "Check that your API server is accessible from your browser"
+				},
+				"network": {
+					"checkConnection": "Check your internet connection",
+					"verifyApiRunning": "Verify the API server is running and accessible",
+					"tryRefresh": "Try refreshing the page",
+					"checkFirewall": "Check if there are any firewall or proxy issues"
+				}
+			}
+		},
+		"formats": {
+			"never": "Never"
+		},
+		"modals": {
+			"createWorkspace": {
+				"breadcrumbMorrow": "MORROW",
+				"title": "Create a new workspace",
+				"description": "Create a new workspace by providing a name for your workspace.",
+				"namePlaceholder": "Workspace name",
+				"descriptionPlaceholder": "Add description...",
+				"createButton": "Create Workspace",
+				"successToast": "Workspace created successfully",
+				"errorToast": "Failed to create workspace",
+				"limitReached": "You own the maximum of {{limit}} workspaces. Delete or transfer one to create another."
+			}
+		},
+		"errors": {
+			"badRequest": "That request was not valid.",
+			"unauthorized": "Your session has expired. Sign in again.",
+			"forbidden": "You don't have permission to do that.",
+			"notFound": "That no longer exists.",
+			"conflict": "That conflicts with something that already exists.",
+			"unknown": "Something went wrong. Try again.",
+			"tooManyRequests": "Too many requests. Please wait a moment and try again.",
+			"badGateway": "The request reached the server but a service it depends on failed. Please try again.",
+			"imageTooLarge": "That picture is too large. Choose one under 512 KB.",
+			"imageUnsupportedType": "Use a PNG, JPEG or WebP picture.",
+			"imageInvalid": "That file isn't a valid picture.",
+			"workspaceLimitReached": "You've reached the limit of workspaces you can own. Delete or transfer one to create another.",
+			"storageUnavailable": "Picture storage isn't available right now. Try again later.",
+			"adminRoleManaged": "Administrators are set by the instance owner and can't be changed here.",
+			"invitationEmailFailed": "The invitation was saved, but the email couldn't be sent. Resend it later."
+		}
+	},
+	"auth": {
+		"signIn": {
+			"pageTitle": "Sign In",
+			"title": "Welcome back",
+			"subtitle": "Enter your email to access your workspace",
+			"invitationSubtitle": "Sign in to accept your invitation",
+			"invitationAlert": "After signing in, you'll be able to accept your workspace invitation.",
+			"signingIn": "Signing in...",
+			"continueWithGoogle": "Continue with Google",
+			"continueWithGithub": "Continue with GitHub",
+			"lastUsed": "Last used",
+			"registrationDisabled": "Public registration is disabled. Use an invitation to create an account.",
+			"toggleMessage": "Don't have an account?",
+			"toggleLink": "Create account",
+			"googleError": "Failed to sign in with Google",
+			"githubError": "Failed to sign in with GitHub",
+			"footerOpen": "New here? Confirm your email and we'll create your account."
+		},
+		"providers": {
+			"google": "Google",
+			"github": "GitHub"
+		},
+		"forms": {
+			"or": "or",
+			"email": "Email",
+			"emailPlaceholder": "me@example.com"
+		},
+		"signUp": {
+			"pageTitle": "Create Account",
+			"title": "Create account",
+			"subtitleInvitation": "Create an account to accept your invitation",
+			"subtitleRegistrationDisabled": "Registration requires an invitation",
+			"subtitleDefault": "Get started with your workspace",
+			"invitationAlert": "After creating your account, you'll be able to accept your workspace invitation.",
+			"registrationDisabledAlert": "Registration is currently disabled. If you were invited, enter the email address that received the invitation to create your account.",
+			"toggleMessage": "Already have an account?",
+			"toggleLink": "Sign in",
+			"footer": "We email you a code, so there is no password to remember."
+		},
+		"verifyOtp": {
+			"pageTitle": "Verify Code",
+			"title": "Enter verification code",
+			"subtitle": "Use the 6-digit code sent to your email to continue",
+			"codeSentTo": "Code sent to {{email}}",
+			"verificationCodeLabel": "Verification Code",
+			"verifying": "Verifying...",
+			"verifyAndSignIn": "Verify & Sign In",
+			"changeEmail": "Change email",
+			"resend": "Resend",
+			"validation": {
+				"codeLength": "Code must be 6 digits"
+			},
+			"toast": {
+				"invalidCode": "Invalid verification code",
+				"signedInSuccess": "Signed in successfully!",
+				"verifyFailed": "Failed to verify code",
+				"resendFailed": "Failed to resend code",
+				"resendSuccess": "New verification code sent!"
+			},
+			"errors": {
+				"invalid": "That code isn't right. Check the email and try again.",
+				"expired": "That code has expired. Send a new one.",
+				"tooManyAttempts": "Too many wrong attempts. Send a new code.",
+				"generic": "We couldn't check that code. Try again."
+			}
+		},
+		"otpSignIn": {
+			"sendFailed": "Failed to send verification code",
+			"codeSent": "Verification code sent! Check your email.",
+			"sending": "Sending...",
+			"sendVerificationCode": "Send Verification Code"
+		},
+		"invitation": {
+			"pageTitleAccept": "Accept Invitation",
+			"pageTitleError": "Invitation Error",
+			"pageTitleInvalid": "Invalid Invitation",
+			"loadingTitle": "Loading invitation...",
+			"errorTitle": "Invitation Error",
+			"invalidTitle": "Invalid Invitation",
+			"invitationExpired": "Invitation Expired",
+			"errorLoadDescription": "Failed to load invitation details. The invitation may be invalid or expired.",
+			"goToSignIn": "Go to Sign In",
+			"workspaceLabel": "Workspace: {{workspaceName}}",
+			"joinWorkspace": "Join {{workspaceName}}",
+			"inviteBodySignedIn": "<inviter>{{inviterName}}</inviter> has invited you to join their workspace.",
+			"inviteBodySignedOut": "<inviter>{{inviterName}}</inviter> has invited you to join their workspace on Morrow.",
+			"createAccountOrSignIn": "Create an account to accept this invitation, or sign in if you already have one.",
+			"createAccount": "Create Account",
+			"accepting": "Accepting...",
+			"acceptInvitation": "Accept Invitation",
+			"goToDashboard": "Go to Dashboard",
+			"signedInAs": "Signed in as <email>{{email}}</email>",
+			"youveBeenInvited": "You've been invited!",
+			"invitationFor": "Invitation for: <email>{{email}}</email>",
+			"signIn": "Sign In",
+			"toast": {
+				"acceptFailed": "Failed to accept invitation",
+				"acceptedOpenFailed": "You joined the workspace, but it couldn't be opened. Reload the page.",
+				"acceptSuccess": "Invitation accepted! Welcome to the team."
+			},
+			"emailMismatchTitle": "This invitation is for a different email",
+			"emailMismatch": "It was sent to {{invited}}, but you're signed in as {{current}}. Switch accounts to accept it.",
+			"switchAccount": "Switch account"
+		},
+		"mcpAuthorize": {
+			"failedTitle": "Authorization failed",
+			"failedSubtitle": "This authorization request is invalid or has expired.",
+			"failedHint": "Return to your MCP client and start the connection again.",
+			"title": "Authorize MCP client",
+			"loadingSubtitle": "Loading request…",
+			"loadingHint": "Checking the authorization request.",
+			"signInTitle": "Sign in to continue",
+			"signInSubtitle": "Sign in before approving this MCP client.",
+			"signIn": "Sign in",
+			"subtitle": "Review this request before granting access to your Morrow account.",
+			"warning": "This client will be able to act as you and access your workspaces. Only continue if you initiated this connection.",
+			"clientName": "Client name (self-reported)",
+			"defaultClientName": "MCP client",
+			"approve": "Approve",
+			"deny": "Deny",
+			"redirectsTo": "Sends you back to",
+			"signedInAs": "Signed in as"
+		},
+		"onboarding": {
+			"progress": "Onboarding progress",
+			"back": "Back",
+			"continue": "Continue",
+			"you": {
+				"title": "What should we call you?",
+				"subtitle": "Teammates will see this name next to your work.",
+				"nameLabel": "Your name",
+				"failed": "Couldn't save your name"
+			},
+			"workspace": {
+				"title": "Set up your workspace",
+				"subtitle": "A workspace is a shared space for your people.",
+				"subtitleInvited": "Join a workspace you've been invited to, or create your own.",
+				"orCreate": "Or create your own",
+				"invitedBy": "Invited by {{name}}",
+				"join": "Join",
+				"joinFailed": "Couldn't join the workspace",
+				"nameLabel": "Workspace name",
+				"namePlaceholder": "e.g. Acme Inc, My Team",
+				"createFailed": "Failed to create workspace"
+			},
+			"invite": {
+				"title": "Invite your teammates",
+				"subtitle": "They'll get an email with a link to join {{name}}. You can invite more people later from Members.",
+				"emailLabel": "Teammate email {{index}}",
+				"emailPlaceholder": "teammate@company.com",
+				"addAnother": "Add another",
+				"remove": "Remove email {{index}}",
+				"send": "Send invites",
+				"sending": "Sending...",
+				"skip": "Skip for now",
+				"invalidEmail": "Enter a valid email address",
+				"sent_one": "Invitation sent",
+				"sent_other": "{{count}} invitations sent",
+				"failed": "Couldn't invite {{email}}: {{message}}"
+			},
+			"loggedInAs": "Logged in as",
+			"accounts": "Accounts",
+			"logOut": "Log out"
+		}
+	},
+	"settings": {
+		"advancedSettings": "Advanced settings",
+		"advancedSettingsDescription": "A personal display preference for this browser across all your workspaces.",
+		"account": "Account",
+		"administration": "Administration",
+		"information": "Information",
+		"preferences": "Preferences",
+		"adminUsers": {
+			"title": "User management",
+			"subtitle": "Manage every account registered on this Morrow instance.",
+			"instanceBadge": "Instance",
+			"directoryTitle": "User directory",
+			"userCount_one": "{{count}} registered user",
+			"userCount_other": "{{count}} registered users",
+			"searchCount_one": "{{count}} matching user",
+			"searchCount_other": "{{count}} matching users",
+			"refreshing": "Refreshing users",
+			"searchPlaceholder": "Search name or email…",
+			"searchLabel": "Search users",
+			"loadError": "Users could not be loaded.",
+			"retry": "Retry",
+			"emptyTitle": "No users found",
+			"emptyDescription": "Try another name or email address.",
+			"clearSearch": "Clear search",
+			"you": "(you)",
+			"previous": "Previous",
+			"next": "Next",
+			"pagination": "Page {{current}} of {{total}}",
+			"columns": {
+				"user": "User",
+				"role": "Global role",
+				"status": "Status",
+				"joined": "Joined",
+				"actions": "Actions"
+			},
+			"roles": {
+				"admin": "Instance admin",
+				"user": "User"
+			},
+			"status": {
+				"active": "Active",
+				"deactivated": "Deactivated"
+			},
+			"actions": {
+				"open": "Actions for {{name}}",
+				"edit": "Edit account",
+				"deactivate": "Deactivate account",
+				"reactivate": "Reactivate account"
+			},
+			"edit": {
+				"title": "Edit user",
+				"description": "Update this account's identity and instance-wide access.",
+				"name": "Full name",
+				"email": "Email address",
+				"save": "Save changes",
+				"saving": "Saving…"
+			},
+			"confirm": {
+				"working": "Working…",
+				"deactivate": {
+					"title": "Deactivate this account?",
+					"description": "{{name}} will be signed out and unable to sign in until an administrator reactivates the account.",
+					"action": "Deactivate account"
+				},
+				"reactivate": {
+					"title": "Reactivate this account?",
+					"description": "{{name}} will be able to sign in and access their workspaces again.",
+					"action": "Reactivate account"
+				},
+				"delete": {
+					"title": "Permanently delete this account?",
+					"description": "This permanently deletes {{name}}, their sessions, memberships, and associated data. This cannot be undone.",
+					"action": "Delete permanently"
+				}
+			},
+			"toast": {
+				"updated": "User updated",
+				"updateError": "Failed to update user",
+				"deactivated": "User deactivated",
+				"reactivated": "User reactivated",
+				"deleted": "User deleted",
+				"actionError": "Failed to update user status"
+			}
+		},
+		"adminWorkspaces": {
+			"title": "Workspace management",
+			"subtitle": "Manage every workspace on this Morrow instance, including ones you don't belong to.",
+			"instanceBadge": "Instance",
+			"directoryTitle": "Workspace directory",
+			"workspaceCount_one": "{{count}} workspace",
+			"workspaceCount_other": "{{count}} workspaces",
+			"searchCount_one": "{{count}} matching workspace",
+			"searchCount_other": "{{count}} matching workspaces",
+			"refreshing": "Refreshing workspaces",
+			"searchPlaceholder": "Search name or slug…",
+			"searchLabel": "Search workspaces",
+			"loadError": "Workspaces could not be loaded.",
+			"retry": "Retry",
+			"emptyTitle": "No workspaces found",
+			"emptyDescription": "Try another name or slug.",
+			"clearSearch": "Clear search",
+			"previous": "Previous",
+			"next": "Next",
+			"pagination": "Page {{current}} of {{total}}",
+			"noOwner": "No owner",
+			"manage": "Manage",
+			"manageLabel": "Manage {{name}}",
+			"columns": {
+				"workspace": "Workspace",
+				"owners": "Owners",
+				"members": "Members",
+				"created": "Created",
+				"actions": "Actions"
+			},
+			"members": {
+				"title": "Members of {{name}}",
+				"description": "Change roles, project access, and ownership, even if you aren't a member of this workspace.",
+				"count_one": "{{count}} member",
+				"count_other": "{{count}} members",
+				"add": "Add member",
+				"loadError": "Members could not be loaded.",
+				"empty": "This workspace has no members.",
+				"columns": {
+					"member": "Member",
+					"role": "Role",
+					"joined": "Joined",
+					"actions": "Actions"
+				},
+				"roleLabel": "Role for {{name}}",
+				"actions": "Actions for {{name}}",
+				"makeOwner": "Make owner",
+				"remove": "Remove from workspace"
+			},
+			"addMember": {
+				"title": "Add member",
+				"description": "Add an existing user to {{name}}. They can access every project until you limit them.",
+				"user": "User",
+				"userPlaceholder": "Search name or email…",
+				"searching": "Searching users…",
+				"usersError": "Users could not be loaded.",
+				"noUsers": "No users found",
+				"alreadyMember": "Already a member",
+				"role": "Role",
+				"submit": "Add member",
+				"adding": "Adding…"
+			},
+			"confirm": {
+				"working": "Working…",
+				"transfer": {
+					"title": "Make {{name}} the owner?",
+					"description": "{{name}} becomes the only owner of {{workspace}}. Anyone who owns it now becomes an admin.",
+					"action": "Make owner"
+				},
+				"remove": {
+					"title": "Remove {{name}}?",
+					"description": "{{name}} loses access to {{workspace}} and its projects. Their account stays on this instance.",
+					"action": "Remove member"
+				}
+			},
+			"toast": {
+				"added": "Member added",
+				"addError": "Failed to add member",
+				"roleUpdated": "Role updated",
+				"roleError": "Failed to update role",
+				"removed": "Member removed",
+				"removeError": "Failed to remove member",
+				"ownershipTransferred": "Ownership transferred",
+				"transferError": "Failed to transfer ownership"
+			}
+		},
+		"informationPage": {
+			"pageTitle": "Personal Information",
+			"title": "Personal Information",
+			"subtitle": "Manage your personal details and account information.",
+			"sectionTitle": "Account Information",
+			"sectionSubtitle": "Manage your profile and account details.",
+			"profilePicture": "Profile picture",
+			"fullName": "Full name",
+			"fullNamePlaceholder": "Enter your name",
+			"email": "Email",
+			"emailPlaceholder": "Enter your email",
+			"updateSuccess": "Profile updated successfully",
+			"updateError": "Failed to update profile",
+			"validation": {
+				"nameRequired": "Name is required",
+				"nameShort": "Name must be at least 2 characters",
+				"invalidEmail": "Invalid email address"
+			},
+			"avatar": {
+				"hint": "Click your picture to change or remove it. Cropped to a square and resized to 256x256.",
+				"remove": "Remove avatar",
+				"updateSuccess": "Profile picture updated",
+				"updateError": "Failed to update profile picture",
+				"removeSuccess": "Profile picture removed",
+				"removeError": "Failed to remove profile picture",
+				"edit": "Change your profile picture",
+				"change": "Change avatar",
+				"notImage": "Choose an image file.",
+				"sourceTooLarge": "Choose a picture smaller than 10 MB.",
+				"unreadable": "That picture couldn't be read. Try another one."
+			},
+			"deleteAccount": {
+				"sectionTitle": "Danger zone",
+				"sectionSubtitle": "Permanent actions that affect your whole account.",
+				"title": "Delete account",
+				"description": "Workspaces only you belong to are deleted with your account. Elsewhere, your tasks stay and become unassigned, and your comments are removed.",
+				"modalTitle": "Delete your account?",
+				"modalDescription": "This permanently deletes your account and cannot be undone.",
+				"confirmLabel": "Type {{email}} to confirm",
+				"confirm": "Delete account",
+				"success": "Your account has been deleted",
+				"error": "Failed to delete account",
+				"sessionTooOld": "For security, sign out and sign back in before deleting your account."
+			},
+			"exportData": {
+				"sectionTitle": "Your data",
+				"sectionSubtitle": "Download a copy of what Morrow holds about you.",
+				"title": "Export your data",
+				"description": "A JSON file with your profile, workspace memberships, notifications, notification preferences and the activity you performed. Webhook URLs and secrets are left out.",
+				"button": "Download export",
+				"exporting": "Preparing…",
+				"success": "Your export has been downloaded",
+				"privacyLink": "Read how Morrow handles your data"
+			}
+		},
+		"preferencesPage": {
+			"title": "Preferences",
+			"subtitle": "Customize your Morrow experience.",
+			"appearanceTitle": "Appearance",
+			"appearanceSubtitle": "Visual settings and layout preferences.",
+			"theme": "Theme",
+			"themeDescription": "Choose your preferred color scheme",
+			"themeLight": "Light",
+			"themeDark": "Dark",
+			"themeSystem": "System",
+			"language": "Language",
+			"languageDescription": "Choose your preferred interface language",
+			"selectLanguage": "Select a language",
+			"firstDayOfWeek": "First Day of Week",
+			"firstDayOfWeekDescription": "Choose which day calendars and weekly ranges start on",
+			"selectFirstDayOfWeek": "Select first day",
+			"weekStartsOnSunday": "Sunday",
+			"weekStartsOnMonday": "Monday",
+			"weekStartsOnSaturday": "Saturday",
+			"sidebarDefault": "Sidebar Default",
+			"sidebarDefaultDescription": "Keep sidebar expanded on startup"
+		},
+		"workspaceGeneral": {
+			"pageTitle": "General Settings",
+			"title": "General Settings",
+			"subtitle": "Manage your workspace name and description.",
+			"logo": {
+				"label": "Logo",
+				"hint": "Click the logo to change or remove it. Cropped to a square and resized to 256x256.",
+				"edit": "Change the workspace logo",
+				"change": "Change logo",
+				"remove": "Remove logo",
+				"updateSuccess": "Workspace logo updated",
+				"updateError": "Failed to update the workspace logo",
+				"removeSuccess": "Workspace logo removed",
+				"removeError": "Failed to remove the workspace logo"
+			},
+			"workspaceInfoTitle": "Workspace Information",
+			"workspaceInfoSubtitle": "Configure your workspace details and preferences.",
+			"nameLabel": "Workspace name",
+			"nameHint": "The name of your workspace",
+			"namePlaceholder": "Enter workspace name",
+			"descriptionLabel": "Description",
+			"descriptionHint": "A brief description of your workspace",
+			"descriptionPlaceholder": "Enter workspace description",
+			"dangerZone": "Danger zone",
+			"dangerZoneSubtitle": "Irreversible and destructive actions.",
+			"deleteWorkspace": "Delete workspace",
+			"deleteWorkspaceDescription": "Schedule workspace to be permanently deleted",
+			"deleteModalTitle": "Delete Workspace?",
+			"deleteModalDescription": "This will permanently delete the workspace \"{{name}}\" and all its data. This action cannot be undone.",
+			"deleteModalConfirm": "Delete Workspace",
+			"toastUpdated": "Workspace updated successfully",
+			"toastUpdateError": "Failed to update workspace",
+			"toastDeleted": "Workspace deleted successfully",
+			"toastDeleteError": "Failed to delete workspace",
+			"validation": {
+				"nameRequired": "Workspace name is required",
+				"nameShort": "Workspace name must be at least 2 characters"
+			},
+			"transferOwnership": {
+				"toastSuccess": "Ownership transferred",
+				"toastError": "Failed to transfer ownership",
+				"title": "Transfer ownership",
+				"subtitle": "Hand this workspace over to another member. You'll be demoted to admin and lose owner-only abilities.",
+				"pickerLabel": "New owner",
+				"noEligibleMembers": "Invite at least one other member before you can transfer ownership.",
+				"pickerHint": "They become the sole owner of this workspace.",
+				"pickerPlaceholder": "Select a member",
+				"button": "Transfer",
+				"dialogTitle": "Transfer ownership?",
+				"dialogDescription": "{{name}} will become the sole owner of {{workspace}}. You'll keep admin access but lose owner-only abilities like deleting the workspace or transferring it again.",
+				"transferring": "Transferring…",
+				"confirm": "Transfer ownership"
+			},
+			"slug": {
+				"oldLinksKeepWorking": "Old links will keep working.",
+				"save": "Change URL",
+				"toastRenamed": "Workspace URL changed",
+				"toastError": "Failed to change the workspace URL"
+			}
+		},
+		"workspaceRoles": {
+			"pageTitle": "Roles",
+			"title": "Roles",
+			"subtitle": "Define which actions members can perform in {{workspaceName}}.",
+			"thisWorkspace": "this workspace",
+			"noAccess": "You need admin or owner permissions to manage workspace roles.",
+			"sectionTitle": "Workspace roles",
+			"sectionSubtitle": "Edit the default roles or add a tailored one. Members keep their assigned role name across edits.",
+			"newRole": "New role",
+			"loading": "Loading…",
+			"loadError": "Failed to load roles.",
+			"emptyTitle": "No roles yet",
+			"emptyDescription": "Default roles will appear here once they're seeded for this workspace.",
+			"defaultBadge": "Default",
+			"permissionCount_one": "{{count}} permission",
+			"permissionCount_other": "{{count}} permissions",
+			"nameLabel": "Name",
+			"nameHint": "Lowercase. Cannot be changed later.",
+			"namePlaceholder": "e.g. reviewer",
+			"discard": "Discard",
+			"createRole": "Create role",
+			"deleteRole": "Delete role",
+			"defaultRoleHelp": "Default role: name is reserved and the row can't be deleted.",
+			"unsavedChanges": "You have unsaved changes",
+			"allChangesSaved": "All changes saved",
+			"saveChanges": "Save changes",
+			"defaultRoleDescriptions": {
+				"viewer": "Can view and comment on tasks.",
+				"member": "Can create and manage tasks and projects.",
+				"admin": "Has full access to the workspace."
+			},
+			"resources": {
+				"project": "Projects",
+				"task": "Tasks",
+				"label": "Labels",
+				"workspace": "Workspace",
+				"organization": "Workspace administration",
+				"member": "Members",
+				"invitation": "Invitations",
+				"team": "Teams",
+				"ac": "Roles and permissions"
+			},
+			"permissions": {
+				"project": {
+					"create": {
+						"label": "Create",
+						"description": "Can create new projects"
+					},
+					"read": {
+						"label": "Read",
+						"description": "Can view projects"
+					},
+					"update": {
+						"label": "Update",
+						"description": "Can edit project settings"
+					},
+					"delete": {
+						"label": "Delete",
+						"description": "Can delete projects"
+					},
+					"share": {
+						"label": "Share",
+						"description": "Can share projects"
+					}
+				},
+				"task": {
+					"create": {
+						"label": "Create",
+						"description": "Can create tasks"
+					},
+					"read": {
+						"label": "Read",
+						"description": "Can view tasks"
+					},
+					"update": {
+						"label": "Update",
+						"description": "Can edit tasks"
+					},
+					"delete": {
+						"label": "Delete",
+						"description": "Can delete tasks"
+					},
+					"assign": {
+						"label": "Assign",
+						"description": "Can assign tasks to members"
+					}
+				},
+				"label": {
+					"create": {
+						"label": "Create",
+						"description": "Can create labels"
+					},
+					"read": {
+						"label": "Read",
+						"description": "Can view labels"
+					},
+					"update": {
+						"label": "Update",
+						"description": "Can edit labels"
+					},
+					"delete": {
+						"label": "Delete",
+						"description": "Can delete labels"
+					}
+				},
+				"workspace": {
+					"read": {
+						"label": "Read",
+						"description": "Can view workspace settings"
+					},
+					"update": {
+						"label": "Update",
+						"description": "Can update workspace settings"
+					},
+					"delete": {
+						"label": "Delete",
+						"description": "Can delete workspace"
+					},
+					"manage_settings": {
+						"label": "Manage Settings",
+						"description": "Can manage workspace settings"
+					}
+				},
+				"organization": {
+					"update": {
+						"label": "Edit workspace administration",
+						"description": "Change workspace settings through the account service."
+					},
+					"delete": {
+						"label": "Delete workspace",
+						"description": "Permanently delete the workspace through the account service."
+					}
+				},
+				"member": {
+					"create": {
+						"label": "Add members",
+						"description": "Add users to this workspace."
+					},
+					"update": {
+						"label": "Change member roles",
+						"description": "Change the roles assigned to workspace members."
+					},
+					"delete": {
+						"label": "Remove members",
+						"description": "Remove users from this workspace."
+					}
+				},
+				"invitation": {
+					"create": {
+						"label": "Invite members",
+						"description": "Send workspace invitations."
+					},
+					"cancel": {
+						"label": "Cancel invitations",
+						"description": "Revoke pending workspace invitations."
+					}
+				},
+				"team": {
+					"create": {
+						"label": "Create teams",
+						"description": "Create teams in this workspace."
+					},
+					"update": {
+						"label": "Edit teams",
+						"description": "Change teams and team membership."
+					},
+					"delete": {
+						"label": "Delete teams",
+						"description": "Delete teams in this workspace."
+					}
+				},
+				"ac": {
+					"create": {
+						"label": "Create roles",
+						"description": "Create workspace roles and assign their permissions."
+					},
+					"read": {
+						"label": "View roles",
+						"description": "Read the workspace roles and their permissions."
+					},
+					"update": {
+						"label": "Change role permissions",
+						"description": "Change role permissions, including administrative access."
+					},
+					"delete": {
+						"label": "Delete roles",
+						"description": "Delete custom workspace roles."
+					}
+				}
+			},
+			"validation": {
+				"nameRequired": "Role name is required",
+				"nameExists": "A role with this name already exists",
+				"permissionRequired": "At least one permission must be selected"
+			},
+			"toast": {
+				"created": "Role created",
+				"createError": "Failed to create role",
+				"updated": "Role updated",
+				"updateError": "Failed to update role",
+				"deleted": "Role deleted",
+				"deleteError": "Failed to delete role"
+			},
+			"deleteDialog": {
+				"title": "Delete role",
+				"description": "This will permanently delete the role \"{{role}}\". Members assigned to this role will lose its permissions."
+			}
+		},
+		"invitationEmailFailed": "Invitation saved, but email delivery failed. Check email settings and resend the invitation.",
+		"shared": {
+			"autosave": "Changes save automatically"
+		}
+	},
+	"navigation": {
+		"commandPalette": {
+			"suggestions": "Suggestions",
+			"commands": "Commands",
+			"members": "Members",
+			"createWorkspace": "Create workspace",
+			"lightTheme": "Light theme",
+			"darkTheme": "Dark theme",
+			"systemTheme": "System theme",
+			"keyboardShortcuts": "Keyboard shortcuts",
+			"inputPlaceholder": "Search for apps and commands...",
+			"empty": "No results found.",
+			"footer": {
+				"navigate": "Navigate",
+				"open": "Open",
+				"close": "Close"
+			}
+		},
+		"sidebar": {
+			"home": "Home"
+		},
+		"settingsLayout": {
+			"toggleSidebar": "Toggle sidebar"
+		},
+		"userMenu": {
+			"signedOutSuccess": "Signed out successfully",
+			"signOutFailed": "Failed to sign out",
+			"unnamedUser": "User",
+			"settings": "Settings",
+			"signingOut": "Signing out...",
+			"logOut": "Log out"
+		},
+		"workspaceSwitcher": {
+			"workspaces": "Workspaces",
+			"switching": "Switching...",
+			"addWorkspace": "Add workspace",
+			"selectWorkspace": "Select workspace"
+		},
+		"page": {
+			"settingsTitle": "Settings",
+			"backToWorkspace": "Back to Workspace",
+			"settingsWorkspaceTab": "Workspace"
+		},
+		"keyboardShortcuts": {
+			"title": "Keyboard Shortcuts",
+			"subtitle": "Speed up your workflow with keyboard shortcuts",
+			"searchPlaceholder": "Search shortcuts...",
+			"footer": "Press <kbd>Escape</kbd> to close",
+			"categories": {
+				"general": "General",
+				"create": "Create"
+			},
+			"items": {
+				"openCommandPalette": "Open command palette",
+				"toggleSidebar": "Toggle sidebar",
+				"showShortcuts": "Show keyboard shortcuts",
+				"closeModal": "Close modal/popover",
+				"createWorkspace": "Create workspace"
+			}
+		}
+	},
+	"emails": {
+		"otp": {
+			"subject": "{{otp}} is your Morrow verification code",
+			"preview": "Enter it on the sign-in page to continue. It expires in {{minutes}} minutes.",
+			"title": "Sign in to Morrow",
+			"subtitle": "Enter this code on the sign-in page to finish signing in. It works once.",
+			"codeLabel": "Verification code",
+			"code": "is your Morrow verification code.",
+			"expiry": "This code expires in {{minutes}} minutes.",
+			"ignoreTitle": "Didn't try to sign in?",
+			"ignore": "You can ignore this email. Nobody can get into your account without this code. Morrow will never ask you to share it.",
+			"footer": "Morrow security email",
+			"reason": "Sent to {{email}} because someone asked to sign in to {{instance}}.",
+			"privacy": "Privacy"
+		},
+		"requestDetails": {
+			"title": "Request details",
+			"account": "Account",
+			"instance": "Instance",
+			"requested": "Requested",
+			"device": "Device",
+			"browserOn": "{{browser}} on {{os}}"
+		}
+	},
+	"invitations": {
+		"email": {
+			"subject": "{{inviterName}} invited you to join {{workspaceName}} on Morrow",
+			"preview": "You're invited to {{workspaceName}} on Morrow",
+			"title": "Join {{workspaceName}}",
+			"subtitle": "{{inviterName}} ({{inviterEmail}}) invited you to collaborate in Morrow.",
+			"cta": "Accept invitation",
+			"sameEmail": "You can accept with the same email that received this message.",
+			"ignore": "If this wasn't expected, you can safely ignore this email.",
+			"footer": "Morrow workspace invitation",
+			"cardDescription": "Accept to join this workspace.",
+			"fallbackLabel": "Or paste this link into your browser",
+			"detailsTitle": "Invitation details",
+			"invitedBy": "Invited by",
+			"role": "Role",
+			"expires": "Expires",
+			"reason": "{{inviteeEmail}} was invited to {{workspaceName}} by {{inviterName}}.",
+			"privacy": "Privacy"
+		}
+	},
+	"workspace": {
+		"create": {
+			"heading": "Create a new workspace",
+			"subtitle": "Workspaces are shared spaces where people can collaborate and manage access.",
+			"success": "Workspace created successfully"
+		},
+		"home": {
+			"pageTitle": "Home",
+			"members": {
+				"title": "Members",
+				"empty": "No members are available.",
+				"error": "Couldn't load workspace members.",
+				"retry": "Try again",
+				"count": "Showing {{start}}–{{end}} of {{total}} members.",
+				"pagination": "Workspace member pages",
+				"page": "Page {{page}} of {{total}}",
+				"previous": "Previous",
+				"next": "Next"
+			},
+			"loadingMembers": "Loading members...",
+			"activity": {
+				"title": "Recent activity",
+				"loading": "Loading activity...",
+				"loadingMore": "Loading more...",
+				"error": "Couldn't load workspace activity.",
+				"retry": "Try again",
+				"empty": "No activity yet.",
+				"loadMore": "Load more",
+				"unknown": "Workspace activity",
+				"unknownActor": "System",
+				"timeAgo": "{{time}} ago",
+				"events": {
+					"memberJoined": "{{memberName}} joined the workspace",
+					"memberRemoved": "{{memberName}} was removed from the workspace",
+					"memberRoleChanged": "{{memberName}}'s role changed from {{previousRole}} to {{role}}",
+					"invitationCreated": "A workspace invitation was sent",
+					"invitationRevoked": "A workspace invitation was revoked",
+					"workspaceUpdated": "Workspace details were updated",
+					"ownershipTransferred": "{{ownerName}} became the workspace owner"
+				}
+			}
+		},
+		"slug": {
+			"label": "URL",
+			"checking": "Checking availability…",
+			"available": "This URL is available",
+			"taken": "This URL is already taken",
+			"reserved": "This URL is reserved",
+			"invalid": "Use 3–40 lowercase letters, numbers and single hyphens"
+		},
+		"notFound": {
+			"title": "Workspace not found",
+			"description": "This workspace doesn't exist, or you don't have access to it.",
+			"action": "Go to my workspaces"
+		}
+	},
+	"team": {
+		"roles": {
+			"owner": "Owner",
+			"admin": "Admin",
+			"member": "Member",
+			"viewer": "Viewer"
+		},
+		"members": {
+			"pageTitle": "Members",
+			"inviteMember": "Invite member",
+			"loading": "Loading members...",
+			"loadError": "Couldn't load workspace members.",
+			"you": "You"
+		},
+		"invitations": {
+			"pendingBadge": "pending",
+			"expires": "Expires {{date}}",
+			"linkLabel": "Invitation link",
+			"copyLink": "Copy link",
+			"linkCopied": "Invitation link copied",
+			"copyFailed": "Couldn't copy automatically. Select the link and press Ctrl+C."
+		},
+		"inviteModal": {
+			"title": "Invite Team Member",
+			"emailLabel": "Email",
+			"emailPlaceholder": "colleague@company.com",
+			"sendInvitation": "Send Invitation",
+			"success": "Invitation sent successfully",
+			"error": "Failed to invite team member",
+			"createdTitle": "Invitation created",
+			"shareLinkDescription": "Share this link with {{email}} so they can join the workspace.",
+			"done": "Done"
+		},
+		"membersTable": {
+			"emptyTitle": "No team members yet",
+			"emptyDescription": "Invite your first team member to get started.",
+			"columns": {
+				"name": "Name",
+				"role": "Role",
+				"joined": "Joined"
+			},
+			"ariaInvitationActions": "Invitation actions",
+			"ariaRemoveMember": "Remove member",
+			"removeDialogTitle": "Remove Team Member?",
+			"removeDialogDescription": "Are you sure you want to remove {{name}} from the workspace? This action cannot be undone.",
+			"cancelDialogTitle": "Cancel Invitation?",
+			"cancelDialogDescription": "Are you sure you want to cancel the invitation for {{email}}? This action cannot be undone.",
+			"removeMember": "Remove Member",
+			"cancelInvitation": "Cancel Invitation",
+			"removeSuccess": "Team member removed successfully",
+			"removeError": "Failed to remove team member",
+			"cancelInviteSuccess": "Invitation cancelled successfully",
+			"cancelInviteError": "Failed to cancel invitation",
+			"roleUpdateSuccess": "Role updated",
+			"roleUpdateError": "Failed to update role"
+		}
+	},
+	"account": {
+		"privacy": {
+			"pageTitle": "Privacy",
+			"title": "Privacy",
+			"subtitle": "What this instance stores about you and why.",
+			"whatTitle": "What is stored",
+			"whatBody": "Your name, email address and profile picture; the workspaces you belong to and your role in them; the notifications and activity that your workspaces generate; and your notification preferences. Sign-in uses a one-time email code or your Google or GitHub account, so no password is stored.",
+			"whoTitle": "Who can see it",
+			"whoBody": "Members of a workspace see your name, picture and role in it, and the activity you perform there. Other people on this instance cannot see your data. The person who runs this instance can access the database.",
+			"controlTitle": "Your control",
+			"controlBody": "You can download everything tied to your account, and you can delete your account from your personal information settings. Deleting your account removes your profile, notifications and preferences.",
+			"back": "Back"
+		}
+	}
+}

@@ -1,0 +1,39 @@
+{
+	"name": "@morrow/permissions",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./workspace-slug": {
+			"types": "./dist/workspace-slug.d.ts",
+			"default": "./dist/workspace-slug.js"
+		},
+		"./workspace-url": {
+			"types": "./dist/workspace-url.d.ts",
+			"default": "./dist/workspace-url.js"
+		}
+	},
+	"license": "UNLICENSED",
+	"scripts": {
+		"build": "vp run compile",
+		"lint": "vp check .",
+		"test": "vp run test:run",
+		"test:watch": "vp test --config vitest.config.ts"
+	},
+	"dependencies": {
+		"better-auth": "1.7.7",
+		"zod": "^4.6.5"
+	},
+	"devDependencies": {
+		"@morrow/typescript-config": "workspace:*",
+		"typescript": "^7.0.2",
+		"vite": "catalog:",
+		"vite-plus": "catalog:"
+	}
+}

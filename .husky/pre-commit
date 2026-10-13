@@ -1,0 +1,3 @@
+set -e
+pnpm exec varlock scan --staged
+pnpm lint
