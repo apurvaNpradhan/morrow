@@ -31,6 +31,24 @@ const accountExportSchema = z.object({
       joinedAt: z.date().nullable(),
     }),
   ),
+  projects: z.array(
+    z.object({
+      workspaceId: z.string(),
+      id: z.string(),
+      key: z.string(),
+      name: z.string(),
+      description: z.string().nullable(),
+      icon: z.string().nullable(),
+      archivedAt: z.date().nullable(),
+      columns: z.array(
+        z.object({
+          name: z.string(),
+          category: z.string(),
+          color: z.string(),
+        }),
+      ),
+    }),
+  ),
   activity: z.array(
     z.object({
       id: z.string(),

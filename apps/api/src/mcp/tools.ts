@@ -5,6 +5,7 @@ import type { z } from "zod";
 import { accountMcpTools } from "#api/account/index";
 import { activityMcpTools } from "#api/activity/index";
 import { membersMcpTools } from "#api/members/index";
+import { projectsMcpTools } from "#api/projects/index";
 import type { McpTool } from "#api/platform/orpc/mcp-tool";
 import { appRouter } from "#api/platform/orpc/router";
 import { workspaceMcpTools } from "#api/workspace/index";
@@ -15,6 +16,7 @@ export const mcpTools: McpTool[] = [
   ...accountMcpTools,
   ...workspaceMcpTools,
   ...membersMcpTools,
+  ...projectsMcpTools,
   ...activityMcpTools,
 ] as McpTool[];
 

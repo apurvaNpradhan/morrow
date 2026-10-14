@@ -125,10 +125,11 @@ describe("MCP endpoint", () => {
     expect(names).toEqual([
       "list_activity",
       "list_members",
+      "list_projects",
       "list_workspaces",
       "whoami",
     ]);
-    expect((await rpc(second)).result?.tools).toHaveLength(4);
+    expect((await rpc(second)).result?.tools).toHaveLength(5);
   });
 
   it("runs tools as the token's user, concurrently", async () => {
@@ -175,6 +176,66 @@ describe("MCP endpoint", () => {
       workspaceId: workspace.id,
     });
     expect(activity.result?.isError).toBe(false);
+  });
+
+  it("lists a workspace's projects with their columns in board order", async () => {
+    const owner = await signUp("Owner");
+    const stranger = await signUp("Stranger");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Shared", slug: "shared", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const [project] = await db
+      .insert(schema.projectTable)
+      .values({
+        workspaceId: workspace.id,
+        key: "MOR",
+        name: "Morrow",
+        position: "a0",
+      })
+      .returning();
+    await db.insert(schema.projectColumnTable).values([
+      {
+        projectId: project.id,
+        name: "Done",
+        category: "done",
+        color: "green",
+        position: "a0",
+      },
+      {
+        projectId: project.id,
+        name: "To Do",
+        category: "unstarted",
+        color: "slate",
+        position: "a0",
+      },
+    ]);
+
+    const listed = await call(owner.token, "list_projects", {
+      workspaceId: workspace.id,
+    });
+    expect(listed.result?.isError).toBe(false);
+    const [first] = JSON.parse(listed.result!.content[0].text) as Array<{
+      key: string;
+      columns: Array<{ name: string }>;
+    }>;
+    expect(first.key).toBe("MOR");
+    expect(first.columns.map((column) => column.name)).toEqual([
+      "To Do",
+      "Done",
+    ]);
+
+    const denied = await call(stranger.token, "list_projects", {
+      workspaceId: workspace.id,
+    });
+    expect(denied.result?.isError).toBe(true);
+    expect(denied.result?.content[0].text).not.toContain("Morrow");
   });
 
   it("rejects empty identifiers before running anything", async () => {

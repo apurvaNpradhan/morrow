@@ -53,4 +53,42 @@ describe("account.export", () => {
     expect(data.memberships.map((m) => m.workspaceName)).toEqual(["Alpha"]);
     expect(data.activity.map((a) => a.content)).toEqual(["I did it"]);
   });
+
+  it("includes the projects and columns of the caller's workspaces, not others'", async () => {
+    const { user, workspace } = await createWorkspaceMember({ role: "owner" });
+    const other = await createWorkspaceMember({ role: "owner" });
+    mockAuthenticatedSession(user);
+    const client = createTestClient(app);
+    await client.projects.create({
+      workspaceId: workspace.id,
+      name: "Morrow",
+      key: "MOR",
+      icon: "Rocket",
+    });
+    mockAuthenticatedSession(other.user);
+    await createTestClient(app).projects.create({
+      workspaceId: other.workspace.id,
+      name: "Secret",
+      key: "SEC",
+    });
+    mockAuthenticatedSession(user);
+
+    const data = await client.account.export();
+
+    expect(data.projects).toHaveLength(1);
+    expect(data.projects[0]).toMatchObject({
+      workspaceId: workspace.id,
+      key: "MOR",
+      name: "Morrow",
+      icon: "Rocket",
+      archivedAt: null,
+    });
+    expect(data.projects[0]?.columns.map((column) => column.name)).toEqual([
+      "Backlog",
+      "To Do",
+      "In Progress",
+      "Done",
+      "Canceled",
+    ]);
+  });
 });

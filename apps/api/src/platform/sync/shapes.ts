@@ -1,4 +1,5 @@
 import { membersShapes } from "#api/members/index";
+import { projectsShapes } from "#api/projects/index";
 import { workspaceShapes } from "#api/workspace/index";
 import type { ShapeDefinition } from "./define-shape";
 
@@ -16,5 +17,6 @@ function buildRegistry(shapes: ShapeDefinition[]) {
 
 export const shapeRegistry = buildRegistry([
   ...membersShapes,
+  ...projectsShapes,
   ...workspaceShapes,
 ]);

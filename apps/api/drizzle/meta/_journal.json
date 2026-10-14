@@ -99,6 +99,13 @@
       "when": 1791973496439,
       "tag": "0013_sync_invitations_and_workspaces",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792003026688,
+      "tag": "0014_projects_and_columns",
+      "breakpoints": true
     }
   ]
 }
