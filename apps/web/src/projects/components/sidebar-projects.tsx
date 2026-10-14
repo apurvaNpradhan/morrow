@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/design-system/ui/sidebar";
 import { useWorkspacePermission } from "@/workspace";
-import { useProjectsOutsidePages } from "../queries/use-projects";
+import { useProjectsWithoutSuspense } from "../queries/use-projects";
 import { CreateProjectDialog } from "./create-project-dialog";
 import { ProjectIcon } from "./project-icon";
 
@@ -28,7 +28,7 @@ export function SidebarProjects({
     select: (location) => location.pathname.replace(/\/+$/, ""),
   });
   const [creating, setCreating] = useState(false);
-  const projects = useProjectsOutsidePages(workspace.id).filter(
+  const projects = useProjectsWithoutSuspense(workspace.id).filter(
     (project) => !project.archivedAt,
   );
   const listPath = `/${workspace.slug}/projects`;

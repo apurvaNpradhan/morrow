@@ -1,13 +1,13 @@
 import type { ProjectIcon } from "@morrow/sync-schemas";
 import { Folder, type LucideIcon } from "lucide-react";
 import { PROJECT_ICON_COMPONENTS } from "../lib/project-icons";
-import { useProjectsOutsidePages } from "./use-projects";
+import { useProjectsWithoutSuspense } from "./use-projects";
 
 /** The workspace's active projects as navigation entries: key, name and icon component. */
 export function useNavProjects(
   workspaceId: string | undefined,
 ): Array<{ key: string; name: string; icon: LucideIcon }> {
-  return useProjectsOutsidePages(workspaceId)
+  return useProjectsWithoutSuspense(workspaceId)
     .filter((project) => !project.archivedAt)
     .map((project) => ({
       key: project.key,

@@ -30,20 +30,13 @@ export async function createColumn(input: {
   await projectColumnCollection.utils.awaitTxId(txid);
 }
 
+/** Renames, recolours or repositions a column; resolves when the change has synced back. */
 export async function updateColumn(
   columnId: string,
-  patch: { name?: string; color?: ColumnColor },
+  patch: { name?: string; color?: ColumnColor; position?: string },
 ) {
   const transaction = projectColumnCollection.update(columnId, (draft) => {
     Object.assign(draft, patch);
-  });
-  await transaction.isPersisted.promise;
-}
-
-/** Gives a column the position computed from its new neighbours in its category. */
-export async function moveColumn(columnId: string, position: string) {
-  const transaction = projectColumnCollection.update(columnId, (draft) => {
-    draft.position = position;
   });
   await transaction.isPersisted.promise;
 }

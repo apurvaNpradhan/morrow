@@ -6,7 +6,7 @@ import {
 import { and, eq, max } from "drizzle-orm";
 import { generateKeyBetween } from "fractional-indexing";
 import { withTxid } from "#api/platform/sync/with-txid";
-import { projectError, violatedConstraint } from "#api/projects/errors";
+import { rethrowViolation } from "#api/projects/errors";
 import { lockProject } from "#api/projects/lib/lock-project";
 import { projectColumnTable } from "#api/projects/tables";
 
@@ -49,9 +49,8 @@ export async function createColumn(
     });
     return { id, txid };
   } catch (error) {
-    if (violatedConstraint(error) === "project_column_project_name_uidx") {
-      throw projectError("COLUMN_NAME_TAKEN");
-    }
-    throw error;
+    rethrowViolation(error, {
+      project_column_project_name_uidx: "COLUMN_NAME_TAKEN",
+    });
   }
 }

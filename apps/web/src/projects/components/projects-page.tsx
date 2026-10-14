@@ -85,7 +85,8 @@ export function ProjectsPage({
               slug={workspace.slug}
               projects={shown}
               // Archived projects keep their place; only active ones reorder.
-              canEdit={canManageProjects() && tab === "active"}
+              canReorder={canManageProjects() && tab === "active"}
+              canOpenSettings={canManageProjects()}
             />
           ) : (
             <Empty className="rounded-xl border border-dashed">

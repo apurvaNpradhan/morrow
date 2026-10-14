@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { recordWorkspaceActivity } from "#api/activity/index";
 import { withTxid } from "#api/platform/sync/with-txid";
-import { projectError, violatedConstraint } from "#api/projects/errors";
+import { rethrowViolation } from "#api/projects/errors";
 import { lockProject } from "#api/projects/lib/lock-project";
 import { projectTable } from "#api/projects/tables";
 
@@ -40,9 +40,8 @@ export async function changeProjectKey(
     // A key that did not change writes nothing, so there is nothing to wait for.
     return { txid: changed ? txid : null };
   } catch (error) {
-    if (violatedConstraint(error) === "project_workspace_key_uidx") {
-      throw projectError("PROJECT_KEY_TAKEN");
-    }
-    throw error;
+    rethrowViolation(error, {
+      project_workspace_key_uidx: "PROJECT_KEY_TAKEN",
+    });
   }
 }

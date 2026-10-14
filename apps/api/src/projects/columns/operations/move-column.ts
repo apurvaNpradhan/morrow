@@ -1,7 +1,7 @@
 import type { ColumnCategory } from "@morrow/sync-schemas";
 import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
-import { projectError, violatedConstraint } from "#api/projects/errors";
+import { rethrowViolation } from "#api/projects/errors";
 import { assertValidPosition } from "#api/projects/lib/position";
 import { lockProject } from "#api/projects/lib/lock-project";
 import { projectColumnTable } from "#api/projects/tables";
@@ -34,9 +34,6 @@ export async function moveColumn(
     });
     return { txid };
   } catch (error) {
-    if (violatedConstraint(error) === "project_column_position_uidx") {
-      throw projectError("POSITION_TAKEN");
-    }
-    throw error;
+    rethrowViolation(error, { project_column_position_uidx: "POSITION_TAKEN" });
   }
 }

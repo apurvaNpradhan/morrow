@@ -32,6 +32,7 @@ A Workspace had members, roles and activity but nothing to organise work in. Kan
 - Both tables are one migration: `REPLICA IDENTITY FULL`, publication, `GRANT SELECT … TO electric`.
 - Every write is a Procedure in `withTxid` that returns `txid`. Edits of an existing row (rename, icon, key, reorder, archive, colour, column moves and deletes) are optimistic collection updates whose handlers call the Procedure and wait with `awaitTxId`. Creating a Project or a Column is not an optimistic insert: the server picks its id, position and default Columns, so the call waits for both tables to deliver it.
 - Settings fields save when they lose focus; there is no debounced form. Changing a key asks first.
+- The two tables are also read by one oRPC Procedure, `projects.list`. This is a deliberate exception to "a table is a Shape or a query, never both": MCP tools and the account export run on the server and cannot read a browser collection. The web app never calls it.
 
 **Also.** Project create, archive, unarchive, delete and key change are recorded in workspace activity; Column writes and reorders are not, to keep the feed readable. `list_projects` is a read-only MCP tool returning each Project with its Columns in board order. The account export includes the Projects and Columns of the user's Workspaces. Background images follow the logo pattern, under `project-backgrounds/<projectId>/`, and are removed with the Project, the Workspace or the account.
 
