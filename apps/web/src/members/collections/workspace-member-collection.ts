@@ -1,4 +1,4 @@
-import { workspaceMemberShapeSchema } from "@morrow/sync-schemas";
+import { workspaceMembersShape } from "@morrow/sync-schemas";
 import {
   electricCollectionOptions,
   isChangeMessage,
@@ -12,10 +12,10 @@ import { registerSyncedCollection } from "@/app/sync/synced-collections";
 export const workspaceMemberCollection = registerSyncedCollection(
   createCollection(
     electricCollectionOptions({
-      id: "workspace-members",
-      schema: workspaceMemberShapeSchema,
+      id: workspaceMembersShape.name,
+      schema: workspaceMembersShape.schema,
       getKey: (row) => row.id,
-      shapeOptions: shapeOptions("workspace-members"),
+      shapeOptions: shapeOptions(workspaceMembersShape.name),
       // Better Auth performs the role change, so there is no transaction id to
       // wait for: wait for the changed row to come back through sync instead.
       onUpdate: async ({ transaction, collection }) => {
