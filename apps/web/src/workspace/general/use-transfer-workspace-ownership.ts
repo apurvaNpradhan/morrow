@@ -16,9 +16,6 @@ export function useTransferWorkspaceOwnership() {
       rpc.members.transferOwnership(request),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["workspace", "full", variables.workspaceId],
-      });
-      queryClient.invalidateQueries({
         queryKey: ["workspace-capabilities", variables.workspaceId],
       });
       queryClient.invalidateQueries({ queryKey: ["active-organization"] });

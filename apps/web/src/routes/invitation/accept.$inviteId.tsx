@@ -54,7 +54,7 @@ function AcceptInvitation() {
   const handleAcceptInvitation = async () => {
     setIsAccepting(true);
     try {
-      const { slug } = await acceptInvitation(inviteId);
+      const { slug } = await acceptInvitation(inviteId, session?.user.id ?? "");
       toast.success(t("auth:invitation.toast.acceptSuccess"));
 
       // Someone who hasn't finished onboarding is already in the workspace

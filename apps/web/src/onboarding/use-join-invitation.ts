@@ -1,6 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/auth";
 import { acceptInvitation, InvitationAcceptedError } from "@/members";
 import { toast } from "@/design-system/toast";
 import { errorMessage } from "@/app/lib/error-message";
@@ -10,21 +10,18 @@ export function useJoinInvitation(
   onJoined: (slug: string) => void | Promise<void>,
 ) {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [joiningId, setJoiningId] = useState<string | null>(null);
 
   const join = async (invitationId: string) => {
     setJoiningId(invitationId);
     try {
-      const { slug } = await acceptInvitation(invitationId);
-      await queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      const { slug } = await acceptInvitation(invitationId, user?.id ?? "");
       await onJoined(slug);
     } catch (error) {
       setJoiningId(null);
       if (error instanceof InvitationAcceptedError) {
         // Joined, so the invitation is gone from the list; retrying would fail.
-        void queryClient.invalidateQueries({ queryKey: ["invitations"] });
-        void queryClient.invalidateQueries({ queryKey: ["workspaces"] });
         toast.error(t("auth:invitation.toast.acceptedOpenFailed"));
         return;
       }

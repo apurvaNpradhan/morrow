@@ -1,5 +1,4 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { WorkspaceStep } from "@/onboarding";
 import { useFinishOnboarding } from "@/onboarding";
 import { setActiveWorkspace } from "@/workspace";
@@ -30,7 +29,6 @@ export const Route = createFileRoute(
 function WorkspaceRoute() {
   const { redirect: redirectTo } = Route.useSearch();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const finish = useFinishOnboarding(redirectTo);
 
   return (
@@ -39,7 +37,6 @@ function WorkspaceRoute() {
         navigate({ to: "/onboarding/you", search: { redirect: redirectTo } })
       }
       onCreated={async (workspace) => {
-        await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
         await setActiveWorkspace(workspace.id);
         await navigate({
           to: "/onboarding/invite",

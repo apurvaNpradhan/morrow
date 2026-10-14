@@ -4,10 +4,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsPage } from "@/app/settings/settings-page";
 import { PageTitle } from "@/design-system/page-title";
-import { InviteTeamMemberModal, useWorkspaceMembers } from "@/members";
+import {
+  InviteTeamMemberModal,
+  useWorkspaceInvitations,
+  useWorkspaceMembers,
+} from "@/members";
 import { MembersTable } from "@/members";
 import { Button } from "@/design-system/ui/button";
-import { useGetFullWorkspace } from "@/workspace";
 import { useWorkspacePermission } from "@/workspace";
 
 export const Route = createFileRoute(
@@ -20,13 +23,8 @@ function RouteComponent() {
   const { t } = useTranslation();
   const { workspace: resolved } = Route.useRouteContext();
   const workspaceId = resolved.id;
-  const {
-    data: workspace,
-    isPending,
-    isError,
-    refetch,
-  } = useGetFullWorkspace({ workspaceId });
   const members = useWorkspaceMembers(workspaceId);
+  const invitations = useWorkspaceInvitations(workspaceId);
   const { canInviteUsers } = useWorkspacePermission();
   const canInvite = Boolean(canInviteUsers());
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -51,28 +49,13 @@ function RouteComponent() {
           ) : null
         }
       >
-        {isPending ? (
-          <p role="status" className="p-5 text-muted-foreground text-sm">
-            {t("team:members.loading")}
-          </p>
-        ) : isError || !workspace ? (
-          <div className="flex flex-col items-start gap-3 p-5">
-            <p role="alert" className="text-muted-foreground text-sm">
-              {t("team:members.loadError")}
-            </p>
-            <Button variant="outline" onClick={() => void refetch()}>
-              {t("common:error.tryAgain")}
-            </Button>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <MembersTable
-              workspaceId={workspaceId}
-              users={members}
-              invitations={workspace.invitations}
-            />
-          </div>
-        )}
+        <div className="overflow-hidden rounded-xl border">
+          <MembersTable
+            workspaceId={workspaceId}
+            users={members}
+            invitations={invitations}
+          />
+        </div>
 
         <InviteTeamMemberModal
           open={isInviteOpen}

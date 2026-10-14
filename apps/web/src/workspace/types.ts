@@ -1,4 +1,4 @@
-import type { RouterOutputs } from "@/app/lib/router-types";
+import type { MyWorkspace } from "./queries/my-workspaces";
 
 /** One of the caller's workspaces, as listed in the switcher. */
-export type WorkspaceSummary = RouterOutputs["workspace"]["list"][number];
+export type WorkspaceSummary = MyWorkspace;

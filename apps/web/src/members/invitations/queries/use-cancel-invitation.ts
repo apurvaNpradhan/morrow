@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { rpc } from "@/app/lib/orpc";
-import { queryClient } from "@/app/query-client";
+import { waitForInvitation } from "../../lib/wait-for-invitation";
 
 type CancelInvitationRequest = {
   invitationId: string;
@@ -9,22 +9,10 @@ type CancelInvitationRequest = {
 
 export function useCancelInvitation() {
   return useMutation({
-    mutationFn: ({ invitationId }: CancelInvitationRequest) =>
-      rpc.members.cancelInvitation({ invitationId }),
-    onSuccess: (_, { workspaceId }) => {
-      // Invalidate all workspace-related queries
-      queryClient.invalidateQueries({
-        queryKey: ["workspace-invites", workspaceId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["workspace", "full", workspaceId],
-      });
-
-      // Also invalidate the broader workspace query
-      queryClient.invalidateQueries({
-        queryKey: ["workspace"],
-      });
+    mutationFn: async ({ invitationId }: CancelInvitationRequest) => {
+      const result = await rpc.members.cancelInvitation({ invitationId });
+      await waitForInvitation(invitationId, "cancelled");
+      return result;
     },
   });
 }

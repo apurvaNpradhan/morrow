@@ -1,7 +1,10 @@
 import { rpc } from "@/app/lib/orpc";
+import { workspaceCollection } from "@/workspace";
 import { setActiveWorkspace } from "@/workspace";
+import { workspaceMemberCollection } from "../../collections/workspace-member-collection";
+import { waitForMembership } from "../../lib/wait-for-membership";
 
-/** The invitation was accepted, but the joined workspace could not be looked up. */
+/** The invitation was accepted, but the joined workspace could not be opened. */
 export class InvitationAcceptedError extends Error {
   constructor() {
     super("Invitation accepted, but the workspace could not be opened");
@@ -11,9 +14,17 @@ export class InvitationAcceptedError extends Error {
 
 /**
  * Accepts an invitation and makes its workspace the last-used one. Returns the
- * workspace's slug, which is what the app's URLs are built from.
+ * workspace's slug, which is what the app's URLs are built from. Resolves once
+ * the new membership has come back through sync, so the page that opens next
+ * finds the workspace.
  */
-export async function acceptInvitation(invitationId: string) {
+export async function acceptInvitation(invitationId: string, userId: string) {
+  // The invitation page sits outside the signed-in layout, so nothing has
+  // started the sync yet; it has to run to see the membership arrive.
+  await Promise.all([
+    workspaceCollection.preload(),
+    workspaceMemberCollection.preload(),
+  ]);
   const accepted = await rpc.members.acceptInvitation({ invitationId });
   const workspaceId = accepted?.invitation.organizationId;
   if (!workspaceId) throw new Error("Failed to accept invitation");
@@ -22,7 +33,10 @@ export async function acceptInvitation(invitationId: string) {
   // report the accept as failed, and a retry would fail.
   await setActiveWorkspace(workspaceId).catch(() => {});
   try {
-    const workspace = await rpc.workspace.get({ workspaceId });
+    await waitForMembership(workspaceId, userId);
+    // The invitation already delivered the workspace row.
+    const workspace = workspaceCollection.get(workspaceId);
+    if (!workspace) throw new Error("Workspace has not synced");
     return { workspaceId, slug: workspace.slug };
   } catch {
     throw new InvitationAcceptedError();

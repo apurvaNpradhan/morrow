@@ -7,13 +7,13 @@ import {
 import { useTranslation } from "react-i18next";
 import { WorkspaceError, WorkspaceNotFound } from "@/workspace";
 import {
-  workspaceMemberCollection,
+  workspaceInvitationCollection,
   workspaceMemberUserCollection,
 } from "@/members";
 import { PageTitle } from "@/design-system/page-title";
 import { useCanonicalWorkspaceUrl } from "@/workspace";
 import { useRememberLastWorkspace } from "@/workspace";
-import { workspaceBySlugQueryOptions } from "@/workspace";
+import { resolveWorkspaceBySlug, useActiveWorkspace } from "@/workspace";
 import { canonicalWorkspaceHref } from "@/workspace";
 import { errorCode } from "@/app/lib/orpc-error";
 import { toNavigation } from "@/onboarding";
@@ -22,8 +22,9 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
   beforeLoad: async ({ context, params, location }) => {
     let workspace;
     try {
-      workspace = await context.queryClient.ensureQueryData(
-        workspaceBySlugQueryOptions(params.slug),
+      workspace = await resolveWorkspaceBySlug(
+        context.session?.user.id ?? "",
+        params.slug,
       );
     } catch (error) {
       // Not a member and no such slug look the same on purpose.
@@ -46,12 +47,13 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
     }
     return { workspace };
   },
-  // Members sync before the page renders, so pages read them without waiting.
-  // Hovering a link preloads this too, which starts the sync early.
+  // Members and invitations sync before the page renders, so pages read them
+  // without waiting. Hovering a link preloads this too, which starts the sync
+  // early. (Workspaces and my own members come from the layout above.)
   loader: async () => {
     await Promise.all([
-      workspaceMemberCollection.preload(),
       workspaceMemberUserCollection.preload(),
+      workspaceInvitationCollection.preload(),
     ]);
   },
   component: WorkspaceLayout,
@@ -61,8 +63,13 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
 
 function WorkspaceLayout() {
   const { t } = useTranslation();
-  const { workspace } = Route.useRouteContext();
-  const { session, sessionError } = Route.useRouteContext();
+  const {
+    workspace: resolved,
+    session,
+    sessionError,
+  } = Route.useRouteContext();
+  const { data: live } = useActiveWorkspace();
+  const workspace = live ?? resolved;
   useCanonicalWorkspaceUrl();
   useRememberLastWorkspace(workspace.id, session, sessionError);
 

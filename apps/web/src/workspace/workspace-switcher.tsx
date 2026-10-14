@@ -20,7 +20,7 @@ import {
 import { UserAvatar } from "@/design-system/user-avatar";
 import { shortcuts } from "@/app/lib/shortcuts";
 import { useActiveWorkspace } from "./queries/use-active-workspace";
-import { useGetWorkspaces } from "./queries/use-get-workspaces";
+import { useMyWorkspaces } from "./queries/use-my-workspaces";
 import {
   getModifierKeyText,
   useRegisterShortcuts,
@@ -33,7 +33,7 @@ export function WorkspaceSwitcher() {
   const { t } = useTranslation();
   const { data: workspace } = useActiveWorkspace();
 
-  const { data: workspaces } = useGetWorkspaces();
+  const workspaces = useMyWorkspaces();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
   const [isCreateWorkspaceModalOpen, setIsCreateWorkspaceModalOpen] =

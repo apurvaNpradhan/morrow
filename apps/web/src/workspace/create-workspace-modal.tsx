@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -42,7 +41,6 @@ export function CreateWorkspaceModal({
   const slugField = useWorkspaceSlugField({ name });
   const [lostSlug, setLostSlug] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { mutateAsync } = useCreateWorkspace();
   const { data: creationStatus } = useWorkspaceCreationStatus(open);
@@ -81,8 +79,6 @@ export function CreateWorkspaceModal({
         description,
       });
       toast.success(t("common:modals.createWorkspace.successToast"));
-      await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-
       await setActiveWorkspace(createdWorkspace.id);
 
       navigate({

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { track } from "@/app/analytics/track";
 import { detailCode } from "@/app/lib/orpc-error";
 import { rpc } from "@/app/lib/orpc";
-import { queryClient } from "@/app/query-client";
+import { waitForInvitation } from "../../lib/wait-for-invitation";
 
 type InviteWorkspaceUserRequest = {
   workspaceId: string;
@@ -17,7 +17,9 @@ export function useInviteWorkspaceUser() {
   return useMutation({
     mutationFn: async (request: InviteWorkspaceUserRequest) => {
       try {
-        return await rpc.members.invite(request);
+        const invitation = await rpc.members.invite(request);
+        if (invitation?.id) await waitForInvitation(invitation.id, "created");
+        return invitation;
       } catch (error) {
         if (detailCode(error) === "INVITATION_EMAIL_FAILED") {
           throw new Error(t("settings:invitationEmailFailed"));
@@ -27,15 +29,6 @@ export function useInviteWorkspaceUser() {
     },
     onSuccess: (_data, { resend }) => {
       if (!resend) track("Invite Sent");
-    },
-    onSettled: (_, _error, { workspaceId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ["workspace-invites", workspaceId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["workspace", "full", workspaceId],
-      });
     },
   });
 }

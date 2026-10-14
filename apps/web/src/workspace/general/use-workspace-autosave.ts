@@ -1,12 +1,10 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { errorMessage } from "@/app/lib/error-message";
 import { toast } from "@/design-system/toast";
-import { invalidateWorkspaceDetails } from "@/workspace/cache/invalidate-workspace-queries";
 import { useUpdateWorkspace } from "@/workspace/queries/use-update-workspace";
 import {
   getWorkspaceDescription,
@@ -31,7 +29,6 @@ export function useWorkspaceAutosave(
   canEdit: boolean,
 ) {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const { mutateAsync: updateWorkspace } = useUpdateWorkspace();
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
@@ -119,7 +116,6 @@ export function useWorkspaceAutosave(
           form.reset(form.getValues());
         }
 
-        await invalidateWorkspaceDetails(queryClient);
         toast.success(t("settings:workspaceGeneral.toastUpdated"));
       } catch (error) {
         toast.error(
@@ -139,7 +135,7 @@ export function useWorkspaceAutosave(
         }
       }
     },
-    [workspace, updateWorkspace, queryClient, form, t],
+    [workspace, updateWorkspace, form, t],
   );
 
   const debouncedSave = useCallback(

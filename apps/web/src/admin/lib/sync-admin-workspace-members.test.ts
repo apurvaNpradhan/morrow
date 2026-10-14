@@ -29,10 +29,7 @@ describe("syncAdminWorkspaceMembers", () => {
       queryClient.getQueryData(["admin", "workspace-members", "acme"]),
     ).toEqual(members);
     expect(invalidate.mock.calls.map(([filters]) => filters?.queryKey)).toEqual(
-      [
-        ["admin", "workspaces"],
-        ["workspace", "full", "acme"],
-      ],
+      [["admin", "workspaces"]],
     );
   });
 

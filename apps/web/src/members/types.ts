@@ -1,4 +1,4 @@
-import type { RouterOutputs } from "@/app/lib/router-types";
+import type { InvitationRow, UserRow } from "@morrow/sync-schemas";
 
 /** A member of a Workspace joined with their user, as the synced collections give it. */
 export type WorkspaceUser = {
@@ -6,11 +6,17 @@ export type WorkspaceUser = {
   userId: string;
   role: string;
   joinedAt: Date;
-  user: { id: string; name: string; email: string; image: string | null };
+  user: UserRow;
 };
 
-export type WorkspaceUserInvitation =
-  RouterOutputs["workspace"]["full"]["invitations"][number];
+/** A pending invitation of a Workspace, as the members page lists it. */
+export type WorkspaceUserInvitation = InvitationRow;
 
-export type UserInvitation =
-  RouterOutputs["members"]["pendingInvitations"][number];
+/** A pending invitation addressed to the signed-in user. */
+export type UserInvitation = {
+  id: string;
+  workspaceId: string;
+  workspaceName: string;
+  inviterName: string;
+  expiresAt: Date;
+};

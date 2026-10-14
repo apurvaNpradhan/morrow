@@ -10,7 +10,4 @@ export function syncAdminWorkspaceMembers(
 ) {
   queryClient.setQueryData(adminWorkspaceMembersQueryKey(workspaceId), members);
   queryClient.invalidateQueries({ queryKey: ADMIN_WORKSPACES_QUERY_KEY });
-  queryClient.invalidateQueries({
-    queryKey: ["workspace", "full", workspaceId],
-  });
 }
