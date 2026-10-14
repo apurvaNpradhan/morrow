@@ -17,6 +17,7 @@ import {
   useDeleteAccount,
   SESSION_TOO_OLD,
 } from "@/account/queries/use-delete-account";
+import { cleanupSyncedCollections } from "@/app/sync/synced-collections";
 
 export function DeleteAccountSection() {
   const { t } = useTranslation();
@@ -32,6 +33,7 @@ export function DeleteAccountSection() {
       await deleteAccount();
       setOpen(false);
       queryClient.clear();
+      void cleanupSyncedCollections();
       toast.success(t("settings:informationPage.deleteAccount.success"));
       navigate({ to: "/auth/sign-in" });
     } catch (error) {

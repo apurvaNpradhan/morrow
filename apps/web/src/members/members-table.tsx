@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCancelInvitation } from "./invitations/queries/use-cancel-invitation";
 import { useDeleteWorkspaceUser } from "./queries/use-delete-workspace-user";
-import { useUpdateWorkspaceUserRole } from "./queries/use-update-workspace-user-role";
+import { updateWorkspaceUserRole } from "./queries/use-update-workspace-user-role";
 import { useWorkspaceRoles } from "./roles/queries/use-workspace-roles";
 import { useCopyInvitationLink } from "./invitations/use-copy-invitation-link";
 import { useWorkspacePermission } from "@/workspace";
@@ -106,7 +106,6 @@ export function MembersTable({ workspaceId, invitations, users }: Props) {
     useDeleteWorkspaceUser();
   const { mutateAsync: cancelInvitation, isPending: isCancelling } =
     useCancelInvitation();
-  const { mutateAsync: updateMemberRole } = useUpdateWorkspaceUserRole();
   const { copy: copyInvitationLink } = useCopyInvitationLink();
   const { data: allWorkspaceRoles = [] } = useWorkspaceRoles(workspaceId);
   const { canManageTeam, canRemoveMembers, canInviteUsers } =
@@ -136,7 +135,7 @@ export function MembersTable({ workspaceId, invitations, users }: Props) {
   const handleChangeRole = async (member: WorkspaceUser, role: string) => {
     if (role === member.role) return;
     try {
-      await updateMemberRole({ workspaceId, memberId: member.id, role });
+      await updateWorkspaceUserRole(member.id, role);
       toast.success(t("team:membersTable.roleUpdateSuccess"));
     } catch (error) {
       toast.error(
@@ -286,7 +285,7 @@ export function MembersTable({ workspaceId, invitations, users }: Props) {
                   )}
                 </TableCell>
                 <TableCell className="py-3 text-sm text-muted-foreground tabular-nums">
-                  {member.createdAt ? formatDateMedium(member.createdAt) : "–"}
+                  {formatDateMedium(member.joinedAt)}
                 </TableCell>
                 <TableCell className="pe-6 py-3 text-right">
                   {!isSelf && canRemove ? (

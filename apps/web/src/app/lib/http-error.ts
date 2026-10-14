@@ -1,3 +1,4 @@
+import { cleanupSyncedCollections } from "@/app/sync/synced-collections";
 import { errorCode } from "./orpc-error";
 
 export class HttpError extends Error {
@@ -29,6 +30,7 @@ export function isUnauthorizedError(error: unknown): boolean {
 // current pathname/search/hash so the sign-in page can return the user to
 // where they were instead of dropping them on the default landing page.
 export function handleUnauthorized(): void {
+  void cleanupSyncedCollections();
   const currentPath =
     window.location.pathname + window.location.search + window.location.hash;
   const target = currentPath

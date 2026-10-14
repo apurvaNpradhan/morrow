@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { WorkspaceLayout } from "@/app/components/workspace-layout";
 import { PageTitle } from "@/design-system/page-title";
-import { InviteTeamMemberModal } from "@/members";
+import { InviteTeamMemberModal, useWorkspaceMembers } from "@/members";
 import { MembersTable } from "@/members";
 import { Button } from "@/design-system/ui/button";
 import { useGetFullWorkspace } from "@/workspace";
@@ -24,6 +24,7 @@ function RouteComponent() {
     isError,
     refetch,
   } = useGetFullWorkspace({ workspaceId });
+  const members = useWorkspaceMembers(workspaceId);
   const { canInviteUsers } = useWorkspacePermission();
   const canInvite = Boolean(canInviteUsers());
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -63,7 +64,7 @@ function RouteComponent() {
         ) : (
           <MembersTable
             workspaceId={workspaceId}
-            users={workspace.members}
+            users={members}
             invitations={workspace.invitations}
           />
         )}

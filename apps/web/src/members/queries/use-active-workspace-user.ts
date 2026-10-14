@@ -1,16 +1,26 @@
-import { useQuery } from "@tanstack/react-query";
+import { and, eq, useLiveQuery } from "@tanstack/react-db";
 import { useAuth } from "@/auth";
 import { useActiveWorkspace } from "@/workspace";
-import { rpc } from "@/app/lib/orpc";
+import { workspaceMemberCollection } from "../collections/workspace-member-collection";
 
+/** The signed-in user's own membership in the active Workspace, live. */
 export const useGetActiveWorkspaceUser = () => {
   const { user } = useAuth();
   const { data: workspace } = useActiveWorkspace();
+  const workspaceId = workspace?.id;
+  const userId = user?.id;
 
-  return useQuery({
-    queryKey: ["workspace-user", "active", workspace?.id, user?.id],
-    enabled: !!workspace?.id && !!user?.id,
-    queryFn: () =>
-      rpc.members.current({ workspaceId: workspace?.id as string }),
+  const { data } = useLiveQuery({
+    query: (q) => {
+      if (!workspaceId || !userId) return undefined;
+      return q
+        .from({ member: workspaceMemberCollection })
+        .where(({ member }) =>
+          and(eq(member.workspaceId, workspaceId), eq(member.userId, userId)),
+        )
+        .findOne();
+    },
   });
+
+  return { data };
 };

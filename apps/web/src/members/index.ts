@@ -18,3 +18,6 @@ export { pendingInvitationsQueryOptions } from "./invitations/queries/pending-in
 export { useGetActiveWorkspaceUser } from "./queries/use-active-workspace-user";
 export { WorkspaceRolesPage } from "./roles/components/workspace-roles-page";
 export { parseInviteEmails } from "./invitations/lib/invite-emails";
+export { useWorkspaceMembers } from "./queries/use-workspace-members";
+export { workspaceMemberCollection } from "./collections/workspace-member-collection";
+export { workspaceMemberUserCollection } from "./collections/workspace-member-user-collection";
