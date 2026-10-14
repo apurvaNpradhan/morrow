@@ -85,6 +85,13 @@
       "when": 1791966665659,
       "tag": "0011_sync_workspace_members",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791973355305,
+      "tag": "0012_roles_always_read",
+      "breakpoints": true
     }
   ]
 }

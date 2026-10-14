@@ -6,6 +6,15 @@ import { authed, requireWorkspacePermission } from "#api/platform/orpc/base";
 const workspaceId = z.string().min(1);
 const permission = z.record(z.string(), z.array(z.string()));
 
+/** Being a member means being able to read the workspace, so no role may omit it. */
+function withReadAccess(granted: Record<string, string[]>) {
+  const workspace = granted.workspace ?? [];
+  return {
+    ...granted,
+    workspace: workspace.includes("read") ? workspace : [...workspace, "read"],
+  };
+}
+
 export const roleProcedures = {
   list: authed
     .input(z.object({ workspaceId }))
@@ -28,7 +37,7 @@ export const roleProcedures = {
         body: {
           organizationId: input.workspaceId,
           role: input.role,
-          permission: input.permission,
+          permission: withReadAccess(input.permission),
         },
       }),
     ),
@@ -41,7 +50,7 @@ export const roleProcedures = {
         body: {
           organizationId: input.workspaceId,
           roleName: input.roleName,
-          data: { permission: input.permission },
+          data: { permission: withReadAccess(input.permission) },
         },
       }),
     ),

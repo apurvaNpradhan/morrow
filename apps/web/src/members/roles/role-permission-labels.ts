@@ -72,7 +72,7 @@ export const PERMISSION_LABELS = new Map(
     },
     "workspace:read": {
       label: "Access workspace",
-      description: "Read workspace metadata and members.",
+      description: "Read workspace metadata and members. Every role has this.",
     },
     "workspace:update": {
       label: "Edit workspace",
