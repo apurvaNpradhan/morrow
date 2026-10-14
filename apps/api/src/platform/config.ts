@@ -39,6 +39,10 @@ export const config = {
   get nodeEnv() {
     return text("NODE_ENV") ?? "development";
   },
+  /** Only when NODE_ENV is set to it: the default must not enable dev-only output. */
+  get isDevelopment() {
+    return text("NODE_ENV") === "development";
+  },
   get isProduction() {
     return this.nodeEnv === "production";
   },

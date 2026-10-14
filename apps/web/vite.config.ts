@@ -54,7 +54,10 @@ export default defineConfig({
   base: "/",
   plugins: lazyPlugins(() => [
     // Dev only (strips the devtools from builds); must come before the others.
-    devtools(),
+    devtools({
+      consolePiping: { enabled: true },
+      injectSource: { enabled: true },
+    }),
     // Loads and validates the root .env.schema; replaces Vite's .env handling.
     varlockVitePlugin(),
     tanstackRouter({
