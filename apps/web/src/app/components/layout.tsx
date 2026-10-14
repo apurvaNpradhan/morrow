@@ -4,8 +4,7 @@ import { AppSidebar } from "./app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/design-system/ui/sidebar";
 import { useUserPreferencesEffects } from "@/app/hooks/use-user-preferences-effects";
 import { cn } from "@/design-system/cn";
-import { useBackgroundStore } from "@/app/store/background";
-import { useUserPreferencesStore } from "@/app/store/user-preferences";
+import { useDevicePreferences } from "@/app/preferences/use-device-preferences";
 
 type LayoutProps = {
   children: ReactNode;
@@ -44,8 +43,7 @@ function LayoutContent({ children, className }: ContentProps) {
 }
 
 export function Layout({ children, className }: LayoutProps) {
-  const { sidebarDefaultOpen } = useUserPreferencesStore();
-  const { background } = useBackgroundStore();
+  const { sidebarDefaultOpen } = useDevicePreferences();
 
   useUserPreferencesEffects();
 
@@ -65,16 +63,8 @@ export function Layout({ children, className }: LayoutProps) {
           className={cn(
             "m-2 flex flex-1 flex-col overflow-auto rounded-xl border border-border/80 bg-background shadow-sm/5",
             "md:peer-data-[variant=inset]:peer-data-[state=collapsed]:border-0",
-            {
-              "before:content-[''] before:absolute before:inset-0 before:bg-cover before:bg-center before:bg-(image:--bg) before:pointer-events-none":
-                background,
-            },
             className,
           )}
-          style={{
-            // @ts-expect-error variables are not typed by React
-            "--bg": `url(${background})`,
-          }}
         >
           {children}
         </SidebarInset>

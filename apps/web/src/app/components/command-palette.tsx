@@ -23,7 +23,7 @@ import { Kbd, KbdGroup } from "@/design-system/ui/kbd";
 import { shortcuts } from "@/app/lib/shortcuts";
 import { useActiveWorkspace } from "@/workspace";
 import { useRegisterShortcuts } from "@/app/hooks/use-keyboard-shortcuts";
-import { useUserPreferencesStore } from "@/app/store/user-preferences";
+import { setTheme } from "@/app/preferences/set-theme";
 
 type PaletteActionItem = {
   value: string;
@@ -40,7 +40,6 @@ type PaletteGroup = {
 
 export function CommandPalette() {
   const { t } = useTranslation();
-  const { setTheme } = useUserPreferencesStore();
   const navigate = useNavigate();
   const { data: workspace } = useActiveWorkspace();
   const [open, setOpen] = useState(false);
@@ -134,7 +133,7 @@ export function CommandPalette() {
         ],
       },
     ],
-    [navigate, setTheme, t, workspace],
+    [navigate, t, workspace],
   );
 
   const shortcutHandlers = useMemo(() => {

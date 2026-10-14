@@ -1,13 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { SettingsRow } from "@/app/settings/settings-row";
-import { useUserPreferencesStore } from "@/app/store/user-preferences";
+import {
+  saveDevicePreferences,
+  useDevicePreferences,
+} from "@/app/preferences/use-device-preferences";
 import { Label } from "@/design-system/ui/label";
 import { Switch } from "@/design-system/ui/switch";
 
 export function SidebarDefaultRow() {
   const { t } = useTranslation();
-  const { sidebarDefaultOpen, setSidebarDefaultOpen } =
-    useUserPreferencesStore();
+  const { sidebarDefaultOpen } = useDevicePreferences();
 
   return (
     <SettingsRow
@@ -21,7 +23,9 @@ export function SidebarDefaultRow() {
       <Switch
         id="sidebar-default-open"
         checked={sidebarDefaultOpen}
-        onCheckedChange={setSidebarDefaultOpen}
+        onCheckedChange={(open) =>
+          saveDevicePreferences({ sidebarDefaultOpen: open })
+        }
       />
     </SettingsRow>
   );
