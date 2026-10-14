@@ -1,6 +1,6 @@
 import {
-  userShapeSchema,
-  workspaceMemberShapeSchema,
+  workspaceMembersShape,
+  workspaceMemberUsersShape,
 } from "@morrow/sync-schemas";
 import { defineShape } from "#api/platform/sync/define-shape";
 import { userTable, workspaceUserTable } from "#api/platform/database/schema";
@@ -13,9 +13,8 @@ import { userTable, workspaceUserTable } from "#api/platform/database/schema";
 
 /** Members of every Workspace the user belongs to. */
 const workspaceMembers = defineShape({
-  name: "workspace-members",
+  shape: workspaceMembersShape,
   table: workspaceUserTable,
-  schema: workspaceMemberShapeSchema,
   where: ({ userId }) => ({
     sql: "workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",
     params: [userId],
@@ -24,9 +23,8 @@ const workspaceMembers = defineShape({
 
 /** The people behind those members: name, email and avatar, never tokens. */
 const workspaceMemberUsers = defineShape({
-  name: "workspace-member-users",
+  shape: workspaceMemberUsersShape,
   table: userTable,
-  schema: userShapeSchema,
   where: ({ userId }) => ({
     sql: "id IN (SELECT user_id FROM workspace_member WHERE workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1))",
     params: [userId],
