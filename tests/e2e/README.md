@@ -3,7 +3,7 @@
 One Playwright flow proves the web shell works against a disposable, bundled
 Morrow instance built from the current checkout: sign up, verify the email, create
 a workspace, invite a member, and see the invitation on the workspace Home
-activity feed. A second spec (`sync.spec.ts`) checks the live data layer end to end against real Electric: a role change reaches another member's open page, a theme change reaches another tab, and signing out clears the previous user's members. PostgreSQL uses temporary storage; no existing database or root
+activity feed. A second spec (`sync.spec.ts`) checks the live data layer end to end against real Electric: a role change reaches another member's open page, a theme change reaches another tab, and signing out clears the previous user's members. `sync-workspaces.spec.ts` covers invitations reaching the invitee live and becoming a member on accept, a workspace rename reaching another member, a former URL redirecting, and a removed member being taken off the workspace. PostgreSQL uses temporary storage; no existing database or root
 `.env` is used. CI runs it too (the `e2e` job), against the same stack.
 
 Email verification works because no Resend key is set: the API writes each email

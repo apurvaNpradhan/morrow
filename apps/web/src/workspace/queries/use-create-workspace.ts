@@ -1,21 +1,10 @@
-import { isChangeMessage } from "@tanstack/electric-db-collection";
 import { useMutation } from "@tanstack/react-query";
 import { rpc } from "@/app/lib/orpc";
+import { waitForRow } from "@/app/sync/wait-for-row";
 import { useAuth } from "@/auth";
 import { waitForMembership } from "@/members";
 import { workspaceCollection } from "../collections/workspace-collection";
 import { SlugUnavailableError } from "@/workspace/routing/lib/workspace-slug-error";
-
-async function waitForWorkspace(workspaceId: string) {
-  if (workspaceCollection.has(workspaceId)) return;
-  await workspaceCollection.utils.awaitMatch(
-    (message) =>
-      isChangeMessage(message) &&
-      message.headers.operation === "insert" &&
-      message.value.id === workspaceId,
-    5_000,
-  );
-}
 
 type CreateWorkspaceRequest = {
   name: string;
@@ -37,7 +26,7 @@ export function useCreateWorkspace() {
         // Open it only once the workspace and the creator's membership have
         // come back through sync, so the page finds both.
         await Promise.all([
-          waitForWorkspace(created.id),
+          waitForRow(workspaceCollection, created.id),
           waitForMembership(created.id, user?.id ?? ""),
         ]);
         return created;
