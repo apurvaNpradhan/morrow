@@ -50,7 +50,7 @@ services:
     network_mode: host
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
+      - ./docker/certs:/certs:ro
     restart: unless-stopped
 
   # S3-compatible storage for avatars; production uses Cloudflare R2 through
@@ -138,4 +138,3 @@ volumes:
   postgres_data:
   minio_data:
   electric_data:
-  caddy_data:

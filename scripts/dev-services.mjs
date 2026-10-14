@@ -2,6 +2,7 @@
 // (HTTPS/HTTP2 for the dev server), makes
 // the buckets and applies migrations. Safe to re-run; `pnpm dev` runs it first.
 import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +14,28 @@ function run(command, args) {
     console.error(`dev-services: \`${command} ${args.join(" ")}\` failed`);
     process.exit(result.status ?? 1);
   }
+}
+
+// Caddy serves the dev server over HTTPS (HTTP/2) with a certificate made by
+// mkcert, so the browser trusts it. `mkcert -install` is a one-time step.
+const certDir = resolve(root, "docker/certs");
+if (!existsSync(resolve(certDir, "localhost.pem"))) {
+  if (spawnSync("mkcert", ["-version"]).status !== 0) {
+    console.error(
+      "dev-services: mkcert is required for the HTTPS dev server. Install it (https://github.com/FiloSottile/mkcert), run `mkcert -install` once, then retry.",
+    );
+    process.exit(1);
+  }
+  mkdirSync(certDir, { recursive: true });
+  run("mkcert", [
+    "-cert-file",
+    "docker/certs/localhost.pem",
+    "-key-file",
+    "docker/certs/localhost-key.pem",
+    "localhost",
+    "127.0.0.1",
+    "::1",
+  ]);
 }
 
 const compose = [
