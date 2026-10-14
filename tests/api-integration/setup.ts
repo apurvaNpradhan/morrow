@@ -72,6 +72,9 @@ process.env.S3_SECRET_ACCESS_KEY = "morrow_local_dev";
 process.env.S3_REGION = "us-east-1";
 process.env.S3_FORCE_PATH_STYLE = "true";
 process.env.S3_PUBLIC_BASE_URL = "http://127.0.0.1:9020/morrow-test";
+// The shape proxy forwards to this host; tests fake the fetch.
+process.env.ELECTRIC_URL = "http://electric.test:3000";
+process.env.ELECTRIC_SECRET = "test-electric-secret";
 process.env.RESEND_API_KEY = "";
 process.env.GITHUB_OAUTH_CLIENT_ID = "";
 process.env.GITHUB_OAUTH_CLIENT_SECRET = "";

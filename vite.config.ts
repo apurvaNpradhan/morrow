@@ -82,7 +82,9 @@ export default defineConfig({
       "anti-slop/no-object-parameters": "error",
       "anti-slop/no-reflect-apply": "error",
       "anti-slop/no-reflect-get": "error",
-      "anti-slop/no-shape-in-symbol-names": "error",
+      // "Shape" is a domain term now (Electric shapes, see CONTEXT.md and
+      // docs/adr/0001) and part of Electric's own API (`shapeOptions`).
+      "anti-slop/no-shape-in-symbol-names": "off",
       "anti-slop/no-unknown-type-aliases": "error",
       "anti-slop/no-widen-then-assert": "error",
       "no-param-reassign": "error",

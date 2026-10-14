@@ -1,0 +1,138 @@
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { createApp } from "../../apps/api/src/index";
+import { mockAnonymousSession, mockAuthenticatedSession } from "./helpers/auth";
+import { createWorkspaceMember } from "./helpers/fixtures";
+import { resetTestDatabase } from "./helpers/database";
+
+beforeEach(resetTestDatabase);
+
+/** Fakes the one outgoing call (to Electric) and records the URL it was given. */
+function fakeElectric(response?: Response) {
+  const spy = vi
+    .spyOn(globalThis, "fetch")
+    .mockImplementation(async () => response ?? new Response("[]"));
+  return {
+    upstream() {
+      const url = spy.mock.calls[0]?.[0];
+      if (!(url instanceof URL)) throw new Error("Electric was not called");
+      return url;
+    },
+    called: () => spy.mock.calls.length > 0,
+  };
+}
+
+const { app } = createApp();
+const get = (path: string) => app.request(`/api/shapes/${path}`);
+
+describe("shape proxy", () => {
+  it("rejects a request without a session", async () => {
+    mockAnonymousSession();
+    const electric = fakeElectric();
+
+    const response = await get("workspace-members?offset=-1");
+
+    expect(response.status).toBe(401);
+    expect(electric.called()).toBe(false);
+  });
+
+  it("answers an unknown shape with 404", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    const response = await get("sessions?offset=-1");
+
+    expect(response.status).toBe(404);
+    expect(electric.called()).toBe(false);
+  });
+
+  it("sets table, columns, filter and secret from the server", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    const response = await get("workspace-members?offset=-1");
+    const upstream = electric.upstream();
+
+    expect(response.status).toBe(200);
+    expect(upstream.origin).toBe("http://electric.test:3000");
+    expect(upstream.pathname).toBe("/v1/shape");
+    expect(upstream.searchParams.get("table")).toBe("workspace_member");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,workspace_id,user_id,role,joined_at",
+    );
+    expect(upstream.searchParams.get("where")).toContain("user_id = $1");
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+    expect(upstream.searchParams.get("secret")).toBe("test-electric-secret");
+  });
+
+  it("only sends the user columns that are safe to share", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await get("workspace-member-users?offset=-1");
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("user");
+    expect(upstream.searchParams.get("columns")).toBe("id,name,email,image");
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
+  it("forwards protocol parameters and ignores table, where and columns from the client", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await get(
+      "workspace-members?" +
+        new URLSearchParams({
+          offset: "0_0",
+          handle: "h-1",
+          live: "true",
+          table: "session",
+          where: "true",
+          columns: "token",
+          "params[1]": "someone-else",
+          secret: "guess",
+        }),
+    );
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("offset")).toBe("0_0");
+    expect(upstream.searchParams.get("handle")).toBe("h-1");
+    expect(upstream.searchParams.get("live")).toBe("true");
+    expect(upstream.searchParams.get("table")).toBe("workspace_member");
+    expect(upstream.searchParams.get("where")).not.toBe("true");
+    expect(upstream.searchParams.get("columns")).not.toContain("token");
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+    expect(upstream.searchParams.get("secret")).toBe("test-electric-secret");
+  });
+
+  it("streams the response back without re-encoding it", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    fakeElectric(
+      new Response('[{"headers":{"control":"snapshot-end"}}]', {
+        headers: {
+          "content-type": "application/json",
+          "content-encoding": "gzip",
+          "content-length": "9999",
+          "electric-handle": "h-1",
+          "electric-offset": "0_0",
+        },
+      }),
+    );
+
+    const response = await app.request("/api/shapes/workspace-members", {
+      headers: { "accept-encoding": "gzip, br" },
+    });
+
+    expect(response.headers.get("content-encoding")).toBeNull();
+    expect(response.headers.get("content-length")).toBeNull();
+    expect(response.headers.get("electric-handle")).toBe("h-1");
+    expect(await response.text()).toBe(
+      '[{"headers":{"control":"snapshot-end"}}]',
+    );
+  });
+});
