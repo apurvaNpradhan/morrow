@@ -43,6 +43,12 @@ export const shapeRoutes = new Hono<{
   const headers = new Headers(response.headers);
   headers.delete("content-encoding");
   headers.delete("content-length");
+  // The devtools show why a shape returns what it does. The filter holds the
+  // user's id and email, so it never leaves the server outside development.
+  if (config.isDevelopment) {
+    headers.set("x-morrow-shape-where", filter.sql);
+    headers.set("x-morrow-shape-params", JSON.stringify(filter.params));
+  }
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

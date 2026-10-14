@@ -1,3 +1,8 @@
+import {
+  trackCollection,
+  type TrackedCollection,
+} from "@/app/devtools/sync/collection-registry";
+
 const syncedCollections: Array<{ cleanup: () => Promise<void> }> = [];
 
 /**
@@ -5,10 +10,11 @@ const syncedCollections: Array<{ cleanup: () => Promise<void> }> = [];
  * out can clear them all without anyone remembering to. Device preferences are
  * local and are not registered.
  */
-export function registerSyncedCollection<
-  Collection extends { cleanup: () => Promise<void> },
->(collection: Collection): Collection {
+export function registerSyncedCollection<Collection extends TrackedCollection>(
+  collection: Collection,
+): Collection {
   syncedCollections.push(collection);
+  if (import.meta.env.DEV) trackCollection(collection);
   return collection;
 }
 

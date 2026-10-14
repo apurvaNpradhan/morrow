@@ -1,6 +1,7 @@
 import { FetchError, snakeCamelMapper } from "@electric-sql/client";
 import * as Sentry from "@sentry/react";
 import { env } from "@/app/lib/env";
+import { tracedFetch } from "@/app/devtools/sync/traced-fetch";
 import { handleUnauthorized } from "@/app/lib/http-error";
 
 // The parser's result type has to match the collection's schema, which differs
@@ -22,6 +23,8 @@ export function shapeOptions(name: string) {
     url: `${env.apiBaseUrl}/shapes/${name}`,
     columnMapper: snakeCamelMapper(),
     parser,
+    // Development only: logs shape requests and applies the devtools' faults.
+    ...(import.meta.env.DEV && { fetchClient: tracedFetch(name) }),
     // Electric retries 5xx and network errors with its own backoff before it
     // asks us; what reaches here is a refusal.
     onError: (error: Error) => {
