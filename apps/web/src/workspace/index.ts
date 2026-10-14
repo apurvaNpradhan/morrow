@@ -3,6 +3,7 @@ export { canonicalWorkspaceHref } from "./routing/lib/canonical-workspace-href";
 export { useCanonicalWorkspaceUrl } from "./routing/use-canonical-workspace-url";
 export { useRememberLastWorkspace } from "./routing/use-remember-last-workspace";
 export { workspaceBySlugQueryOptions } from "./routing/workspace-by-slug-query";
+export { WorkspaceError } from "./routing/workspace-error";
 export { WorkspaceNotFound } from "./routing/workspace-not-found";
 export { useGetFullWorkspace } from "./queries/use-get-full-workspace";
 export { useWorkspacePermission } from "./queries/use-workspace-permission";

@@ -26,6 +26,7 @@ import { authClient } from "@/auth";
 import { toast } from "@/design-system/toast";
 import { AuthLayout } from "@/auth";
 import { errorMessage } from "@/app/lib/error-message";
+import { cleanupSyncedCollections } from "@/app/sync/synced-collections";
 
 export const Route = createFileRoute("/invitation/accept/$inviteId")({
   component: AcceptInvitation,
@@ -109,6 +110,7 @@ function AcceptInvitation() {
       const { error } = await authClient.signOut();
       if (error) throw error;
       queryClient.clear();
+      void cleanupSyncedCollections();
       await navigate({
         to: "/auth/sign-in",
         search: { invitationId: inviteId, email: invitedEmail },

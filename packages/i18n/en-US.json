@@ -895,15 +895,12 @@
 			"members": {
 				"title": "Members",
 				"empty": "No members are available.",
-				"error": "Couldn't load workspace members.",
-				"retry": "Try again",
 				"count": "Showing {{start}}–{{end}} of {{total}} members.",
 				"pagination": "Workspace member pages",
 				"page": "Page {{page}} of {{total}}",
 				"previous": "Previous",
 				"next": "Next"
 			},
-			"loadingMembers": "Loading members...",
 			"activity": {
 				"title": "Recent activity",
 				"loading": "Loading activity...",

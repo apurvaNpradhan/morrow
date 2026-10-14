@@ -1,5 +1,6 @@
 import * as email from "@morrow/email";
 import type { ORPCError } from "@orpc/client";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { db, schema } from "../../apps/api/src/platform/database";
 import { createApp } from "../../apps/api/src/index";
@@ -153,9 +154,12 @@ describe("member procedures", () => {
     });
     expect(members.map((m) => m.role).sort()).toEqual(["member", "owner"]);
 
-    const mine = await guest.client.members.current({
-      workspaceId: created.id,
-    });
+    const memberRows = await db
+      .select()
+      .from(schema.workspaceUserTable)
+      .where(eq(schema.workspaceUserTable.workspaceId, created.id));
+    const mine = memberRows.find((row) => row.userId === guest.id);
+    const ownerMember = memberRows.find((row) => row.userId === owner.id);
     expect(mine?.role).toBe("member");
 
     await owner.client.members.updateRole({
@@ -164,12 +168,11 @@ describe("member procedures", () => {
       role: "admin",
     });
     expect(
-      (await guest.client.members.current({ workspaceId: created.id }))?.role,
+      (await guest.client.members.list({ workspaceId: created.id })).find(
+        (m) => m.id === guest.id,
+      )?.role,
     ).toBe("admin");
 
-    const ownerMember = await owner.client.members.current({
-      workspaceId: created.id,
-    });
     await owner.client.members.transferOwnership({
       workspaceId: created.id,
       newOwnerMemberId: mine!.id,

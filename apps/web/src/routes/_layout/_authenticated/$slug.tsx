@@ -5,7 +5,11 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { WorkspaceNotFound } from "@/workspace";
+import { WorkspaceError, WorkspaceNotFound } from "@/workspace";
+import {
+  workspaceMemberCollection,
+  workspaceMemberUserCollection,
+} from "@/members";
 import { PageTitle } from "@/design-system/page-title";
 import { useCanonicalWorkspaceUrl } from "@/workspace";
 import { useRememberLastWorkspace } from "@/workspace";
@@ -42,7 +46,16 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
     }
     return { workspace };
   },
+  // Members sync before the page renders, so pages read them without waiting.
+  // Hovering a link preloads this too, which starts the sync early.
+  loader: async () => {
+    await Promise.all([
+      workspaceMemberCollection.preload(),
+      workspaceMemberUserCollection.preload(),
+    ]);
+  },
   component: WorkspaceLayout,
+  errorComponent: WorkspaceError,
   notFoundComponent: WorkspaceNotFound,
 });
 

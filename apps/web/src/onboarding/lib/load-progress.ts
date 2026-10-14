@@ -10,10 +10,13 @@ export type LoadedProgress = {
   ownedWorkspace: Awaited<ReturnType<typeof rpc.workspace.list>>[number] | null;
 };
 
-async function findOwnedWorkspace(workspaces: LoadedProgress["workspaces"]) {
+async function findOwnedWorkspace(
+  workspaces: LoadedProgress["workspaces"],
+  userId: string,
+) {
   for (const workspace of workspaces) {
-    const member = await rpc.members.current({ workspaceId: workspace.id });
-    const role = member?.role;
+    const members = await rpc.members.list({ workspaceId: workspace.id });
+    const role = members.find((member) => member.id === userId)?.role;
     if (typeof role === "string" && role.split(",").includes("owner"))
       return workspace;
   }
@@ -29,7 +32,7 @@ export async function loadOnboardingProgress(
   // Ownership only decides the invite step, which needs a name and a workspace.
   const ownedWorkspace =
     hasName && workspaces.length > 0
-      ? await findOwnedWorkspace(workspaces)
+      ? await findOwnedWorkspace(workspaces, user.id)
       : null;
   return {
     progress: {
