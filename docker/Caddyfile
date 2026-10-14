@@ -1,13 +1,13 @@
 # Dev only: serves the Vite dev server over HTTPS so the browser uses HTTP/2.
 # Over HTTP/1.1 it opens at most six connections per host, and the sync
-# long-polls hold five of them, which stalls every other request.
+# long-polls hold five of them, which stalls every other request. The
+# certificate is made by mkcert (scripts/dev-services.mjs), so browsers trust it.
 {
-	skip_install_trust
-	auto_https disable_redirects
+	auto_https off
 }
 
 localhost:5443 {
 	bind 127.0.0.1
-	tls internal
+	tls /certs/localhost.pem /certs/localhost-key.pem
 	reverse_proxy localhost:5173
 }
