@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import { rpc } from "@/app/lib/orpc";
-import { queryClient } from "@/app/query-client";
 
 type DeleteWorkspaceUserRequest = {
   workspaceId: string;
@@ -9,16 +8,8 @@ type DeleteWorkspaceUserRequest = {
 
 export function useDeleteWorkspaceUser() {
   return useMutation({
+    // The member row leaves the synced collection by itself.
     mutationFn: ({ workspaceId, userId }: DeleteWorkspaceUserRequest) =>
       rpc.members.remove({ workspaceId, memberIdOrEmail: userId }),
-    onSuccess: (_, { workspaceId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ["workspace-invites", workspaceId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["workspace", "full", workspaceId],
-      });
-    },
   });
 }

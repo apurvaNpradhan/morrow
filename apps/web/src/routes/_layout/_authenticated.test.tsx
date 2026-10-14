@@ -12,6 +12,16 @@ vi.mock("@/auth/lib/auth-client", () => ({
   authClient: { getSession: () => getSession() },
 }));
 vi.mock("@/app/hooks/use-track-signup", () => ({ useTrackSignup: vi.fn() }));
+// The layout preloads these; the guard is what is under test.
+vi.mock("@/members", () => ({
+  myInvitationCollection: { preload: vi.fn() },
+  workspaceMemberCollection: { preload: vi.fn() },
+}));
+vi.mock("@/workspace", () => ({
+  workspaceCollection: { preload: vi.fn() },
+  useLeaveLostWorkspace: vi.fn(),
+  WorkspaceError: () => null,
+}));
 
 type Location = { href: string; pathname: string };
 const beforeLoad = (

@@ -3,7 +3,6 @@ import { SettingsPage } from "@/app/settings/settings-page";
 import { useAuth } from "@/auth";
 import { PageTitle } from "@/design-system/page-title";
 import { useActiveWorkspace } from "@/workspace/queries/use-active-workspace";
-import { useGetFullWorkspace } from "@/workspace/queries/use-get-full-workspace";
 import { useWorkspacePermission } from "@/workspace/queries/use-workspace-permission";
 import { OwnershipSection } from "./ownership-section";
 import { useWorkspaceAutosave } from "@/workspace/general/use-workspace-autosave";
@@ -14,9 +13,6 @@ export function WorkspaceGeneralPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { data: workspace } = useActiveWorkspace();
-  const { data: fullWorkspace } = useGetFullWorkspace({
-    workspaceId: workspace?.id,
-  });
   const { canManageWorkspace, canDeleteWorkspace, isOwner } =
     useWorkspacePermission();
   const canEdit = canManageWorkspace();
@@ -35,11 +31,7 @@ export function WorkspaceGeneralPage() {
           canEdit={canEdit}
         />
         {isOwner && workspace ? (
-          <OwnershipSection
-            workspace={workspace}
-            members={fullWorkspace?.members ?? []}
-            currentUserId={user?.id}
-          />
+          <OwnershipSection workspace={workspace} currentUserId={user?.id} />
         ) : null}
         {canDeleteWorkspace() && workspace ? (
           <WorkspaceDangerZone workspace={workspace} />

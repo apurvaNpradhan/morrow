@@ -14,25 +14,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/design-system/ui/select";
+import { useWorkspaceMembers } from "@/members";
 import { useTransferWorkspaceOwnership } from "@/workspace/general/use-transfer-workspace-ownership";
-
-type Member = {
-  id: string;
-  userId: string;
-  role: string;
-  user: { name: string; email: string };
-};
 
 /** Owner-only: hand the workspace to another member, after a confirmation. */
 export function OwnershipSection({
   workspace,
-  members,
   currentUserId,
 }: {
   workspace: { id: string; name: string };
-  members: Member[];
   currentUserId: string | undefined;
 }) {
+  const members = useWorkspaceMembers(workspace.id);
   const { t } = useTranslation();
   const { mutateAsync: transferOwnership, isPending } =
     useTransferWorkspaceOwnership();

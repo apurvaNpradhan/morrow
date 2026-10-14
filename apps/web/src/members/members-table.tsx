@@ -128,9 +128,8 @@ export function MembersTable({ workspaceId, invitations, users }: Props) {
     return 0;
   });
 
-  const pendingInvitations = invitations.filter(
-    (inv) => inv.status !== "accepted" && inv.status !== "canceled",
-  );
+  // Only pending invitations are synced, so every row here is one.
+  const pendingInvitations = invitations;
 
   const handleChangeRole = async (member: WorkspaceUser, role: string) => {
     if (role === member.role) return;
@@ -350,8 +349,8 @@ export function MembersTable({ workspaceId, invitations, users }: Props) {
               </TableCell>
               <TableCell className="py-3">
                 <Badge variant="outline" className="capitalize">
-                  {t(`team:roles.${invitation.role}`, {
-                    defaultValue: capitalize(invitation.role),
+                  {t(`team:roles.${invitation.role ?? "member"}`, {
+                    defaultValue: capitalize(invitation.role ?? "member"),
                   })}
                 </Badge>
               </TableCell>

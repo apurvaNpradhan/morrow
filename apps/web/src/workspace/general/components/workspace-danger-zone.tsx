@@ -26,7 +26,6 @@ export function WorkspaceDangerZone({
     try {
       await deleteWorkspace({ workspaceId: workspace.id });
       toast.success(t("settings:workspaceGeneral.toastDeleted"));
-      await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       await queryClient.invalidateQueries({
         queryKey: ["active-organization"],
       });

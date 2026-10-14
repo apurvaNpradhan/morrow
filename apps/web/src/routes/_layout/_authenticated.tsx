@@ -1,5 +1,11 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useTrackSignup } from "@/app/hooks/use-track-signup";
+import { myInvitationCollection, workspaceMemberCollection } from "@/members";
+import {
+  useLeaveLostWorkspace,
+  workspaceCollection,
+  WorkspaceError,
+} from "@/workspace";
 import { authClient } from "@/auth";
 import { needsOnboarding } from "@/onboarding";
 import { getOnboardingReturnTo } from "@/onboarding";
@@ -39,12 +45,24 @@ export const Route = createFileRoute("/_layout/_authenticated")({
         search: { redirect: getOnboardingReturnTo(location) },
       });
     }
+    // What the pages after this one read: the user's Workspaces, their own
+    // memberships and the invitations sent to them. Without a session there is
+    // nothing to sync.
+    if (session) {
+      await Promise.all([
+        workspaceCollection.preload(),
+        workspaceMemberCollection.preload(),
+        myInvitationCollection.preload(),
+      ]);
+    }
     return { session, sessionError };
   },
+  errorComponent: WorkspaceError,
 });
 
 function AuthenticatedLayout() {
   const { session } = Route.useRouteContext();
   useTrackSignup(session?.user);
+  useLeaveLostWorkspace();
   return <Outlet />;
 }

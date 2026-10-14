@@ -23,14 +23,18 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));
 
-const ensureQueryData = vi.fn();
+const resolveWorkspaceBySlug = vi.fn();
+vi.mock("@/workspace/routing/resolve-workspace-by-slug", () => ({
+  resolveWorkspaceBySlug: (userId: string, slug: string) =>
+    resolveWorkspaceBySlug(userId, slug),
+}));
 const beforeLoad = (
   Route as unknown as { beforeLoad: (args: unknown) => Promise<unknown> }
 ).beforeLoad;
 
 function load(slug: string, pathname: string, searchStr = "", hash = "") {
   return beforeLoad({
-    context: { queryClient: { ensureQueryData } },
+    context: { session: { user: { id: "u1" } } },
     params: { slug },
     location: { pathname, searchStr, hash },
   });
@@ -46,12 +50,12 @@ describe("/$slug", () => {
       name: "Acme",
       requestedSlug: "acme",
     };
-    ensureQueryData.mockResolvedValue(workspace);
+    resolveWorkspaceBySlug.mockResolvedValue(workspace);
     await expect(load("acme", "/acme/inbox")).resolves.toEqual({ workspace });
   });
 
   it("redirects a former slug to the canonical URL, keeping the rest of the path", async () => {
-    ensureQueryData.mockResolvedValue({
+    resolveWorkspaceBySlug.mockResolvedValue({
       id: "w1",
       slug: "acme-inc",
       requestedSlug: "acme",
@@ -68,9 +72,9 @@ describe("/$slug", () => {
   });
 
   it("reports an unknown slug and an inaccessible one identically", async () => {
-    ensureQueryData.mockRejectedValue(new ORPCError("NOT_FOUND"));
+    resolveWorkspaceBySlug.mockRejectedValue(new ORPCError("NOT_FOUND"));
     await expect(load("nope", "/nope")).rejects.toEqual({ notFound: true });
-    ensureQueryData.mockRejectedValue(new ORPCError("NOT_FOUND"));
+    resolveWorkspaceBySlug.mockRejectedValue(new ORPCError("NOT_FOUND"));
     await expect(load("private", "/private")).rejects.toEqual({
       notFound: true,
     });
@@ -78,7 +82,7 @@ describe("/$slug", () => {
 
   it("surfaces other failures instead of pretending the workspace is missing", async () => {
     const error = new HttpError(500, "boom");
-    ensureQueryData.mockRejectedValue(error);
+    resolveWorkspaceBySlug.mockRejectedValue(error);
     await expect(load("acme", "/acme")).rejects.toBe(error);
   });
 });

@@ -1,12 +1,16 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { rpc } from "@/app/lib/orpc";
-import { invalidateWorkspaceDetails } from "@/workspace/cache/invalidate-workspace-queries";
+import { workspaceCollection } from "../collections/workspace-collection";
 
 export function useRemoveWorkspaceLogo(workspaceId: string) {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: () => rpc.workspace.removeLogo({ workspaceId }),
-    onSuccess: () => invalidateWorkspaceDetails(queryClient),
+    mutationFn: async () => {
+      const removed = await rpc.workspace.removeLogo({ workspaceId });
+      // Resolve once the change has come back through sync.
+      if (removed.txid !== null) {
+        await workspaceCollection.utils.awaitTxId(removed.txid);
+      }
+      return removed;
+    },
   });
 }

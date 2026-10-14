@@ -36,7 +36,7 @@ async function recreateDatabase() {
  */
 function boot() {
   return new Promise<string>((done) => {
-    const child = spawn("./node_modules/.bin/tsx", ["src/index.ts"], {
+    const child = spawn(process.execPath, ["--import", "tsx", "src/index.ts"], {
       cwd: apiDir,
       env: { ...process.env, DATABASE_URL: bootUrl(), NODE_ENV: "development" },
     });

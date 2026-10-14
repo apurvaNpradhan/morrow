@@ -1,30 +1,13 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { NoWorkspaceScreen } from "@/onboarding";
-import { pendingInvitationsQueryOptions } from "@/members";
-import { workspacesQueryOptions } from "@/workspace";
-import { handleUnauthorized, isUnauthorizedError } from "@/app/lib/http-error";
+import { listMyWorkspaces } from "@/workspace";
 
 // Sends the user to the workspace they last used, or the first one they belong to.
 export const Route = createFileRoute("/_layout/_authenticated/")({
-  beforeLoad: async ({ context }) => {
-    const { queryClient, session } = context;
-    let workspaces;
-    try {
-      // Both are needed by the screen below when there is no workspace; load
-      // them together so it opens with its data.
-      [workspaces] = await Promise.all([
-        queryClient.fetchQuery({ ...workspacesQueryOptions, staleTime: 0 }),
-        queryClient.prefetchQuery(
-          pendingInvitationsQueryOptions(session?.user.email),
-        ),
-      ]);
-    } catch (error) {
-      if (isUnauthorizedError(error)) {
-        handleUnauthorized();
-        return;
-      }
-      throw error;
-    }
+  beforeLoad: ({ context }) => {
+    const { session } = context;
+    // Synced by the layout above, so this is a read, not a request.
+    const workspaces = listMyWorkspaces(session?.user.id ?? "");
 
     const lastUsedId = session?.session.activeOrganizationId;
     const target =

@@ -25,8 +25,8 @@ vi.mock("./onboarding-shell", () => ({
 vi.mock("./create-workspace-form", () => ({
   CreateWorkspaceForm: () => <form aria-label="create workspace" />,
 }));
-vi.mock("@/members/invitations/queries/use-pending-invitations", () => ({
-  usePendingInvitations: () => pending,
+vi.mock("@/members/queries/use-my-invitations", () => ({
+  useMyInvitations: () => pending.data,
 }));
 vi.mock("@/onboarding/use-join-invitation", () => ({
   useJoinInvitation: () => ({ join, joiningId: joinState.joiningId }),

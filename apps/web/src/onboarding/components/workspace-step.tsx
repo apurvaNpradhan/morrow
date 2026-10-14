@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { usePendingInvitations } from "@/members";
+import { useMyInvitations } from "@/members";
 import { getSegmentCount } from "@/onboarding/lib/segment-count";
 import { CreateWorkspaceForm } from "./create-workspace-form";
 import { InvitationCardList } from "./invitation-card-list";
@@ -24,7 +24,7 @@ export function WorkspaceStep({
   onJoined,
 }: WorkspaceStepProps) {
   const { t } = useTranslation();
-  const { data: invitations = [] } = usePendingInvitations();
+  const invitations = useMyInvitations();
   const { join, joiningId } = useJoinInvitation(onJoined);
   const hasInvitations = invitations.length > 0;
   const path = joiningId ? "join" : "create";

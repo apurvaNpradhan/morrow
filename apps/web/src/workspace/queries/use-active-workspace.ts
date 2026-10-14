@@ -1,25 +1,33 @@
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "@tanstack/react-router";
-import { workspaceBySlugQueryOptions } from "@/workspace/routing/workspace-by-slug-query";
+import { useMatch } from "@tanstack/react-router";
+import { eq, useLiveQuery } from "@tanstack/react-db";
+import { workspaceCollection } from "../collections/workspace-collection";
 
-/** The workspace named by the `/$slug` URL, not the session's last-used one. */
+/**
+ * The workspace named by the `/$slug` URL, live. The route resolves the slug
+ * once and keeps the workspace's id, so a rename elsewhere keeps this tab on
+ * the same workspace.
+ */
 export function useActiveWorkspace() {
-  const slug = useParams({
-    strict: false,
-    select: (params) =>
-      "slug" in params && typeof params.slug === "string"
-        ? params.slug
-        : undefined,
+  const match = useMatch({
+    from: "/_layout/_authenticated/$slug",
+    shouldThrow: false,
   });
-  const { data, error, isPending } = useQuery({
-    ...workspaceBySlugQueryOptions(slug ?? ""),
-    enabled: !!slug,
+  const workspaceId = match?.context.workspace.id;
+
+  const { data } = useLiveQuery({
+    query: (q) => {
+      if (!workspaceId) return undefined;
+      return q
+        .from({ workspace: workspaceCollection })
+        .where(({ workspace }) => eq(workspace.id, workspaceId))
+        .findOne();
+    },
   });
 
   return {
     data,
-    error,
-    isLoading: !!slug && isPending,
-    isError: !!error,
+    error: null,
+    isLoading: false,
+    isError: false,
   };
 }

@@ -1,23 +1,23 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { rpc } from "@/app/lib/orpc";
-import { refreshSlugLookups } from "@/workspace/routing/workspace-by-slug-query";
+import { workspaceCollection } from "../collections/workspace-collection";
 
 export function useRenameWorkspaceSlug() {
-  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       workspaceId,
       slug,
     }: {
       workspaceId: string;
       slug: string;
-    }) => rpc.workspace.renameSlug({ workspaceId, slug }),
-    onSuccess: async () => {
-      // Every cached slug lookup is now wrong: the old slug points at the new
-      // one and, when renaming back, the reverse. Stale answers would send the
-      // router back and forth between the two URLs.
-      await refreshSlugLookups(queryClient);
-      await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    }) => {
+      const renamed = await rpc.workspace.renameSlug({ workspaceId, slug });
+      // Resolve once the new slug has come back through sync, so the page the
+      // caller opens next finds the workspace under it.
+      if (renamed.txid !== null) {
+        await workspaceCollection.utils.awaitTxId(renamed.txid);
+      }
+      return renamed;
     },
   });
 }
