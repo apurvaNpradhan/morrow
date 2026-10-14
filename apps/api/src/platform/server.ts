@@ -1,46 +1,13 @@
-import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import type { createApp } from "./create-app";
-import { sql } from "drizzle-orm";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { drainSignInEmails, reconcileAdminRoles } from "#api/auth/index";
 import { seedDefaultWorkspaceRoles } from "#api/workspace/index";
 import { config } from "./config";
-import { getDatabase } from "./database";
-import { prepareDatabaseStartup } from "./database/prepare-database-startup";
-import { waitForDatabase } from "./database/wait-for-database";
 import { startJobs, stopJobs } from "./jobs";
 import { flushLogs, log, logFailure } from "./logger";
 
-export async function runStartupTasks() {
-  const currentDir = dirname(fileURLToPath(import.meta.url));
-  // Next to dist/ in the built image; two levels up from src/platform in dev.
-  const migrationsFolder = ["../drizzle", "../../drizzle"]
-    .map((relative) => join(currentDir, relative))
-    .find((folder) => existsSync(join(folder, "meta", "_journal.json")));
-  if (!migrationsFolder) {
-    throw new Error("Could not find the drizzle migrations folder.");
-  }
-
-  await prepareDatabaseStartup({
-    waitForDatabase: async () => {
-      await waitForDatabase({
-        query: async () => {
-          await getDatabase().execute(sql`SELECT 1`);
-        },
-      });
-    },
-    runStartupMigrations: async () => {
-      log.info("db", "Migrating database");
-      await migrate(getDatabase(), {
-        migrationsFolder,
-      });
-      log.info("db", "Database migrated");
-    },
-  });
-
+/** Everything that needs a migrated database and the auth module. */
+async function runStartupTasks() {
   await seedDefaultWorkspaceRoles();
   await reconcileAdminRoles();
 
