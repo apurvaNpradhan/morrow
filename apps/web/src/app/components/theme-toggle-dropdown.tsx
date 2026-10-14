@@ -2,10 +2,11 @@ import { MoonIcon, SunIcon } from "lucide-react";
 import { useId } from "react";
 import { Label } from "@/design-system/ui/label";
 import { Switch } from "@/design-system/ui/switch";
-import { useUserPreferencesStore } from "@/app/store/user-preferences";
+import { setTheme } from "@/app/preferences/set-theme";
+import { useDevicePreferences } from "@/app/preferences/use-device-preferences";
 
 export function ThemeToggleDropdown() {
-  const { theme, setTheme } = useUserPreferencesStore();
+  const { theme } = useDevicePreferences();
   const id = useId();
   const checked = theme === "light";
 

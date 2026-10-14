@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { AdvancedSettingsSwitch } from "@/app/settings/advanced-settings-switch";
 import { SettingsPage } from "@/app/settings/settings-page";
 import { useAuth } from "@/auth";
 import { PageTitle } from "@/design-system/page-title";
@@ -45,7 +44,6 @@ export function WorkspaceGeneralPage() {
         {canDeleteWorkspace() && workspace ? (
           <WorkspaceDangerZone workspace={workspace} />
         ) : null}
-        <AdvancedSettingsSwitch />
       </SettingsPage>
     </>
   );

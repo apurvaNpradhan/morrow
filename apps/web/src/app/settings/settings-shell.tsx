@@ -7,7 +7,7 @@ import { useLeaveSettingsOnEscape } from "./nav/use-leave-settings-on-escape";
 import { useSettingsNav } from "./nav/use-settings-nav";
 import { SettingsHeader } from "./settings-header";
 import { SidebarInset, SidebarProvider } from "@/design-system/ui/sidebar";
-import { useUserPreferencesStore } from "@/app/store/user-preferences";
+import { useDevicePreferences } from "@/app/preferences/use-device-preferences";
 
 type SettingsShellProps = {
   children: ReactNode;
@@ -17,7 +17,7 @@ type SettingsShellProps = {
 // (sidebar width, inset panel, header height) so moving between the two
 // doesn't shift anything on screen.
 export function SettingsShell({ children }: SettingsShellProps) {
-  const { sidebarDefaultOpen } = useUserPreferencesStore();
+  const { sidebarDefaultOpen } = useDevicePreferences();
   const nav = useSettingsNav();
   const pathname = useLocation({ select: (location) => location.pathname });
   const leave = useLeaveSettings();

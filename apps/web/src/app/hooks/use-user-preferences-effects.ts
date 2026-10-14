@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { useUserPreferencesStore } from "@/app/store/user-preferences";
+import { useDevicePreferences } from "@/app/preferences/use-device-preferences";
 
 export function useUserPreferencesEffects() {
-  const { compactMode } = useUserPreferencesStore();
+  const { compactMode } = useDevicePreferences();
 
   useEffect(() => {
     const root = document.documentElement;

@@ -11,6 +11,8 @@ import { useAuth } from "./auth";
 import { KeyboardShortcutsHelp } from "./app/components/keyboard-shortcuts-help";
 import { AuthProvider } from "./auth";
 import { ThemeProvider } from "./app/components/theme-provider";
+import { applyTheme } from "./app/preferences/apply-theme";
+import { readDevicePreferences } from "./app/preferences/use-device-preferences";
 import { ErrorBoundary } from "./design-system/ui/error-boundary";
 import { KeyboardShortcutsProvider } from "./app/hooks/use-keyboard-shortcuts";
 import { AppI18nProvider } from "./app/i18n/provider";
@@ -92,6 +94,9 @@ function RootCrashFallback({
     </div>
   );
 }
+
+// Before the first render, so the page never paints in the wrong theme.
+applyTheme(readDevicePreferences().theme);
 
 const rootElement = document.getElementById("root") as HTMLElement;
 if (!rootElement.innerHTML) {

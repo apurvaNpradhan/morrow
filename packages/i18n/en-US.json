@@ -260,8 +260,6 @@
 		}
 	},
 	"settings": {
-		"advancedSettings": "Advanced settings",
-		"advancedSettingsDescription": "A personal display preference for this browser across all your workspaces.",
 		"account": "Account",
 		"administration": "Administration",
 		"information": "Information",
@@ -497,12 +495,6 @@
 			"language": "Language",
 			"languageDescription": "Choose your preferred interface language",
 			"selectLanguage": "Select a language",
-			"firstDayOfWeek": "First Day of Week",
-			"firstDayOfWeekDescription": "Choose which day calendars and weekly ranges start on",
-			"selectFirstDayOfWeek": "Select first day",
-			"weekStartsOnSunday": "Sunday",
-			"weekStartsOnMonday": "Monday",
-			"weekStartsOnSaturday": "Saturday",
 			"sidebarDefault": "Sidebar Default",
 			"sidebarDefaultDescription": "Keep sidebar expanded on startup"
 		},
