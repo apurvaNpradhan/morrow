@@ -35,6 +35,29 @@ services:
       morrow:
         condition: service_healthy
 
+  # Morrow starts against a migrated database, as it does in production. On an
+  # empty one Better Auth looks up a table that startup migrations have not
+  # created yet and the process exits.
+  migrate:
+    image: morrow-e2e:test
+    working_dir: /app/apps/api
+    command:
+      - node
+      - -e
+      - |
+        const { Pool } = require("pg");
+        const { drizzle } = require("drizzle-orm/node-postgres");
+        const { migrate } = require("drizzle-orm/node-postgres/migrator");
+        const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+        migrate(drizzle(pool), { migrationsFolder: "./drizzle" })
+          .then(() => pool.end())
+          .catch((error) => { console.error(error); process.exit(1); });
+    environment:
+      DATABASE_URL: postgresql://morrow_e2e:morrow_e2e@postgres:5432/morrow_e2e
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   morrow:
     image: morrow-e2e:test
     build:
@@ -48,8 +71,19 @@ services:
       ELECTRIC_SECRET: browser-tests-only-electric-secret
       AUTH_SECRET: browser-tests-only-not-a-production-secret
       MORROW_CLIENT_URL: http://localhost:18173
+      # Required in production. Nothing here uploads avatars, so these only
+      # have to be well-formed.
+      S3_ENDPOINT: http://storage.invalid:9000
+      S3_BUCKET: browser-tests
+      S3_ACCESS_KEY_ID: browser-tests
+      S3_SECRET_ACCESS_KEY: browser-tests-only
+      S3_PUBLIC_BASE_URL: http://storage.invalid:9000/browser-tests
+      # Sign-in codes are limited per client address. The browser tests send a
+      # different X-Forwarded-For for each user, which only counts from a
+      # trusted proxy: the Docker bridge the published port arrives through.
+      TRUSTED_PROXIES: 172.16.0.0/12,192.168.0.0/16,10.0.0.0/8
       REGISTRATION_OPEN: "true"
       MORROW_EMAIL_CONSOLE: "true"
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully

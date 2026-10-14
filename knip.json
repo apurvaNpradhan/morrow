@@ -14,7 +14,8 @@
 				"@orpc/server",
 				"pg",
 				"better-auth",
-				"esbuild"
+				"esbuild",
+				"@tanstack/intent"
 			]
 		},
 		"apps/api": {
@@ -36,6 +37,9 @@
 			]
 		},
 		"packages/permissions": {
+			"ignoreDependencies": ["@morrow/typescript-config", "vite"]
+		},
+		"packages/sync-schemas": {
 			"ignoreDependencies": ["@morrow/typescript-config", "vite"]
 		},
 		"packages/email": {}

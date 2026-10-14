@@ -13,11 +13,27 @@ Required in production:
 - `MORROW_CLIENT_URL`: public HTTPS origin, for example `https://morrow.example.com`.
 - `RESEND_API_KEY` and `EMAIL_FROM`: sign-in codes and invitations are emailed, so production does not start without them.
 
+- `ELECTRIC_URL`: internal URL of the Electric application, for example `http://morrow-electric:3000`. Never a public address.
+- `ELECTRIC_SECRET`: the secret Electric was started with; Morrow sends it on every request to Electric. Generate one with `openssl rand -hex 32`.
+
 Your own email in `ADMIN_EMAILS` makes you an administrator once you sign in with that verified address.
 
 `MORROW_API_URL` defaults to `${MORROW_CLIENT_URL}/api`: the API and web app share one origin, so there is no CORS or cookie-domain configuration.
 
 - `TRUSTED_PROXIES` (recommended): the CIDR of the Docker network Traefik reaches Morrow through (check it with `docker network inspect dokploy-network`, commonly a `10.0.x.0/24` or `172.x.0.0/16` range). Without it Morrow treats the proxy address as every visitor, which collapses sign-in rate limits to one shared identity. Use the specific proxy network, never `0.0.0.0/0`.
+
+### Electric (sync)
+
+Morrow streams live data (currently the members of your workspaces) through [Electric](https://electric-sql.com), a second container that reads Postgres. It is required: Morrow does not start without `ELECTRIC_URL` and `ELECTRIC_SECRET`.
+
+Create a second Dokploy Application in the **same project** as Morrow and the database service:
+
+- Image `electricsql/electric@sha256:efb6fa43859d67cb8c73439e0c8bc0f7a3daa467500fb06f2a924bcb2070c139` (the digest `compose.local.yml` pins).
+- **No domain.** Electric must only be reachable on the internal network; Morrow reaches it by its service name.
+- Environment: `DATABASE_URL` (direct connection to the database service as the `electric` role, with `?sslmode=disable` on the internal network), `ELECTRIC_SECRET`, and `ELECTRIC_MANUAL_TABLE_PUBLISHING=true`. Do not set `ELECTRIC_INSECURE`.
+- A persistent volume mounted at `/var/lib/electric`, so a restart does not make every browser sync from scratch.
+
+The database service needs `wal_level=logical` and `max_slot_wal_keep_size=10GB`, and the `electric` role must exist before the first deploy. The steps are in the [runbook](runbook.md#electric-sync).
 
 Optional configuration (see `.env.schema` for all of it):
 
@@ -34,7 +50,7 @@ The web app calls oRPC procedures over `/rpc`; there is no REST or OpenAPI view.
 
 ## Local compose
 
-`compose.local.yml` starts the app and a disposable Postgres service. It exposes the app at `http://localhost:1337` and Postgres on port `5432`:
+`compose.local.yml` starts the app, a disposable Postgres service (with logical replication on) and Electric. It exposes the app at `http://localhost:1337`, Postgres on port `5432` and Electric on `3010`:
 
 ```sh
 docker compose -f compose.local.yml up --build
@@ -44,4 +60,4 @@ The local database uses the development-only password `morrow_local_dev` and sto
 
 ## CI scope
 
-CI runs lint, the dead-code check (`pnpm knip`), typecheck, unit tests, and i18n consistency checks on pushes and pull requests. The `integration` job runs `pnpm test:integration` against a PostgreSQL service, and the `checks` job also runs the deployment-script tests (`pnpm test:security`). To run integration tests locally, use a disposable test database. CI does not build Docker images. The image workflow runs CI first; a successful push to `main` publishes the combined image to GHCR and then triggers Dokploy's deploy webhook (repository secret `DOKPLOY_DEPLOY_WEBHOOK`). Day-to-day operations are in the [runbook](runbook.md).
+CI runs lint, the dead-code check (`pnpm knip`), typecheck, unit tests, and i18n consistency checks on pushes and pull requests. The `integration` job starts Postgres (with logical replication) and Electric through `docker compose`, because GitHub service containers cannot change the Postgres command, then runs `pnpm test:integration`, and the `checks` job also runs the deployment-script tests (`pnpm test:security`). The `e2e` job builds the image from the checkout and runs the Playwright tests against it, Postgres and Electric (see `tests/e2e/README.md`). To run integration tests locally, use a disposable test database. The image workflow runs CI first; a successful push to `main` publishes the combined image to GHCR and then triggers Dokploy's deploy webhook (repository secret `DOKPLOY_DEPLOY_WEBHOOK`). Day-to-day operations are in the [runbook](runbook.md).

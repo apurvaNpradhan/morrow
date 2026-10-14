@@ -10,6 +10,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml vite.config.ts .env.schema 
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/email/package.json ./packages/email/
 COPY packages/permissions/package.json ./packages/permissions/
+COPY packages/sync-schemas/package.json ./packages/sync-schemas/
 COPY packages/i18n/package.json ./packages/i18n/
 COPY apps/api/package.json ./apps/api/
 
@@ -18,6 +19,7 @@ RUN pnpm install --frozen-lockfile
 COPY packages/typescript-config ./packages/typescript-config
 COPY packages/email ./packages/email
 COPY packages/permissions ./packages/permissions
+COPY packages/sync-schemas ./packages/sync-schemas
 COPY packages/i18n ./packages/i18n
 COPY apps/api ./apps/api
 
@@ -27,6 +29,7 @@ RUN pnpm run build
 WORKDIR /app/packages/permissions
 RUN pnpm run build
 
+WORKDIR /app/packages/sync-schemas
 RUN pnpm run build
 
 WORKDIR /app/apps/api
@@ -43,6 +46,7 @@ COPY --from=api-builder /app/apps/api/package.json ./apps/api/
 COPY --from=api-builder /app/packages/typescript-config/package.json ./packages/typescript-config/
 COPY --from=api-builder /app/packages/email/package.json ./packages/email/
 COPY --from=api-builder /app/packages/permissions/package.json ./packages/permissions/
+COPY --from=api-builder /app/packages/sync-schemas/package.json ./packages/sync-schemas/
 COPY --from=api-builder /app/packages/i18n/package.json ./packages/i18n/
 
 RUN sed -i 's/"prepare": "husky"/"prepare": ""/g' package.json && \
@@ -54,6 +58,7 @@ COPY --from=api-builder /app/apps/api/dist ./apps/api/dist
 COPY --from=api-builder /app/apps/api/drizzle ./apps/api/drizzle
 COPY --from=api-builder /app/packages/email ./packages/email
 COPY --from=api-builder /app/packages/permissions ./packages/permissions
+COPY --from=api-builder /app/packages/sync-schemas ./packages/sync-schemas
 COPY --from=api-builder /app/packages/i18n ./packages/i18n
 
 FROM --platform=$BUILDPLATFORM node:24.19.0-alpine AS web-builder
@@ -69,12 +74,16 @@ COPY apps/web/package.json ./apps/web/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/typescript-config ./packages/typescript-config
 COPY packages/permissions ./packages/permissions
+COPY packages/sync-schemas ./packages/sync-schemas
 COPY packages/i18n ./packages/i18n
 COPY apps/web ./apps/web
 
 RUN pnpm install --frozen-lockfile
 
 WORKDIR /app/packages/permissions
+RUN pnpm run build
+
+WORKDIR /app/packages/sync-schemas
 RUN pnpm run build
 
 # Public, build-time settings (see .env.schema). The web app is static, so these
@@ -99,7 +108,7 @@ WORKDIR /app
 COPY --from=api-runtime --chown=appuser:appuser /app /app
 COPY --from=web-builder --chown=appuser:appuser /app/apps/web/dist /app/apps/web/dist
 
-RUN cd /app/apps/api && node -e "const fs=require('fs');for(const m of ['hono','pg','drizzle-orm','better-auth','varlock','@modelcontextprotocol/server','@orpc/server'])fs.accessSync('node_modules/'+m+'/package.json');for(const m of ['email','permissions'])fs.accessSync('node_modules/@morrow/'+m+'/dist/index.js');fs.accessSync('node_modules/@morrow/i18n/en-US.json')"
+RUN cd /app/apps/api && node -e "const fs=require('fs');for(const m of ['hono','pg','drizzle-orm','better-auth','varlock','@modelcontextprotocol/server','@orpc/server'])fs.accessSync('node_modules/'+m+'/package.json');for(const m of ['email','permissions','sync-schemas'])fs.accessSync('node_modules/@morrow/'+m+'/dist/index.js');fs.accessSync('node_modules/@morrow/i18n/en-US.json')"
 
 ENV NODE_ENV=production
 
