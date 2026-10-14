@@ -61,6 +61,13 @@ export const config = {
     return text("DATABASE_URL") ?? "postgresql://morrow@localhost:5432/morrow";
   },
 
+  get electric() {
+    return {
+      url: text("ELECTRIC_URL") ?? "http://127.0.0.1:3010",
+      secret: text("ELECTRIC_SECRET") ?? "",
+    };
+  },
+
   get authSecret() {
     return process.env.AUTH_SECRET;
   },

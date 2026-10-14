@@ -71,6 +71,20 @@
       "when": 1791910635212,
       "tag": "0009_drop_unused_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791966649673,
+      "tag": "0010_electric_publication",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791966665659,
+      "tag": "0011_sync_workspace_members",
+      "breakpoints": true
     }
   ]
 }

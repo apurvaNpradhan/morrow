@@ -3,17 +3,37 @@ name: morrow-e2e
 services:
   postgres:
     image: postgres:16-alpine
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_slot_wal_keep_size=10GB
     environment:
       POSTGRES_DB: morrow_e2e
       POSTGRES_USER: morrow_e2e
       POSTGRES_PASSWORD: morrow_e2e
     tmpfs:
       - /var/lib/postgresql/data
+    volumes:
+      - ../../docker/electric-role.sql:/docker-entrypoint-initdb.d/electric-role.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U morrow_e2e -d morrow_e2e"]
       interval: 2s
       timeout: 5s
       retries: 30
+
+  # Starts after Morrow, whose startup migrations create the publication
+  # Electric reads (manual table publishing).
+  electric:
+    image: electricsql/electric@sha256:efb6fa43859d67cb8c73439e0c8bc0f7a3daa467500fb06f2a924bcb2070c139
+    environment:
+      DATABASE_URL: postgresql://electric:electric_local_dev@postgres:5432/morrow_e2e?sslmode=disable
+      ELECTRIC_SECRET: browser-tests-only-electric-secret
+      ELECTRIC_MANUAL_TABLE_PUBLISHING: "true"
+    depends_on:
+      morrow:
+        condition: service_healthy
 
   morrow:
     image: morrow-e2e:test
@@ -24,6 +44,8 @@ services:
       - "127.0.0.1:18173:1337"
     environment:
       DATABASE_URL: postgresql://morrow_e2e:morrow_e2e@postgres:5432/morrow_e2e
+      ELECTRIC_URL: http://electric:3000
+      ELECTRIC_SECRET: browser-tests-only-electric-secret
       AUTH_SECRET: browser-tests-only-not-a-production-secret
       MORROW_CLIENT_URL: http://localhost:18173
       REGISTRATION_OPEN: "true"
