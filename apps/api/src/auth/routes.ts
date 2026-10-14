@@ -95,9 +95,7 @@ export const authenticateApi: MiddlewareHandler = async (c, next) => {
         // The browser gave up (a long-polling shape request cancelled on
         // navigation or sign-out); nobody is waiting for an answer.
         if (c.req.raw.signal.aborted) {
-          throw new HTTPException(499 as 500, {
-            message: "Client closed request",
-          });
+          return new Response(null, { status: 499 });
         }
         logFailure(
           "auth.api-authentication",
