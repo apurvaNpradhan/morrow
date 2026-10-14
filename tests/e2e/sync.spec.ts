@@ -81,6 +81,8 @@ test("the previous user's members never show up after signing out and in as some
   await page.goto(`/${slug}/members`);
   await expect(page.getByText(firstEmail)).toBeVisible();
 
+  // The user menu is in the app sidebar, which settings pages replace.
+  await page.goto(`/${slug}`);
   await page.getByRole("button", { name: "FP" }).first().click();
   await page.getByRole("menuitem", { name: "Log out" }).click();
   await expect(page).toHaveURL(/\/auth\/sign-in/);
