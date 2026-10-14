@@ -9,9 +9,6 @@ export function invalidateWorkspaceHomeQueries(
     queryKey: ["workspace", "full", workspaceId],
   });
   void queryClient.invalidateQueries({
-    queryKey: ["workspace-users", workspaceId],
-  });
-  void queryClient.invalidateQueries({
     queryKey: orpc.activity.key(),
   });
 }

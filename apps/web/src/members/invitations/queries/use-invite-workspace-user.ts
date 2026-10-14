@@ -36,10 +36,6 @@ export function useInviteWorkspaceUser() {
       queryClient.invalidateQueries({
         queryKey: ["workspace", "full", workspaceId],
       });
-
-      queryClient.invalidateQueries({
-        queryKey: ["workspace-users", workspaceId],
-      });
     },
   });
 }

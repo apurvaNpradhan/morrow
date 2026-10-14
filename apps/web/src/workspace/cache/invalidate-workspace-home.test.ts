@@ -9,11 +9,10 @@ describe("invalidateWorkspaceHomeQueries", () => {
     const otherWorkspaceId = "workspace-2";
     const affectedKeys = [
       ["workspace", "full", workspaceId],
-      ["workspace-users", workspaceId, 20, 0],
       [["activity", "list"], { input: { workspaceId } }],
     ];
     for (const queryKey of affectedKeys) client.setQueryData(queryKey, {});
-    client.setQueryData(["workspace-users", otherWorkspaceId], {});
+    client.setQueryData(["workspace-roles", otherWorkspaceId], {});
 
     invalidateWorkspaceHomeQueries(client, workspaceId);
 
@@ -21,7 +20,7 @@ describe("invalidateWorkspaceHomeQueries", () => {
       expect(client.getQueryState(queryKey)?.isInvalidated).toBe(true);
     }
     expect(
-      client.getQueryState(["workspace-users", otherWorkspaceId])
+      client.getQueryState(["workspace-roles", otherWorkspaceId])
         ?.isInvalidated,
     ).toBe(false);
   });

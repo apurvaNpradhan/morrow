@@ -21,10 +21,6 @@ export function useCancelInvitation() {
         queryKey: ["workspace", "full", workspaceId],
       });
 
-      queryClient.invalidateQueries({
-        queryKey: ["workspace-users", workspaceId],
-      });
-
       // Also invalidate the broader workspace query
       queryClient.invalidateQueries({
         queryKey: ["workspace"],

@@ -19,12 +19,6 @@ export function useTransferWorkspaceOwnership() {
         queryKey: ["workspace", "full", variables.workspaceId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["workspace-users", variables.workspaceId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["workspace-user", "active"],
-      });
-      queryClient.invalidateQueries({
         queryKey: ["workspace-capabilities", variables.workspaceId],
       });
       queryClient.invalidateQueries({ queryKey: ["active-organization"] });

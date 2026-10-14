@@ -19,10 +19,6 @@ export function useDeleteWorkspaceUser() {
       queryClient.invalidateQueries({
         queryKey: ["workspace", "full", workspaceId],
       });
-
-      queryClient.invalidateQueries({
-        queryKey: ["workspace-users", workspaceId],
-      });
     },
   });
 }
