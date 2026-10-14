@@ -6,6 +6,7 @@ import { SettingsSection } from "@/app/settings/settings-section";
 import { setTheme } from "@/app/preferences/set-theme";
 import { useDevicePreferences } from "@/app/preferences/use-device-preferences";
 import { LanguageRow } from "./language-row";
+import { ProjectBackgroundsRow } from "./project-backgrounds-row";
 import { SidebarDefaultRow } from "./sidebar-default-row";
 
 export function PreferencesPage() {
@@ -31,6 +32,7 @@ export function PreferencesPage() {
         <SettingsCard>
           <LanguageRow />
           <SidebarDefaultRow />
+          <ProjectBackgroundsRow />
         </SettingsCard>
       </SettingsSection>
     </SettingsPage>

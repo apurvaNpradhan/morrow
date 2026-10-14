@@ -8,9 +8,17 @@ import {
   User,
   Users,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { SettingsNav } from "./types";
 
 type Translate = (key: string) => string;
+
+/** What a project contributes to the navigation. */
+export type SettingsNavProject = {
+  key: string;
+  name: string;
+  icon: LucideIcon;
+};
 
 type BuildSettingsNavInput = {
   t: Translate;
@@ -18,6 +26,8 @@ type BuildSettingsNavInput = {
   slug: string;
   workspaceName?: string;
   hasAdminAccess: boolean;
+  /** The workspace's active projects, in order. */
+  projects?: SettingsNavProject[];
 };
 
 export function buildSettingsNav({
@@ -25,6 +35,7 @@ export function buildSettingsNav({
   slug,
   workspaceName,
   hasAdminAccess,
+  projects = [],
 }: BuildSettingsNavInput): SettingsNav {
   return {
     account: {
@@ -69,6 +80,26 @@ export function buildSettingsNav({
         },
       ],
     },
+    projects:
+      projects.length > 0
+        ? {
+            id: "projects",
+            label: t("settings:projects"),
+            links: projects.map((project) => ({
+              id: `project-${project.key}`,
+              label: project.name,
+              to: workspaceUrl(
+                slug,
+                `/settings/projects/${project.key}/general`,
+              ),
+              matchPrefix: workspaceUrl(
+                slug,
+                `/settings/projects/${project.key}`,
+              ),
+              icon: project.icon,
+            })),
+          }
+        : null,
     admin: hasAdminAccess
       ? {
           id: "admin",

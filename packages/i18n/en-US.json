@@ -91,7 +91,15 @@
 			"workspaceLimitReached": "You've reached the limit of workspaces you can own. Delete or transfer one to create another.",
 			"storageUnavailable": "Picture storage isn't available right now. Try again later.",
 			"adminRoleManaged": "Administrators are set by the instance owner and can't be changed here.",
-			"invitationEmailFailed": "The invitation was saved, but the email couldn't be sent. Resend it later."
+			"invitationEmailFailed": "The invitation was saved, but the email couldn't be sent. Resend it later.",
+			"projectKeyTaken": "Another project in this workspace already uses that key.",
+			"positionTaken": "Someone else just reordered that. Try again.",
+			"projectArchived": "This project is archived. Unarchive it to change it.",
+			"projectNotArchived": "Archive the project first.",
+			"columnNameTaken": "Another column in this project already has that name.",
+			"lastRequiredColumn": "Every project needs at least one To Do (unstarted) column and one Done column.",
+			"invalidPosition": "That position isn't valid. Try again.",
+			"invalidTargetColumn": "Choose another column of this project to move the items to."
 		}
 	},
 	"auth": {
@@ -496,7 +504,9 @@
 			"languageDescription": "Choose your preferred interface language",
 			"selectLanguage": "Select a language",
 			"sidebarDefault": "Sidebar Default",
-			"sidebarDefaultDescription": "Keep sidebar expanded on startup"
+			"sidebarDefaultDescription": "Keep sidebar expanded on startup",
+			"projectBackgrounds": "Project backgrounds",
+			"projectBackgroundsDescription": "Show a project's background image behind its board on this device."
 		},
 		"workspaceGeneral": {
 			"pageTitle": "General Settings",
@@ -769,7 +779,8 @@
 		"invitationEmailFailed": "Invitation saved, but email delivery failed. Check email settings and resend the invitation.",
 		"shared": {
 			"autosave": "Changes save automatically"
-		}
+		},
+		"projects": "Projects"
 	},
 	"navigation": {
 		"commandPalette": {
@@ -911,7 +922,12 @@
 					"invitationCreated": "A workspace invitation was sent",
 					"invitationRevoked": "A workspace invitation was revoked",
 					"workspaceUpdated": "Workspace details were updated",
-					"ownershipTransferred": "{{ownerName}} became the workspace owner"
+					"ownershipTransferred": "{{ownerName}} became the workspace owner",
+					"projectCreated": "{{projectName}} ({{projectKey}}) was created",
+					"projectArchived": "{{projectName}} ({{projectKey}}) was archived",
+					"projectUnarchived": "{{projectName}} ({{projectKey}}) was restored from the archive",
+					"projectDeleted": "{{projectName}} ({{projectKey}}) was deleted",
+					"projectKeyChanged": "A project's key changed from {{previousKey}} to {{projectKey}}"
 				}
 			}
 		},
@@ -997,6 +1013,183 @@
 			"whoBody": "Members of a workspace see your name, picture and role in it, and the activity you perform there. Other people on this instance cannot see your data. The person who runs this instance can access the database.",
 			"controlTitle": "Your control",
 			"controlBody": "You can download everything tied to your account, and you can delete your account from your personal information settings. Deleting your account removes your profile, notifications and preferences.",
+	},
+	"projects": {
+		"pageTitle": "Projects",
+		"categories": {
+			"backlog": {
+				"title": "Backlog",
+				"description": "Ideas and work that isn't planned yet."
+			},
+			"unstarted": {
+				"title": "Not started",
+				"description": "Planned work that is ready to begin. New items start in the first column here."
+			},
+			"started": {
+				"title": "In progress",
+				"description": "Work that is underway."
+			},
+			"done": {
+				"title": "Done",
+				"description": "Finished work."
+			},
+			"canceled": {
+				"title": "Canceled",
+				"description": "Work that won't be done."
+			}
+		},
+		"colors": {
+			"gray": "Gray",
+			"slate": "Slate",
+			"red": "Red",
+			"orange": "Orange",
+			"amber": "Amber",
+			"green": "Green",
+			"teal": "Teal",
+			"blue": "Blue",
+			"violet": "Violet",
+			"pink": "Pink"
+		},
+		"icon": {
+			"label": "Project icon",
+			"none": "Use the first letter of the key"
+		},
+		"list": {
+			"title": "Projects",
+			"create": "New project",
+			"tabsLabel": "Show projects",
+			"active": "Active",
+			"archived": "Archived",
+			"emptyTitle": "No projects yet",
+			"emptyDescription": "Projects organise the work of this workspace. Create the first one to get started.",
+			"emptyReadOnly": "Ask someone who can edit projects to create the first one.",
+			"emptyArchivedTitle": "Nothing archived",
+			"emptyArchivedDescription": "Projects you archive stay here, read-only, until you restore or delete them.",
+			"reorderHandle": "Reorder {{name}}. Drag, or press the up and down arrow keys.",
+			"reorderError": "Couldn't reorder the projects. Try again.",
+			"settings": "Settings for {{name}}"
+		},
+		"sidebar": {
+			"title": "Projects",
+			"create": "New project",
+			"empty": "No projects yet"
+		},
+		"create": {
+			"title": "New project",
+			"description": "A project has its own columns. Its key becomes the prefix of ticket ids.",
+			"nameLabel": "Name",
+			"namePlaceholder": "Website redesign",
+			"keyLabel": "Key",
+			"keyHint": "2–6 letters or digits, starting with a letter. Tickets will look like {{key}}-12.",
+			"keyInvalid": "Use 2–6 letters or digits, starting with a letter.",
+			"keyTaken": "Another project in this workspace already uses this key.",
+			"submit": "Create project",
+			"creating": "Creating…",
+			"success": "Project created",
+			"error": "Couldn't create the project."
+		},
+		"board": {
+			"notFoundTitle": "Project not found",
+			"notFoundDescription": "It may have been deleted, or its key may have changed.",
+			"backToProjects": "All projects",
+			"archivedNotice": "This project is archived and read-only.",
+			"settings": "Project settings",
+			"emptyLane": "No items yet",
+			"lanesLabel": "Columns of {{name}}"
+		},
+		"switcher": {
+			"label": "Switch project",
+			"all": "All projects"
+		},
+		"settings": {
+			"tabsLabel": "Project settings",
+			"general": "General",
+			"workflow": "Workflow",
+			"noProjectsTitle": "No projects yet",
+			"noProjectsDescription": "Create a project to configure it here.",
+			"notFoundDescription": "This project doesn't exist or its key has changed.",
+			"archivedNotice": "This project is archived. Unarchive it to change its settings.",
+			"saveError": "Couldn't save the change."
+		},
+		"general": {
+			"title": "General",
+			"pageTitle": "Project settings",
+			"subtitle": "Name, key and look of {{name}}.",
+			"detailsTitle": "Details",
+			"nameLabel": "Name",
+			"namePlaceholder": "Project name",
+			"keyLabel": "Key",
+			"keyHint": "Ticket ids look like {{key}}-12. Changing the key breaks existing links.",
+			"keyInvalid": "Use 2–6 letters or digits, starting with a letter.",
+			"descriptionLabel": "Description",
+			"descriptionPlaceholder": "What is this project for?",
+			"iconLabel": "Icon",
+			"iconHint": "Shown in the sidebar and in lists.",
+			"keyChange": {
+				"title": "Change the project key?",
+				"description": "Links to {{previous}} will stop working, and ticket ids will start with {{next}} instead.",
+				"confirm": "Change key",
+				"success": "Key changed"
+			},
+			"background": {
+				"label": "Background",
+				"hint": "Shown behind the board. PNG, JPEG or WebP under 512 KB.",
+				"edit": "Change background",
+				"change": "Upload an image",
+				"remove": "Remove background",
+				"updateSuccess": "Background updated",
+				"updateError": "Couldn't update the background.",
+				"removeSuccess": "Background removed",
+				"removeError": "Couldn't remove the background."
+			},
+			"archive": {
+				"title": "Archive project",
+				"description": "Hide it from the sidebar and make it read-only. You can restore it any time.",
+				"button": "Archive",
+				"success": "Project archived",
+				"error": "Couldn't archive the project.",
+				"restoreTitle": "Restore project",
+				"restoreDescription": "Show it in the sidebar again and make it editable.",
+				"restoreButton": "Unarchive",
+				"restoreSuccess": "Project restored",
+				"restoreError": "Couldn't restore the project."
+			},
+			"danger": {
+				"title": "Danger zone",
+				"subtitle": "Deleting is permanent and only possible for archived projects.",
+				"deleteTitle": "Delete project",
+				"deleteDescription": "Permanently delete {{name}} with its columns and background.",
+				"deleteButton": "Delete project",
+				"modalTitle": "Delete this project?",
+				"modalDescription": "{{name}} and everything in it will be deleted for good. This can't be undone.",
+				"modalConfirm": "Delete project",
+				"success": "Project deleted",
+				"error": "Couldn't delete the project."
+			}
+		},
+		"workflow": {
+			"title": "Workflow",
+			"pageTitle": "Project workflow",
+			"subtitle": "The columns of {{name}}, grouped by what they mean. Drag a column to reorder it within its group.",
+			"empty": "No columns in this group.",
+			"requiredNote": "Every project keeps at least one column here.",
+			"reorderHandle": "Reorder {{name}}. Drag, or press the up and down arrow keys.",
+			"reorderError": "Couldn't reorder the columns. Try again.",
+			"nameLabel": "Name of the column",
+			"colorLabel": "Colour of {{name}}",
+			"categoryLabel": "Category of {{name}}",
+			"addPlaceholder": "Add a column",
+			"add": "Add column",
+			"addError": "Couldn't add the column.",
+			"updateError": "Couldn't update the column.",
+			"delete": "Delete {{name}}",
+			"deleteTitle": "Delete “{{name}}”?",
+			"deleteDescription": "Items in this column move to the column you choose below.",
+			"deleteTargetLabel": "Move items to",
+			"deleteConfirm": "Delete column",
+			"deleteSuccess": "Column deleted",
+			"deleteError": "Couldn't delete the column."
+		}
 			"back": "Back"
 		}
 	}

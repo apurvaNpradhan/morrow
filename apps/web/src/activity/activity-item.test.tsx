@@ -29,4 +29,48 @@ describe("workspace activity item", () => {
       "2026-10-08T10:00:00.000Z",
     );
   });
+
+  it.each([
+    [
+      "project.created",
+      { projectKey: "MOR", projectName: "Morrow" },
+      "Morrow (MOR) was created",
+    ],
+    [
+      "project.archived",
+      { projectKey: "MOR", projectName: "Morrow" },
+      "Morrow (MOR) was archived",
+    ],
+    [
+      "project.unarchived",
+      { projectKey: "MOR", projectName: "Morrow" },
+      "Morrow (MOR) was restored from the archive",
+    ],
+    [
+      "project.deleted",
+      { projectKey: "MOR", projectName: "Morrow" },
+      "Morrow (MOR) was deleted",
+    ],
+    [
+      "project.key_changed",
+      { previousKey: "OLD", projectKey: "MOR" },
+      "A project's key changed from OLD to MOR",
+    ],
+  ])("describes %s", async (type, eventData, text) => {
+    await preloadNamespaces("en-US");
+    render(
+      <I18nextProvider i18n={i18n}>
+        <ActivityItem
+          activity={{
+            type,
+            actorName: "Casey",
+            eventData,
+            createdAt: "2026-10-08T10:00:00.000Z",
+          }}
+        />
+      </I18nextProvider>,
+    );
+
+    expect(screen.getByText(text)).toBeInTheDocument();
+  });
 });

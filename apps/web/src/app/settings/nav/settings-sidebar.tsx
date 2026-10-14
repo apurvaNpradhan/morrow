@@ -41,6 +41,9 @@ export function SettingsSidebar({ nav, onLeave }: SettingsSidebarProps) {
       <SidebarContent className="gap-0 pb-2">
         <SettingsNavGroup group={nav.account} pathname={pathname} />
         <SettingsNavGroup group={nav.workspace} pathname={pathname} />
+        {nav.projects ? (
+          <SettingsNavGroup group={nav.projects} pathname={pathname} />
+        ) : null}
         {nav.admin ? (
           <SettingsNavGroup group={nav.admin} pathname={pathname} />
         ) : null}

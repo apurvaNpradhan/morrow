@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { buildSettingsNav } from "./build-settings-nav";
 import { useAdminAccess } from "@/admin";
+import { useNavProjects } from "@/projects";
 import { useActiveWorkspace } from "@/workspace";
 
 export function useSettingsNav() {
@@ -13,6 +14,7 @@ export function useSettingsNav() {
   });
   const { data: workspace } = useActiveWorkspace();
   const { data: hasAdminAccess } = useAdminAccess();
+  const projects = useNavProjects(workspace?.id);
 
   return useMemo(
     () =>
@@ -21,7 +23,8 @@ export function useSettingsNav() {
         slug,
         workspaceName: workspace?.name,
         hasAdminAccess: Boolean(hasAdminAccess),
+        projects,
       }),
-    [t, slug, workspace?.name, hasAdminAccess],
+    [t, slug, workspace?.name, hasAdminAccess, projects],
   );
 }

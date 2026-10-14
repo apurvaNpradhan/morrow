@@ -15,6 +15,7 @@ export const devicePreferencesSchema = z.object({
   theme: z.enum(["light", "dark", "system"]).default("dark"),
   compactMode: z.boolean().default(false),
   sidebarDefaultOpen: z.boolean().default(true),
+  showProjectBackgrounds: z.boolean().default(true),
 });
 
 export type DevicePreferences = z.infer<typeof devicePreferencesSchema>;

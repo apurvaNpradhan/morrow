@@ -7,6 +7,10 @@ Morrow is a personal workspace platform run as a single instance (the owner's Do
 - **Workspace** — the unit users create, share and are members of. Has a slug, members, roles and activity.
 - **Member** — a user's membership in a workspace, with a role (static owner; viewer, member, admin editable per workspace). Every role can read its workspace; being a member means being able to see it.
 - **Invitation** — a pending offer to join a workspace. Only pending ones are synced; an accepted or cancelled one leaves the browser.
+- **Project** — a named container of work inside a Workspace, with a key, an icon, an optional background and its own Columns. Every Member sees every Project. Can be archived; an archived Project is read-only until restored or deleted.
+- **Project key** — 2–6 upper-case letters and digits, starting with a letter. Unique per Workspace; the URL segment of a Project and the prefix of its future ticket ids.
+- **Column** — one step of a Project's workflow. Belongs to one Column category, has a name and a colour, and is ordered by a fractional-index position. Every Project keeps at least one `unstarted` and one `done` Column.
+- **Column category** — what a Column means: `backlog`, `unstarted`, `started`, `done` or `canceled`. Fixed; Projects choose the names, not the categories.
 - **Admin** — a user whose verified session email is in `ADMIN_EMAILS`. Not stored in the database. Admins are exempt from the workspace limit and reach other workspaces through the administration pages, not the workspace URL.
 - **Registration** — sign-up by email OTP, Google or GitHub. Closed by `REGISTRATION_OPEN=false`.
 - **Vertical** — a folder named by what its code does, with the same name in API and web (`workspace`, `members`, …). It has one public `index.ts`; other verticals import only that.

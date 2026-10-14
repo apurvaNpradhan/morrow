@@ -21,6 +21,8 @@ import { cn } from "@/design-system/cn";
 
 type WorkspaceLayoutProps = {
   title: string;
+  /** Replaces the page's last breadcrumb item(s), for pages nested under a list. */
+  crumbs?: ReactNode;
   headerActions?: ReactNode;
   children: ReactNode;
   onCreateProject?: () => void;
@@ -29,6 +31,7 @@ type WorkspaceLayoutProps = {
 
 export function WorkspaceLayout({
   title,
+  crumbs,
   headerActions,
   children,
   className,
@@ -69,11 +72,13 @@ export function WorkspaceLayout({
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <span className="text-xs font-normal text-card-foreground">
-                    {title}
-                  </span>
-                </BreadcrumbItem>
+                {crumbs ?? (
+                  <BreadcrumbItem>
+                    <span className="text-xs font-normal text-card-foreground">
+                      {title}
+                    </span>
+                  </BreadcrumbItem>
+                )}
               </BreadcrumbList>
             </Breadcrumb>
           </div>

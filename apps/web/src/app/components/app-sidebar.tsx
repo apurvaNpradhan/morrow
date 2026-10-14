@@ -11,12 +11,14 @@ import {
   useSidebar,
 } from "@/design-system/ui/sidebar";
 import { VersionDisplay } from "./version-display";
-import { WorkspaceSwitcher } from "@/workspace";
+import { SidebarProjects } from "@/projects";
+import { useActiveWorkspace, WorkspaceSwitcher } from "@/workspace";
 import { shortcuts } from "@/app/lib/shortcuts";
 import { useRegisterShortcuts } from "@/app/hooks/use-keyboard-shortcuts";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { toggleSidebar } = useSidebar();
+  const { data: workspace } = useActiveWorkspace();
 
   useRegisterShortcuts({
     modifierShortcuts: {
@@ -38,6 +40,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent className="overflow-hidden gap-1 py-1">
         <NavMain />
+        {workspace ? <SidebarProjects workspace={workspace} /> : null}
       </SidebarContent>
       <SidebarFooter>
         <NavSecondary />

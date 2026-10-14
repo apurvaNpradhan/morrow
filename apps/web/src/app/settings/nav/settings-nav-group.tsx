@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { isSettingsLinkActive } from "./is-link-active";
 import type { SettingsNavGroup as SettingsNavGroupModel } from "./types";
 import {
   SidebarGroup,
@@ -25,7 +26,7 @@ export function SettingsNavGroup({ group, pathname }: SettingsNavGroupProps) {
           {group.links.map((link) => (
             <SidebarMenuItem key={link.id}>
               <SidebarMenuButton
-                isActive={pathname === link.to}
+                isActive={isSettingsLinkActive(link, pathname)}
                 className="h-8 text-sm"
                 render={<Link to={link.to} />}
               >
