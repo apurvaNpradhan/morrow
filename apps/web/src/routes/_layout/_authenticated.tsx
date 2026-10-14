@@ -6,7 +6,7 @@ import {
   workspaceCollection,
   WorkspaceError,
 } from "@/workspace";
-import { authClient } from "@/auth";
+import { loadSession } from "@/auth";
 import { needsOnboarding } from "@/onboarding";
 import { getOnboardingReturnTo } from "@/onboarding";
 
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_layout/_authenticated")({
     let session = null;
     let sessionError = false;
     try {
-      const { data } = await authClient.getSession();
+      const { data } = await loadSession();
       session = data;
     } catch (error) {
       sessionError = true;

@@ -10,6 +10,7 @@ export { REGISTRATION_STATUS_QUERY_KEY } from "./use-registration-status";
 export { useRegistrationStatus } from "./use-registration-status";
 export { SignInFormSkeleton } from "./components/sign-in-form-skeleton";
 export { AuthProvider } from "./components/auth-provider";
+export { forgetSession, loadSession } from "./lib/session";
 export { refreshSession } from "./lib/refresh-session";
 export { AuthCaptcha } from "./components/auth-captcha";
 export { useAuthCaptcha } from "./use-auth-captcha";

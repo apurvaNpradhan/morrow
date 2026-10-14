@@ -12,6 +12,7 @@ import {
   AuthLayout,
   AuthLegalFooter,
   authClient,
+  forgetSession,
   otpErrorKey,
   useAuthCaptcha,
 } from "@/auth";
@@ -102,6 +103,8 @@ function VerifyOtp() {
           return;
         }
 
+        // The cached "signed out" answer would bounce the next route guard.
+        forgetSession();
         toast.success(t("auth:verifyOtp.toast.signedInSuccess"));
         if (safeRedirect) {
           history.push(safeRedirect);

@@ -3,7 +3,7 @@ import {
   electricCollectionOptions,
   isChangeMessage,
 } from "@tanstack/electric-db-collection";
-import { createCollection } from "@tanstack/react-db";
+import { BasicIndex, createCollection } from "@tanstack/react-db";
 import { rpc } from "@/app/lib/orpc";
 import { shapeOptions } from "@/app/sync/shape-options";
 import { registerSyncedCollection } from "@/app/sync/synced-collections";
@@ -15,6 +15,10 @@ export const workspaceMemberCollection = registerSyncedCollection(
       id: workspaceMembersShape.name,
       schema: workspaceMembersShape.schema,
       getKey: (row) => row.id,
+      // Live queries join members to users on `userId`; index it instead of
+      // scanning every row.
+      defaultIndexType: BasicIndex,
+      autoIndex: "eager",
       shapeOptions: shapeOptions(workspaceMembersShape.name),
       // Better Auth performs the role change, so there is no transaction id to
       // wait for: wait for the changed row to come back through sync instead.

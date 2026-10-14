@@ -6,6 +6,7 @@ import {
   useRef,
 } from "react";
 import { authClient } from "@/auth/lib/auth-client";
+import { forgetSession } from "@/auth/lib/session";
 import type { User } from "@/app/lib/user";
 import { LoadingSkeleton } from "@/design-system/ui/loading-skeleton";
 
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         user: (data?.user as User | null | undefined) ?? null,
         isLoading: isPending,
         refetchUser: async () => {
+          forgetSession();
           await refetch({ query: { disableCookieCache: true } });
         },
       }}
