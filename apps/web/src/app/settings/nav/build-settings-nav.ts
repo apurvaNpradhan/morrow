@@ -58,7 +58,7 @@ export function buildSettingsNav({
         {
           id: "workspace-members",
           label: t("team:members.pageTitle"),
-          to: workspaceUrl(slug, "/members"),
+          to: workspaceUrl(slug, "/settings/workspace/members"),
           icon: Users,
         },
         {

@@ -39,7 +39,6 @@ describe("buildSettingsNav", () => {
       (group) => group?.links ?? [],
     );
     expect(links.length).toBeGreaterThan(0);
-    for (const link of links)
-      expect(link.to).toMatch(/^\/other\/(settings\/|members$)/);
+    for (const link of links) expect(link.to).toMatch(/^\/other\/settings\//);
   });
 });
