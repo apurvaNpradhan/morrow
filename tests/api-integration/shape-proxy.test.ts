@@ -93,6 +93,8 @@ describe("shape proxy", () => {
     );
     expect(upstream.searchParams.get("where")).toContain("user_id = $1");
     expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+    // ...and those whose pending invitation names the user's email.
+    expect(upstream.searchParams.get("params[2]")).toBe(user.email);
   });
 
   it("serves only pending invitations of the user's workspaces", async () => {
@@ -132,6 +134,16 @@ describe("shape proxy", () => {
       "lower(email) = lower($1)",
     );
     expect(upstream.searchParams.get("params[1]")).toBe(user.email);
+  });
+
+  it("matches no invitations until the user's email is verified", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession({ ...user, emailVerified: false });
+    const electric = fakeElectric();
+
+    await get("my-invitations?offset=-1");
+
+    expect(electric.upstream().searchParams.get("params[1]")).toBe("");
   });
 
   it("forwards protocol parameters and ignores table, where and columns from the client", async () => {

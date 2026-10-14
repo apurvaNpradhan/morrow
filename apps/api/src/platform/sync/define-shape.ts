@@ -3,7 +3,11 @@ import type { PgTable } from "drizzle-orm/pg-core";
 import type { z } from "zod";
 
 /** What a shape's filter may depend on: the session, never the request. */
-export type ShapeContext = { userId: string; userEmail: string };
+export type ShapeContext = {
+  userId: string;
+  /** The user's email once verified; empty before, so it matches nothing. */
+  verifiedEmail: string;
+};
 
 /** A shape's row filter: SQL over the table with `$1…` placeholders. */
 export type ShapeFilter = { sql: string; params: string[] };

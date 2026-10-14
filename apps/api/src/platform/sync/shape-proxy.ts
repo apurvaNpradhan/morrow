@@ -1,4 +1,5 @@
 import { ELECTRIC_PROTOCOL_QUERY_PARAMS } from "@electric-sql/client";
+import type { User } from "better-auth/types";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { config } from "#api/platform/config";
@@ -11,7 +12,7 @@ import { shapeRegistry } from "./shapes";
  * secret is added here. Nothing else in the query string is forwarded.
  */
 export const shapeRoutes = new Hono<{
-  Variables: { userId: string; userEmail: string };
+  Variables: { userId: string; userEmail: string; user: User | null };
 }>().get("/shapes/:name", async (c) => {
   const shape = shapeRegistry.get(c.req.param("name"));
   if (!shape) throw new HTTPException(404, { message: "Unknown shape" });
@@ -26,7 +27,7 @@ export const shapeRoutes = new Hono<{
 
   const filter = shape.where({
     userId: c.get("userId"),
-    userEmail: c.get("userEmail"),
+    verifiedEmail: c.get("user")?.emailVerified ? c.get("userEmail") : "",
   });
   upstream.searchParams.set("table", shape.table);
   upstream.searchParams.set("columns", shape.columns.join(","));
