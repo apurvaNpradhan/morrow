@@ -6,6 +6,7 @@ import {
   Shield,
   SlidersHorizontal,
   User,
+  Users,
 } from "lucide-react";
 import type { SettingsNav } from "./types";
 
@@ -53,6 +54,12 @@ export function buildSettingsNav({
           label: t("settings:workspaceGeneral.title"),
           to: workspaceUrl(slug, "/settings/workspace/general"),
           icon: Settings,
+        },
+        {
+          id: "workspace-members",
+          label: t("team:members.pageTitle"),
+          to: workspaceUrl(slug, "/members"),
+          icon: Users,
         },
         {
           id: "workspace-roles",
