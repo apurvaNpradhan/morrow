@@ -19,6 +19,11 @@ const ACTIVITY_KEYS = new Map(
     "workspace.invitation_revoked": "invitationRevoked",
     "workspace.updated": "workspaceUpdated",
     "workspace.ownership_transferred": "ownershipTransferred",
+    "project.created": "projectCreated",
+    "project.archived": "projectArchived",
+    "project.unarchived": "projectUnarchived",
+    "project.deleted": "projectDeleted",
+    "project.key_changed": "projectKeyChanged",
   } satisfies Record<string, string>),
 );
 
@@ -38,6 +43,16 @@ export function ActivityItem({ activity }: ActivityItemProps) {
             ? eventData.previousRole
             : "",
         role: typeof eventData.role === "string" ? eventData.role : "",
+        projectKey:
+          typeof eventData.projectKey === "string" ? eventData.projectKey : "",
+        projectName:
+          typeof eventData.projectName === "string"
+            ? eventData.projectName
+            : "",
+        previousKey:
+          typeof eventData.previousKey === "string"
+            ? eventData.previousKey
+            : "",
       })
     : t("home.activity.unknown");
   const elapsed = formatDistanceToNow(new Date(activity.createdAt));

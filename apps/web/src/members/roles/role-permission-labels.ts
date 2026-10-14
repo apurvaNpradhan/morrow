@@ -8,6 +8,7 @@ export const RESOURCE_LABELS = new Map(
     team: "Teams",
     ac: "Roles and permissions",
     workspace: "Workspace",
+    project: "Projects",
   } satisfies Record<string, string>),
 );
 
@@ -85,6 +86,19 @@ export const PERMISSION_LABELS = new Map(
     "workspace:manage_settings": {
       label: "Manage settings",
       description: "Configure workspace settings and preferences.",
+    },
+    "project:create": {
+      label: "Create projects",
+      description: "Add projects to this workspace.",
+    },
+    "project:update": {
+      label: "Edit projects",
+      description:
+        "Rename, reorder, archive and configure projects and their columns.",
+    },
+    "project:delete": {
+      label: "Delete projects",
+      description: "Permanently delete archived projects.",
     },
   } satisfies Record<string, { label: string; description: string }>),
 );

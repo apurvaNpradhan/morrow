@@ -60,6 +60,9 @@ export function useWorkspacePermission() {
       canUpdateMembers: () => can.updateMembers,
       canRemoveMembers: () => can.removeMembers,
       canManageRoles: () => can.manageRoles,
+      canCreateProjects: () => can.createProjects,
+      canManageProjects: () => can.manageProjects,
+      canDeleteProjects: () => can.deleteProjects,
     };
   }, [can]);
 

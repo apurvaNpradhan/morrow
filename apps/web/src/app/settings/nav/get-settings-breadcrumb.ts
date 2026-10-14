@@ -1,3 +1,4 @@
+import { isSettingsLinkActive } from "./is-link-active";
 import type { SettingsNav } from "./types";
 
 export type SettingsBreadcrumb = {
@@ -15,8 +16,10 @@ export function getSettingsBreadcrumb(
 ): SettingsBreadcrumb | null {
   const path = normalizeSettingsPath(pathname);
 
-  for (const group of [nav.account, nav.workspace, nav.admin]) {
-    const link = group?.links.find((candidate) => candidate.to === path);
+  for (const group of [nav.account, nav.workspace, nav.projects, nav.admin]) {
+    const link = group?.links.find((candidate) =>
+      isSettingsLinkActive(candidate, path),
+    );
     if (group && link) {
       return { section: group.label, page: link.label };
     }

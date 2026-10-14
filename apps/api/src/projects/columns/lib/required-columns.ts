@@ -1,17 +1,15 @@
-import type { ColumnCategory } from "@morrow/sync-schemas";
+import {
+  type ColumnCategory,
+  REQUIRED_COLUMN_CATEGORIES,
+} from "@morrow/sync-schemas";
 import { and, count, eq } from "drizzle-orm";
 import type { DbOrTx } from "#api/members/index";
 import { projectError } from "#api/projects/errors";
 import { projectColumnTable } from "#api/projects/tables";
 
-/**
- * Every project keeps one column new items start in (`unstarted`) and one
- * they finish in (`done`); the other categories may be empty.
- */
-const REQUIRED_CATEGORIES: ReadonlySet<ColumnCategory> = new Set([
-  "unstarted",
-  "done",
-]);
+const REQUIRED_CATEGORIES: ReadonlySet<ColumnCategory> = new Set(
+  REQUIRED_COLUMN_CATEGORIES,
+);
 
 /**
  * Throws LAST_REQUIRED_COLUMN when the column is the only one of a required

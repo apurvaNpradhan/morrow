@@ -17,6 +17,15 @@ export const COLUMN_CATEGORIES = [
 ] as const;
 export type ColumnCategory = (typeof COLUMN_CATEGORIES)[number];
 
+/**
+ * Every project keeps at least one column in each of these: where new items
+ * start, and where finished work goes.
+ */
+export const REQUIRED_COLUMN_CATEGORIES = [
+  "unstarted",
+  "done",
+] as const satisfies readonly ColumnCategory[];
+
 /** Named colours; the web app maps each to theme-aware design-system colours. */
 export const COLUMN_COLORS = [
   "gray",

@@ -27,6 +27,14 @@ const DOMAIN_KEYS = new Map(
     STORAGE_UNAVAILABLE: "common:errors.storageUnavailable",
     ADMIN_ROLE_MANAGED: "common:errors.adminRoleManaged",
     INVITATION_EMAIL_FAILED: "common:errors.invitationEmailFailed",
+    PROJECT_KEY_TAKEN: "common:errors.projectKeyTaken",
+    POSITION_TAKEN: "common:errors.positionTaken",
+    PROJECT_ARCHIVED: "common:errors.projectArchived",
+    PROJECT_NOT_ARCHIVED: "common:errors.projectNotArchived",
+    COLUMN_NAME_TAKEN: "common:errors.columnNameTaken",
+    LAST_REQUIRED_COLUMN: "common:errors.lastRequiredColumn",
+    INVALID_POSITION: "common:errors.invalidPosition",
+    INVALID_TARGET_COLUMN: "common:errors.invalidTargetColumn",
   } satisfies Record<string, string>),
 );
 
