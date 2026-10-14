@@ -35,5 +35,6 @@ Members synced live ([0001](0001-electric-tanstack-db-sync.md)), but the pages a
 ## Consequences
 
 - Everything a signed-in user sees outside roles, capabilities and activity is live. Adding a feature on these tables means a shape, not a query.
+- The inviter's name, email and avatar also reach an invitee through the members user shape.
 - A Workspace's name, logo and description now reach the browsers of people who only hold a pending invitation. This is more than the old `pendingInvitations` Procedure exposed (name only) and is the price of showing where an invitation leads.
 - Instance admins lose the `/$slug` back door. Anything an admin needs inside a foreign Workspace must exist as an administration Procedure.
