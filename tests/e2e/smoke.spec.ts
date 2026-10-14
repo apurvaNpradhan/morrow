@@ -1,28 +1,6 @@
-import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-
-// Without a Resend key the API writes emails to its console. Read the
-// disposable stack's log and return the sign-in code from the newest email.
-function consoleEmailCode(to: string) {
-  const logs = execFileSync(
-    "docker",
-    [
-      "compose",
-      "-f",
-      "tests/e2e/compose.yml",
-      "logs",
-      "--no-log-prefix",
-      "morrow",
-    ],
-    { cwd: new URL("../..", import.meta.url).pathname, encoding: "utf8" },
-  );
-  const start = logs.lastIndexOf(`[morrow-email] to=${to} `);
-  if (start === -1) return undefined;
-  return logs
-    .slice(start)
-    .match(/(\d{6}) is your Morrow verification code/)?.[1];
-}
+import { consoleEmailCode } from "./helpers";
 
 test("sign up with an emailed code, onboard, create a workspace, invite a member, see activity", async ({
   page,
