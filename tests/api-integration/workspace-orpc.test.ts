@@ -219,6 +219,34 @@ describe("member procedures", () => {
     ).toHaveLength(before.length);
   });
 
+  it("keeps read access in every role, because membership means read", async () => {
+    const owner = await signUp("owner@example.com");
+    const created = await owner.client.workspace.create({
+      name: "Read",
+      slug: "read-rule",
+    });
+
+    await owner.client.members.roles.create({
+      workspaceId: created.id,
+      role: "blind",
+      permission: { member: ["update"] },
+    });
+    await owner.client.members.roles.update({
+      workspaceId: created.id,
+      roleName: "blind",
+      permission: { invitation: ["create"] },
+    });
+
+    const [row] = await db
+      .select()
+      .from(schema.workspaceRoleTable)
+      .where(eq(schema.workspaceRoleTable.role, "blind"));
+    expect(JSON.parse(row.permission)).toEqual({
+      invitation: ["create"],
+      workspace: ["read"],
+    });
+  });
+
   it("looks up an invitation publicly", async () => {
     const result = await createTestClient(app).members.publicInvitation({
       id: "missing",

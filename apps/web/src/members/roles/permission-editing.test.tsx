@@ -65,7 +65,7 @@ describe("workspace role permission editing", () => {
       );
     }
   });
-  it("can remove every permission, including all provider administrative rights", async () => {
+  it("can remove every permission but read access, including all provider administrative rights", async () => {
     render(
       <CustomRoleEditor
         workspaceId="workspace"
@@ -91,7 +91,7 @@ describe("workspace role permission editing", () => {
       expect(m.update).toHaveBeenCalledWith({
         workspaceId: "workspace",
         roleName: "admin",
-        permission: {},
+        permission: { workspace: ["read"] },
       }),
     );
   });

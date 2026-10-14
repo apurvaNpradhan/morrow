@@ -75,7 +75,10 @@ export function PermissionList({
               };
               const canGrant =
                 ASSEMBLED_STATEMENT[resource]?.includes(action) ?? false;
-              const checked = isChecked(resource, action);
+              // Members can always read their workspace; the server adds it to
+              // every role, so the switch is on and cannot be changed.
+              const alwaysOn = resource === "workspace" && action === "read";
+              const checked = alwaysOn || isChecked(resource, action);
               const switchId = `${id}-${resource}-${action}`;
               return (
                 <SettingsRow
@@ -101,11 +104,19 @@ export function PermissionList({
                     id={switchId}
                     checked={checked}
                     onCheckedChange={
-                      readOnly || !onToggle || (!canGrant && !checked)
+                      readOnly ||
+                      alwaysOn ||
+                      !onToggle ||
+                      (!canGrant && !checked)
                         ? undefined
                         : () => onToggle(resource, action)
                     }
-                    disabled={readOnly || disabled || (!canGrant && !checked)}
+                    disabled={
+                      readOnly ||
+                      disabled ||
+                      alwaysOn ||
+                      (!canGrant && !checked)
+                    }
                   />
                 </SettingsRow>
               );
