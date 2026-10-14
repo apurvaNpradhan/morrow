@@ -3,14 +3,8 @@ import { z } from "zod";
 import { authApi, type AuthResult } from "#api/platform/orpc/auth-api";
 import { authed, base } from "#api/platform/orpc/base";
 import { rateLimit } from "#api/platform/orpc/rate-limit";
-import {
-  getInvitationDetails,
-  getUserPendingInvitations,
-} from "./invitation-lookup";
-import {
-  invitationDetailsSchema,
-  pendingInvitationListSchema,
-} from "./invitation-response";
+import { getInvitationDetails } from "./invitation-lookup";
+import { invitationDetailsSchema } from "./invitation-response";
 
 const workspaceId = z.string().min(1);
 
@@ -73,14 +67,6 @@ const rejectInvitation = authed
     }),
   );
 
-const pendingInvitations = authed
-  .output(pendingInvitationListSchema)
-  .handler(({ context }) =>
-    context.user.emailVerified
-      ? getUserPendingInvitations(context.user.email)
-      : [],
-  );
-
 const invitationDetails = authed
   .input(z.object({ id: z.string() }))
   .output(invitationDetailsSchema)
@@ -96,7 +82,6 @@ export const invitationProcedures = {
   cancelInvitation,
   acceptInvitation,
   rejectInvitation,
-  pendingInvitations,
   invitationDetails,
   publicInvitation,
 };

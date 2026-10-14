@@ -190,28 +190,6 @@ export const setActive = authed
     }),
   );
 
-export const full = authed
-  .input(
-    z.object({
-      workspaceId,
-      membersLimit: z.number().int().min(1).max(500).default(100),
-    }),
-  )
-  .use(requireWorkspacePermission({ workspace: ["read"] }))
-  .output(type<NonNullable<AuthResult<"getFullOrganization">>>())
-  .handler(async ({ context, input }) => {
-    const found = await (
-      await authApi()
-    ).getFullOrganization({
-      headers: context.authHeaders,
-      query: {
-        organizationId: input.workspaceId,
-        membersLimit: input.membersLimit,
-      },
-    });
-    return found as NonNullable<typeof found>;
-  });
-
 export const can = authed
   .input(
     z.object({
@@ -230,7 +208,6 @@ export const workspaceRouter = {
   update,
   remove,
   setActive,
-  full,
   can,
   get,
   resolve,
