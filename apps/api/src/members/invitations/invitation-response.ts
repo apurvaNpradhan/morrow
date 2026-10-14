@@ -1,22 +1,5 @@
 import { z } from "zod";
 
-export const pendingInvitationSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  workspaceId: z.string(),
-  workspaceName: z.string(),
-  inviterName: z.string(),
-  expiresAt: z.date(),
-  createdAt: z.date(),
-  status: z
-    .string()
-    .describe(
-      "Always `pending` here; expired and accepted ones are filtered out.",
-    ),
-});
-
-export const pendingInvitationListSchema = z.array(pendingInvitationSchema);
-
 export const invitationDetailsSchema = z.object({
   valid: z
     .boolean()

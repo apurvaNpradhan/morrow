@@ -2,13 +2,11 @@ import { and, eq } from "drizzle-orm";
 import { ORPCError } from "@orpc/server";
 import { db } from "#api/platform/database/index";
 import {
-  userTable,
   workspaceSlugAliasTable,
   workspaceTable,
   workspaceUserTable,
 } from "#api/platform/database/schema";
 import { roleHasWorkspacePermission } from "#api/platform/permissions";
-import { hasInstanceAdminRole } from "#api/platform/instance-admin-role";
 import { getWorkspace } from "./get-workspace";
 
 /**
@@ -34,34 +32,25 @@ export async function resolveWorkspace(userId: string, slug: string) {
   });
   if (!workspaceId) throw notFound;
 
-  const [[member], [user]] = await Promise.all([
-    db
-      .select({ role: workspaceUserTable.role })
-      .from(workspaceUserTable)
-      .where(
-        and(
-          eq(workspaceUserTable.workspaceId, workspaceId),
-          eq(workspaceUserTable.userId, userId),
-        ),
-      )
-      .limit(1),
-    db
-      .select({ role: userTable.role })
-      .from(userTable)
-      .where(eq(userTable.id, userId))
-      .limit(1),
-  ]);
-  if (!hasInstanceAdminRole(user?.role)) {
-    // Same read check as GET /workspace/{id}; a role without it must not
-    // learn the name or description.
-    if (
-      !member ||
-      !(await roleHasWorkspacePermission(workspaceId, member.role, {
-        workspace: ["read"],
-      }))
-    ) {
-      throw notFound;
-    }
+  // Membership with read access is the only way in. Instance admins reach
+  // other people's workspaces through the administration pages, not this URL.
+  const [member] = await db
+    .select({ role: workspaceUserTable.role })
+    .from(workspaceUserTable)
+    .where(
+      and(
+        eq(workspaceUserTable.workspaceId, workspaceId),
+        eq(workspaceUserTable.userId, userId),
+      ),
+    )
+    .limit(1);
+  if (
+    !member ||
+    !(await roleHasWorkspacePermission(workspaceId, member.role, {
+      workspace: ["read"],
+    }))
+  ) {
+    throw notFound;
   }
 
   return getWorkspace(workspaceId);

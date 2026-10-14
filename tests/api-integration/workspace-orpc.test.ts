@@ -143,8 +143,10 @@ describe("member procedures", () => {
     });
     const [invitation] = await db.select().from(schema.invitationTable);
 
-    const pending = await guest.client.members.pendingInvitations();
-    expect(pending.map((i) => i.id)).toEqual([invitation.id]);
+    const details = await guest.client.members.invitationDetails({
+      id: invitation.id,
+    });
+    expect(details.valid).toBe(true);
 
     await guest.client.members.acceptInvitation({
       invitationId: invitation.id,
