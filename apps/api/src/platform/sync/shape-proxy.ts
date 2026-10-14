@@ -10,39 +10,41 @@ import { shapeRegistry } from "./shapes";
  * columns and filter come from the shape registry and the session, and the
  * secret is added here. Nothing else in the query string is forwarded.
  */
-export const shapeRoutes = new Hono<{ Variables: { userId: string } }>().get(
-  "/shapes/:name",
-  async (c) => {
-    const shape = shapeRegistry.get(c.req.param("name"));
-    if (!shape) throw new HTTPException(404, { message: "Unknown shape" });
+export const shapeRoutes = new Hono<{
+  Variables: { userId: string; userEmail: string };
+}>().get("/shapes/:name", async (c) => {
+  const shape = shapeRegistry.get(c.req.param("name"));
+  if (!shape) throw new HTTPException(404, { message: "Unknown shape" });
 
-    const { url, secret } = config.electric;
-    const upstream = new URL("/v1/shape", url);
-    for (const [key, value] of new URL(c.req.url).searchParams) {
-      if (ELECTRIC_PROTOCOL_QUERY_PARAMS.includes(key)) {
-        upstream.searchParams.set(key, value);
-      }
+  const { url, secret } = config.electric;
+  const upstream = new URL("/v1/shape", url);
+  for (const [key, value] of new URL(c.req.url).searchParams) {
+    if (ELECTRIC_PROTOCOL_QUERY_PARAMS.includes(key)) {
+      upstream.searchParams.set(key, value);
     }
+  }
 
-    const filter = shape.where({ userId: c.get("userId") });
-    upstream.searchParams.set("table", shape.table);
-    upstream.searchParams.set("columns", shape.columns.join(","));
-    upstream.searchParams.set("where", filter.sql);
-    filter.params.forEach((value, index) => {
-      upstream.searchParams.set(`params[${index + 1}]`, value);
-    });
-    upstream.searchParams.set("secret", secret);
+  const filter = shape.where({
+    userId: c.get("userId"),
+    userEmail: c.get("userEmail"),
+  });
+  upstream.searchParams.set("table", shape.table);
+  upstream.searchParams.set("columns", shape.columns.join(","));
+  upstream.searchParams.set("where", filter.sql);
+  filter.params.forEach((value, index) => {
+    upstream.searchParams.set(`params[${index + 1}]`, value);
+  });
+  upstream.searchParams.set("secret", secret);
 
-    const response = await fetch(upstream, { signal: c.req.raw.signal });
-    // fetch() already decoded the body, so the original encoding and length no
-    // longer describe it.
-    const headers = new Headers(response.headers);
-    headers.delete("content-encoding");
-    headers.delete("content-length");
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    });
-  },
-);
+  const response = await fetch(upstream, { signal: c.req.raw.signal });
+  // fetch() already decoded the body, so the original encoding and length no
+  // longer describe it.
+  const headers = new Headers(response.headers);
+  headers.delete("content-encoding");
+  headers.delete("content-length");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+});

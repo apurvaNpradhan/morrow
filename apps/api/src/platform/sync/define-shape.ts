@@ -2,6 +2,9 @@ import { getTableColumns, getTableName } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { z } from "zod";
 
+/** What a shape's filter may depend on: the session, never the request. */
+export type ShapeContext = { userId: string; userEmail: string };
+
 /** A shape's row filter: SQL over the table with `$1…` placeholders. */
 export type ShapeFilter = { sql: string; params: string[] };
 
@@ -14,7 +17,7 @@ type ShapeDefinitionInput<Schema extends z.ZodObject, Table extends PgTable> = {
   shape: { name: string; schema: Schema };
   table: Table;
   /** Which rows this user may read. Everything comes from the session, never the request. */
-  where: (context: { userId: string }) => ShapeFilter;
+  where: (context: ShapeContext) => ShapeFilter;
 };
 
 export type ShapeDefinition = {
@@ -23,7 +26,7 @@ export type ShapeDefinition = {
   table: string;
   /** The allowed Postgres column names. */
   columns: string[];
-  where: (context: { userId: string }) => ShapeFilter;
+  where: (context: ShapeContext) => ShapeFilter;
 };
 
 /**
