@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "#api/platform/database/index";
+import { withTxid } from "#api/platform/sync/with-txid";
 import { removeOwnedImage } from "#api/storage/index";
 import { workspaceTable } from "#api/workspace/tables";
 
@@ -12,7 +12,7 @@ export async function setWorkspaceLogo(
   workspaceId: string,
   logo: string | null,
 ) {
-  const previous = await db.transaction(async (tx) => {
+  const { result: before, txid } = await withTxid(async (tx) => {
     const [row] = await tx
       .select({ logo: workspaceTable.logo })
       .from(workspaceTable)
@@ -23,12 +23,15 @@ export async function setWorkspaceLogo(
       .update(workspaceTable)
       .set({ logo })
       .where(eq(workspaceTable.id, workspaceId));
-    return row.logo;
+    return { logo: row.logo };
   });
   const hadLogo = await removeOwnedImage(
-    previous,
+    before?.logo ?? null,
     "workspace-logos",
     workspaceId,
   );
-  return { hadLogo };
+  return {
+    hadLogo, // No row, no write, nothing to wait for.
+    txid: before ? txid : null,
+  };
 }

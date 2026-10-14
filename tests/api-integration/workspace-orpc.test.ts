@@ -1,6 +1,6 @@
 import * as email from "@morrow/email";
 import type { ORPCError } from "@orpc/client";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { db, schema } from "../../apps/api/src/platform/database";
 import { createApp } from "../../apps/api/src/index";
@@ -245,6 +245,38 @@ describe("member procedures", () => {
       invitation: ["create"],
       workspace: ["read"],
     });
+  });
+
+  it("returns the transaction id of a slug rename and of a logo removal", async () => {
+    const owner = await signUp("owner@example.com");
+    const created = await owner.client.workspace.create({
+      name: "Txid",
+      slug: "txid-space",
+    });
+    const xminOf = async () => {
+      const rows = await db.execute<{ xmin: string }>(
+        sql`SELECT xmin::text AS xmin FROM workspace WHERE id = ${created.id}`,
+      );
+      return Number(rows.rows[0]?.xmin);
+    };
+
+    const renamed = await owner.client.workspace.renameSlug({
+      workspaceId: created.id,
+      slug: "txid-renamed",
+    });
+    expect(renamed.slug).toBe("txid-renamed");
+    expect(renamed.txid).toBe(await xminOf());
+
+    const removed = await owner.client.workspace.removeLogo({
+      workspaceId: created.id,
+    });
+    expect(removed.txid).toBe(await xminOf());
+
+    const unchanged = await owner.client.workspace.renameSlug({
+      workspaceId: created.id,
+      slug: "txid-renamed",
+    });
+    expect(unchanged.txid).toBeNull();
   });
 
   it("looks up an invitation publicly", async () => {

@@ -9,14 +9,23 @@ export const workspaceMetadataSchema = z.object({
   createdAt: z.date(),
 });
 
+const txid = z
+  .number()
+  .nullable()
+  .describe(
+    "Postgres transaction id of the write, for waiting until sync delivers it; null when nothing changed.",
+  );
+
 export const logoSchema = z.object({
   url: z.string().describe("Public URL of the stored logo."),
+  txid,
 });
 
 export const logoDeletedSchema = z.object({
   deleted: z
     .boolean()
     .describe("False when the workspace had no uploaded logo to remove."),
+  txid,
 });
 
 export const workspaceCreationStatusSchema = z.object({
@@ -51,4 +60,4 @@ export const resolvedWorkspaceSchema = workspaceMetadataSchema.extend({
     ),
 });
 
-export const renamedSlugSchema = z.object({ slug: z.string() });
+export const renamedSlugSchema = z.object({ slug: z.string(), txid });

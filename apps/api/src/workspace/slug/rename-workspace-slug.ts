@@ -1,11 +1,11 @@
 import { and, eq } from "drizzle-orm";
 import { ORPCError } from "@orpc/server";
 import { recordWorkspaceActivity } from "#api/activity/index";
-import { db } from "#api/platform/database/index";
 import {
   workspaceSlugAliasTable,
   workspaceTable,
 } from "#api/platform/database/schema";
+import { withTxid } from "#api/platform/sync/with-txid";
 import { SLUG_UNAVAILABLE_MESSAGES, getSlugAvailability } from "./availability";
 
 const UNIQUE_VIOLATION = "23505";
@@ -34,8 +34,9 @@ export async function renameWorkspaceSlug(workspaceId: string, slug: string) {
   }
 
   let changed = true;
+  let txid: number;
   try {
-    await db.transaction(async (tx) => {
+    ({ txid } = await withTxid(async (tx) => {
       const [current] = await tx
         .select({ slug: workspaceTable.slug })
         .from(workspaceTable)
@@ -65,7 +66,7 @@ export async function renameWorkspaceSlug(workspaceId: string, slug: string) {
         .update(workspaceTable)
         .set({ slug })
         .where(eq(workspaceTable.id, workspaceId));
-    });
+    }));
   } catch (error) {
     if (isUniqueViolation(error)) {
       throw new ORPCError("CONFLICT", {
@@ -75,12 +76,13 @@ export async function renameWorkspaceSlug(workspaceId: string, slug: string) {
     throw error;
   }
 
-  if (!changed) return { slug };
+  // A rename that changed nothing writes nothing, so there is nothing to wait for.
+  if (!changed) return { slug, txid: null };
 
   await recordWorkspaceActivity({
     type: "workspace.updated",
     workspaceId,
     fields: ["details"],
   });
-  return { slug };
+  return { slug, txid };
 }
