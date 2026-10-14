@@ -1,9 +1,15 @@
 import {
+  myInvitationsShape,
+  workspaceInvitationsShape,
   workspaceMembersShape,
   workspaceMemberUsersShape,
 } from "@morrow/sync-schemas";
 import { defineShape } from "#api/platform/sync/define-shape";
-import { userTable, workspaceUserTable } from "#api/platform/database/schema";
+import {
+  invitationTable,
+  userTable,
+  workspaceUserTable,
+} from "#api/platform/database/schema";
 
 /**
  * Both shapes are scoped to the user, not to one Workspace: they cover every
@@ -31,4 +37,33 @@ const workspaceMemberUsers = defineShape({
   }),
 });
 
-export const membersShapes = [workspaceMembers, workspaceMemberUsers];
+/**
+ * Pending invitations of those Workspaces. Every Member sees them, as the
+ * members page always has; only pending rows sync, so an accepted or cancelled
+ * invitation leaves the browser as a delete.
+ */
+const workspaceInvitations = defineShape({
+  shape: workspaceInvitationsShape,
+  table: invitationTable,
+  where: ({ userId }) => ({
+    sql: "status = 'pending' AND workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",
+    params: [userId],
+  }),
+});
+
+/** Pending invitations addressed to the signed-in user's own email. */
+const myInvitations = defineShape({
+  shape: myInvitationsShape,
+  table: invitationTable,
+  where: ({ userEmail }) => ({
+    sql: "status = 'pending' AND lower(email) = lower($1)",
+    params: [userEmail],
+  }),
+});
+
+export const membersShapes = [
+  workspaceMembers,
+  workspaceMemberUsers,
+  workspaceInvitations,
+  myInvitations,
+];

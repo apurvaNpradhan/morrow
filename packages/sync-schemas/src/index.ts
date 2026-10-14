@@ -38,3 +38,38 @@ export const workspaceMemberUsersShape = shape(
 
 export type WorkspaceMemberRow = z.infer<typeof workspaceMembersShape.schema>;
 export type UserRow = z.infer<typeof workspaceMemberUsersShape.schema>;
+
+export const workspacesShape = shape(
+  "workspaces",
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    logo: z.string().nullable(),
+    description: z.string().nullable(),
+    createdAt: z.date(),
+  }),
+);
+
+const invitationColumns = z.object({
+  id: z.string(),
+  workspaceId: z.string(),
+  email: z.string(),
+  role: z.string().nullable(),
+  status: z.string(),
+  expiresAt: z.date(),
+  createdAt: z.date(),
+  inviterId: z.string(),
+});
+
+/** Pending invitations of the Workspaces the user belongs to. */
+export const workspaceInvitationsShape = shape(
+  "workspace-invitations",
+  invitationColumns,
+);
+
+/** Pending invitations addressed to the signed-in user's email. */
+export const myInvitationsShape = shape("my-invitations", invitationColumns);
+
+export type WorkspaceRow = z.infer<typeof workspacesShape.schema>;
+export type InvitationRow = z.infer<typeof myInvitationsShape.schema>;

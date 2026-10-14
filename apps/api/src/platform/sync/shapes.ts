@@ -1,4 +1,5 @@
 import { membersShapes } from "#api/members/index";
+import { workspaceShapes } from "#api/workspace/index";
 import type { ShapeDefinition } from "./define-shape";
 
 /** Every shape the browser may ask for, by name. A vertical adds its shapes here. */
@@ -13,4 +14,7 @@ function buildRegistry(shapes: ShapeDefinition[]) {
   return registry;
 }
 
-export const shapeRegistry = buildRegistry([...membersShapes]);
+export const shapeRegistry = buildRegistry([
+  ...membersShapes,
+  ...workspaceShapes,
+]);

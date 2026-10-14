@@ -79,6 +79,61 @@ describe("shape proxy", () => {
     expect(upstream.searchParams.get("params[1]")).toBe(user.id);
   });
 
+  it("serves the user's workspaces by membership", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await get("workspaces?offset=-1");
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("workspace");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,name,slug,logo,description,created_at",
+    );
+    expect(upstream.searchParams.get("where")).toContain("user_id = $1");
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
+  it("serves only pending invitations of the user's workspaces", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await get("workspace-invitations?offset=-1");
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("invitation");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,workspace_id,email,role,status,expires_at,created_at,inviter_id",
+    );
+    expect(upstream.searchParams.get("where")).toContain("status = 'pending'");
+    expect(upstream.searchParams.get("where")).toContain("user_id = $1");
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
+  it("serves invitations addressed to the session email, never another", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await app.request(
+      "/api/shapes/my-invitations?" +
+        new URLSearchParams({
+          offset: "-1",
+          "params[1]": "victim@example.com",
+        }),
+    );
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("invitation");
+    expect(upstream.searchParams.get("where")).toContain("status = 'pending'");
+    expect(upstream.searchParams.get("where")).toContain(
+      "lower(email) = lower($1)",
+    );
+    expect(upstream.searchParams.get("params[1]")).toBe(user.email);
+  });
+
   it("forwards protocol parameters and ignores table, where and columns from the client", async () => {
     const { user } = await createWorkspaceMember();
     mockAuthenticatedSession(user);

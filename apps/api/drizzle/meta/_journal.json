@@ -92,6 +92,13 @@
       "when": 1791973355305,
       "tag": "0012_roles_always_read",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791973496439,
+      "tag": "0013_sync_invitations_and_workspaces",
+      "breakpoints": true
     }
   ]
 }
