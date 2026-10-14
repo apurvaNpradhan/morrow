@@ -110,7 +110,7 @@ function AcceptInvitation() {
       const { error } = await authClient.signOut();
       if (error) throw error;
       queryClient.clear();
-      void cleanupSyncedCollections();
+      await cleanupSyncedCollections();
       await navigate({
         to: "/auth/sign-in",
         search: { invitationId: inviteId, email: invitedEmail },

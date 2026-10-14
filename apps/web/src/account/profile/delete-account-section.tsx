@@ -33,7 +33,7 @@ export function DeleteAccountSection() {
       await deleteAccount();
       setOpen(false);
       queryClient.clear();
-      void cleanupSyncedCollections();
+      await cleanupSyncedCollections();
       toast.success(t("settings:informationPage.deleteAccount.success"));
       navigate({ to: "/auth/sign-in" });
     } catch (error) {

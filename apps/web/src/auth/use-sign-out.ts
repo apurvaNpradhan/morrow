@@ -11,12 +11,12 @@ export function useSignOut() {
     mutationFn: async () => {
       const result = await authClient.signOut({
         fetchOptions: {
-          onSuccess: () => {
+          onSuccess: async () => {
             // Drop user-scoped data before leaving so the next sign-in on this
             // browser never sees it.
             queryClient.clear();
-            void cleanupSyncedCollections();
-            navigate({ to: "/auth/sign-in" });
+            await cleanupSyncedCollections();
+            await navigate({ to: "/auth/sign-in" });
           },
         },
       });
