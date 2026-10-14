@@ -86,7 +86,7 @@ export function CommandPalette() {
             onRun: () => {
               if (!workspace) return;
               navigate({
-                to: "/$slug/members",
+                to: "/$slug/settings/workspace/members",
                 params: { slug: workspace.slug },
               });
             },
