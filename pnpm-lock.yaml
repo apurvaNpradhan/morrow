@@ -78,6 +78,9 @@ importers:
       '@oxlint/plugins':
         specifier: 1.85.0
         version: 1.85.0
+      '@tanstack/intent':
+        specifier: ^0.5.5
+        version: 0.5.5
       '@types/node':
         specifier: 26.6.3
         version: 26.6.3
@@ -3412,6 +3415,11 @@ packages:
   '@tanstack/history@1.162.4':
     resolution: {integrity: sha512-utTS5L2OkeYUzXGohL1Z8sefu1GLNOJcxe8Hd6iIdc/Xo1K1nDB2JEp4iSFhvYh33xKC9V91TxrS8qfrpoKobQ==}
     engines: {node: '>=20.19'}
+
+  '@tanstack/intent@0.5.5':
+    resolution: {integrity: sha512-Ei5RqUWgV96HrezTEyDbScy0wZN+17dNo59Am8/3ncv0YIaIxApkiX5LkM488wxe4a1Imdi09nhjFxblxwLMSQ==}
+    engines: {node: '>=20.12.0'}
+    hasBin: true
 
   '@tanstack/match-sorter-utils@9.2.6':
     resolution: {integrity: sha512-DIpUSOhPfQ7u/qfUi/Wgm0wBO56MyBYXGvnlI0NcauDRPqdBUlAZZjW2Dxm92m+k1UWVhKw8YJ4f47+75Aujyw==}
@@ -9075,6 +9083,8 @@ snapshots:
       - typescript
 
   '@tanstack/history@1.162.4': {}
+
+  '@tanstack/intent@0.5.5': {}
 
   '@tanstack/match-sorter-utils@9.2.6':
     dependencies:
