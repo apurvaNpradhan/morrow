@@ -112,7 +112,7 @@ describe("workspace logo", () => {
     expect(await exists(keyOf(first.url))).toBe(false);
     expect(await exists(keyOf(second.url))).toBe(true);
 
-    expect(await client.workspace.removeLogo({ workspaceId })).toEqual({
+    expect(await client.workspace.removeLogo({ workspaceId })).toMatchObject({
       deleted: true,
     });
     expect(await logoOf(workspaceId)).toBeNull();

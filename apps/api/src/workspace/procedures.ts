@@ -102,9 +102,9 @@ export const removeLogo = authed
   .use(requireWorkspacePermission({ workspace: ["update"] }))
   .output(logoDeletedSchema)
   .handler(async ({ input }) => {
-    const { hadLogo } = await setWorkspaceLogo(input.workspaceId, null);
+    const { hadLogo, txid } = await setWorkspaceLogo(input.workspaceId, null);
     await publishLogoChange(input.workspaceId);
-    return { deleted: hadLogo };
+    return { deleted: hadLogo, txid };
   });
 
 export const list = authed

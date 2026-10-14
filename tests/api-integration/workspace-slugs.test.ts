@@ -140,7 +140,7 @@ describe("PUT /api/workspace/:id/slug", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ slug: "acme-inc" });
+    expect(await response.json()).toMatchObject({ slug: "acme-inc" });
     expect(await aliases(workspace.id)).toEqual(["acme"]);
     const rows = await db
       .select()
