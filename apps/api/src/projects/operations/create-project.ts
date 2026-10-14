@@ -3,7 +3,7 @@ import { eq, max, sql } from "drizzle-orm";
 import { generateKeyBetween } from "fractional-indexing";
 import { recordWorkspaceActivity } from "#api/activity/index";
 import { withTxid } from "#api/platform/sync/with-txid";
-import { projectError, violatedConstraint } from "#api/projects/errors";
+import { rethrowViolation } from "#api/projects/errors";
 import { projectColumnTable, projectTable } from "#api/projects/tables";
 
 type NewProject = {
@@ -68,9 +68,8 @@ export async function createProject(input: NewProject) {
     });
     return { id, txid };
   } catch (error) {
-    if (violatedConstraint(error) === "project_workspace_key_uidx") {
-      throw projectError("PROJECT_KEY_TAKEN");
-    }
-    throw error;
+    rethrowViolation(error, {
+      project_workspace_key_uidx: "PROJECT_KEY_TAKEN",
+    });
   }
 }

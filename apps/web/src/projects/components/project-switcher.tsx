@@ -8,7 +8,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/design-system/ui/menu";
-import { useProjectsOutsidePages } from "../queries/use-projects";
+import { useProjectsWithoutSuspense } from "../queries/use-projects";
 import { ProjectIcon } from "./project-icon";
 
 type ProjectSwitcherProps = {
@@ -19,7 +19,7 @@ type ProjectSwitcherProps = {
 /** The breadcrumb entry of a project page: names it and jumps to another one. */
 export function ProjectSwitcher({ workspace, current }: ProjectSwitcherProps) {
   const { t } = useTranslation("projects");
-  const projects = useProjectsOutsidePages(workspace.id).filter(
+  const projects = useProjectsWithoutSuspense(workspace.id).filter(
     (project) => !project.archivedAt || project.id === current.id,
   );
 

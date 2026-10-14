@@ -11,7 +11,7 @@ import { SettingsCard } from "@/app/settings/settings-card";
 import { toast } from "@/design-system/toast";
 import { Button } from "@/design-system/ui/button";
 import { Input } from "@/design-system/ui/input";
-import { createColumn, moveColumn } from "../actions/column-actions";
+import { createColumn, updateColumn } from "../actions/column-actions";
 import { CATEGORY_ICONS } from "../lib/column-style";
 import { useSortableList } from "../lib/use-sortable-list";
 import { ColumnRow } from "./column-row";
@@ -47,7 +47,7 @@ export function ColumnCategoryGroup({
   const sortable = useSortableList({
     items: columns,
     disabled,
-    onMove: (column, position) => moveColumn(column.id, position),
+    onMove: (column, position) => updateColumn(column.id, { position }),
     onError: (error) =>
       toast.error(errorMessage(t, error, t("workflow.reorderError"))),
   });

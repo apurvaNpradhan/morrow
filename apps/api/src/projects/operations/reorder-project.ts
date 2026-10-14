@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
-import { projectError, violatedConstraint } from "#api/projects/errors";
+import { rethrowViolation } from "#api/projects/errors";
 import { assertValidPosition } from "#api/projects/lib/position";
 import { lockProject } from "#api/projects/lib/lock-project";
 import { projectTable } from "#api/projects/tables";
@@ -26,9 +26,8 @@ export async function reorderProject(
     });
     return { txid };
   } catch (error) {
-    if (violatedConstraint(error) === "project_workspace_position_uidx") {
-      throw projectError("POSITION_TAKEN");
-    }
-    throw error;
+    rethrowViolation(error, {
+      project_workspace_position_uidx: "POSITION_TAKEN",
+    });
   }
 }

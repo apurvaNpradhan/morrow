@@ -18,7 +18,7 @@ import { Input } from "@/design-system/ui/input";
 import { Label } from "@/design-system/ui/label";
 import { createProject } from "../actions/project-actions";
 import { suggestProjectKey } from "../lib/suggest-project-key";
-import { useProjectsOutsidePages } from "../queries/use-projects";
+import { useProjectsWithoutSuspense } from "../queries/use-projects";
 import { ProjectIconPicker } from "./project-icon-picker";
 
 type CreateProjectDialogProps = {
@@ -35,7 +35,7 @@ export function CreateProjectDialog({
   const { t } = useTranslation("projects");
   const navigate = useNavigate();
   const takenKeys = new Set(
-    useProjectsOutsidePages(workspace.id).map((project) => project.key),
+    useProjectsWithoutSuspense(workspace.id).map((project) => project.key),
   );
   const [name, setName] = useState("");
   const [typedKey, setTypedKey] = useState<string | null>(null);

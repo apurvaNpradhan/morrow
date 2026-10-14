@@ -23,7 +23,7 @@ export function useProjects(workspaceId: string): ProjectRow[] {
  * Like `useProjects`, for chrome outside the pages (sidebar, switcher): it
  * never suspends, and is empty until sync has delivered, or without a workspace.
  */
-export function useProjectsOutsidePages(
+export function useProjectsWithoutSuspense(
   workspaceId: string | undefined,
 ): ProjectRow[] {
   const { data } = useLiveQuery({

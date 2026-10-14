@@ -42,3 +42,17 @@ export function violatedConstraint(error: unknown): string | null {
   }
   return null;
 }
+
+/**
+ * Turns a unique-index violation of one of `constraints` into its typed
+ * refusal; anything else is rethrown as it was. Call it from a `catch`.
+ */
+export function rethrowViolation(
+  error: unknown,
+  constraints: Record<string, ProjectErrorCode>,
+): never {
+  const violated = violatedConstraint(error);
+  const code = violated === null ? undefined : constraints[violated];
+  if (code) throw projectError(code);
+  throw error;
+}

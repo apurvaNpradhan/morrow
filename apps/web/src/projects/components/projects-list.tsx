@@ -5,7 +5,7 @@ import { errorMessage } from "@/app/lib/error-message";
 import { cn } from "@/design-system/cn";
 import { toast } from "@/design-system/toast";
 import { Button } from "@/design-system/ui/button";
-import { moveProject } from "../actions/project-actions";
+import { updateProject } from "../actions/project-actions";
 import { useSortableList } from "../lib/use-sortable-list";
 import type { ProjectRow } from "@morrow/sync-schemas";
 import { ProjectIcon } from "./project-icon";
@@ -13,17 +13,23 @@ import { ProjectIcon } from "./project-icon";
 type ProjectsListProps = {
   slug: string;
   projects: ProjectRow[];
-  /** Whether rows can be reordered and have a settings shortcut. */
-  canEdit: boolean;
+  canReorder: boolean;
+  /** Whether rows get a shortcut to the project's settings. */
+  canOpenSettings: boolean;
 };
 
 /** Projects as rows: icon, name, key, description. Reorderable when editable. */
-export function ProjectsList({ slug, projects, canEdit }: ProjectsListProps) {
+export function ProjectsList({
+  slug,
+  projects,
+  canReorder,
+  canOpenSettings,
+}: ProjectsListProps) {
   const { t } = useTranslation("projects");
   const sortable = useSortableList({
     items: projects,
-    disabled: !canEdit,
-    onMove: (project, position) => moveProject(project.id, position),
+    disabled: !canReorder,
+    onMove: (project, position) => updateProject(project.id, { position }),
     onError: (error) =>
       toast.error(errorMessage(t, error, t("list.reorderError"))),
   });
@@ -45,7 +51,7 @@ export function ProjectsList({ slug, projects, canEdit }: ProjectsListProps) {
                 "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary",
             )}
           >
-            {canEdit ? (
+            {canReorder ? (
               <button
                 type="button"
                 aria-label={t("list.reorderHandle", { name: project.name })}
@@ -82,7 +88,7 @@ export function ProjectsList({ slug, projects, canEdit }: ProjectsListProps) {
                 ) : null}
               </span>
             </Link>
-            {canEdit ? (
+            {canOpenSettings ? (
               <Button
                 variant="ghost"
                 size="icon-sm"

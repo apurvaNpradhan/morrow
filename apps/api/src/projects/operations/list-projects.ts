@@ -15,11 +15,18 @@ export async function listProjects(workspaceId: string) {
     .innerJoin(projectTable, eq(projectTable.id, projectColumnTable.projectId))
     .where(eq(projectTable.workspaceId, workspaceId));
 
+  const byProject = new Map<
+    string,
+    (typeof columns)[number]["project_column"][]
+  >();
+  for (const { project_column: column } of columns) {
+    byProject.set(column.projectId, [
+      ...(byProject.get(column.projectId) ?? []),
+      column,
+    ]);
+  }
   return projects.sort(comparePosition).map((project) => ({
     ...project,
-    columns: columns
-      .filter((row) => row.project_column.projectId === project.id)
-      .map((row) => row.project_column)
-      .sort(compareColumns),
+    columns: (byProject.get(project.id) ?? []).sort(compareColumns),
   }));
 }
