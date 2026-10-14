@@ -92,6 +92,13 @@ export const authenticateApi: MiddlewareHandler = async (c, next) => {
       return await eventContext.run({ actorUserId: c.get("userId") }, next);
     } catch (error) {
       if (!(error instanceof HTTPException)) {
+        // The browser gave up (a long-polling shape request cancelled on
+        // navigation or sign-out); nobody is waiting for an answer.
+        if (c.req.raw.signal.aborted) {
+          throw new HTTPException(499 as 500, {
+            message: "Client closed request",
+          });
+        }
         logFailure(
           "auth.api-authentication",
           {
