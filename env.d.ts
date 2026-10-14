@@ -42,6 +42,21 @@ export type CoercedEnvSchema = {
   DATABASE_URL: string;
   
   /**
+   * **ELECTRIC_URL**  
+   * Internal URL of the Electric sync service. Morrow proxies browser shape  
+   * requests to it, so it is never exposed publicly.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M24%2021V9h-2v14h8v-2zm-4-6v-4c0-1.103-.897-2-2-2h-6v14h2v-6h1.48l2.335%206h2.145l-2.333-6H18c1.103%200%202-.897%202-2m-6-4h4v4h-4zM8%2023H4c-1.103%200-2-.897-2-2V9h2v12h4V9h2v12c0%201.103-.897%202-2%202%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  ELECTRIC_URL: string;
+  
+  /**
+   * **ELECTRIC_SECRET** 🔐 _sensitive_  
+   * Authenticates Morrow to Electric; must equal Electric's ELECTRIC_SECRET.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  ELECTRIC_SECRET: string;
+  
+  /**
    * **AUTH_SECRET** 🔐 _sensitive_  
    * Signs sessions. Generate with `openssl rand -hex 32` and keep it stable.  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
@@ -130,25 +145,25 @@ export type CoercedEnvSchema = {
    * **S3_ENDPOINT**  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
    */
-  S3_ENDPOINT?: string;
+  S3_ENDPOINT: string;
   
   /**
    * **S3_BUCKET**  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
    */
-  S3_BUCKET?: string;
+  S3_BUCKET: string;
   
   /**
    * **S3_ACCESS_KEY_ID** 🔐 _sensitive_  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
    */
-  S3_ACCESS_KEY_ID?: string;
+  S3_ACCESS_KEY_ID: string;
   
   /**
    * **S3_SECRET_ACCESS_KEY** 🔐 _sensitive_  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
    */
-  S3_SECRET_ACCESS_KEY?: string;
+  S3_SECRET_ACCESS_KEY: string;
   
   /**
    * **S3_REGION**  
@@ -183,9 +198,11 @@ export type CoercedEnvSchema = {
   
   /**
    * **S3_PUBLIC_BASE_URL**  
+   * Public base of the bucket, with no trailing slash. Required for avatars.  
+   * Development points at the Compose MinIO from `pnpm dev:services`.  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
    */
-  S3_PUBLIC_BASE_URL?: string;
+  S3_PUBLIC_BASE_URL: string;
   
   /**
    * **SENTRY_DSN**  
@@ -261,11 +278,11 @@ export type CoercedEnvSchema = {
   
 };
 
-type _CoercedEnvSchema_9b588899 = CoercedEnvSchema;
+type _CoercedEnvSchema_d2ced906 = CoercedEnvSchema;
 
 declare module 'varlock/env' {
-  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_9b588899> {}
-  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_9b588899, 'NODE_ENV' | 'MORROW_CLIENT_URL' | 'MORROW_API_URL' | 'TRUSTED_PROXIES' | 'ADMIN_EMAILS' | 'REGISTRATION_OPEN' | 'MAX_WORKSPACES_PER_USER' | 'GOOGLE_CLIENT_ID' | 'GITHUB_CLIENT_ID' | 'EMAIL_FROM' | 'MORROW_EMAIL_CONSOLE' | 'S3_ENDPOINT' | 'S3_BUCKET' | 'S3_REGION' | 'S3_FORCE_PATH_STYLE' | 'S3_MAX_IMAGE_UPLOAD_BYTES' | 'S3_PRESIGN_TTL_SECONDS' | 'S3_KEY_PREFIX' | 'S3_PUBLIC_BASE_URL' | 'SENTRY_DSN' | 'SENTRY_ENVIRONMENT' | 'SENTRY_TRACES_SAMPLE_RATE' | 'SENTRY_PROFILES_SAMPLE_RATE' | 'SENTRY_RELEASE' | 'SENTRY_ORG' | 'SENTRY_PROJECT' | 'VITE_API_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'VITE_SENTRY_DSN'>> {}
+  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_d2ced906> {}
+  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_d2ced906, 'NODE_ENV' | 'MORROW_CLIENT_URL' | 'MORROW_API_URL' | 'TRUSTED_PROXIES' | 'ELECTRIC_URL' | 'ADMIN_EMAILS' | 'REGISTRATION_OPEN' | 'MAX_WORKSPACES_PER_USER' | 'GOOGLE_CLIENT_ID' | 'GITHUB_CLIENT_ID' | 'EMAIL_FROM' | 'MORROW_EMAIL_CONSOLE' | 'S3_ENDPOINT' | 'S3_BUCKET' | 'S3_REGION' | 'S3_FORCE_PATH_STYLE' | 'S3_MAX_IMAGE_UPLOAD_BYTES' | 'S3_PRESIGN_TTL_SECONDS' | 'S3_KEY_PREFIX' | 'S3_PUBLIC_BASE_URL' | 'SENTRY_DSN' | 'SENTRY_ENVIRONMENT' | 'SENTRY_TRACES_SAMPLE_RATE' | 'SENTRY_PROFILES_SAMPLE_RATE' | 'SENTRY_RELEASE' | 'SENTRY_ORG' | 'SENTRY_PROJECT' | 'VITE_API_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'VITE_SENTRY_DSN'>> {}
 }
 
 
@@ -275,17 +292,17 @@ export type EnvSchemaAsStrings = {
       : (NonNullable<CoercedEnvSchema[Property]> extends boolean ? ('true' | 'false') : string)
 };
 
-type _EnvSchemaAsStrings_9b588899 = EnvSchemaAsStrings;
+type _EnvSchemaAsStrings_d2ced906 = EnvSchemaAsStrings;
 declare global {
 
   // add types for global import.meta.env
-  interface ImportMetaEnv extends _EnvSchemaAsStrings_9b588899 {}
+  interface ImportMetaEnv extends _EnvSchemaAsStrings_d2ced906 {}
   interface ImportMeta {
     readonly env: ImportMetaEnv;
   }
 
   // add types for global process.env
   namespace NodeJS {
-    interface ProcessEnv extends _EnvSchemaAsStrings_9b588899 {}
+    interface ProcessEnv extends _EnvSchemaAsStrings_d2ced906 {}
   }
 }

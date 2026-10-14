@@ -45,21 +45,8 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/morrow_test
+      DATABASE_URL: postgres://morrow:morrow_local_dev@localhost:5432/morrow
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
@@ -70,5 +57,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Compose, not a service container: Postgres must start with logical
+      # replication, which a service container cannot configure.
+      - name: Start Postgres and Electric
+        run: |
+          docker compose -f compose.local.yml up -d --wait postgres
+          NODE_ENV=test pnpm --filter @morrow/api db:migrate
+          docker compose -f compose.local.yml up -d --wait electric
       - name: API integration tests
         run: pnpm test:integration

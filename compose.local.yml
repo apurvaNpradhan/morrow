@@ -1,6 +1,14 @@
 services:
   postgres:
     image: postgres:16-alpine
+    # Electric reads the write-ahead log, so Postgres must log at the logical
+    # level. The WAL cap stops a stopped Electric from filling the disk.
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_slot_wal_keep_size=10GB
     environment:
       POSTGRES_DB: morrow
       POSTGRES_USER: morrow
@@ -9,11 +17,29 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/electric-role.sql:/docker-entrypoint-initdb.d/electric-role.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U morrow -d morrow"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Sync service: streams the synced tables to the browser through Morrow's
+  # /api/shapes proxy. Reads Postgres through the `electric` replication role.
+  electric:
+    image: electricsql/electric@sha256:efb6fa43859d67cb8c73439e0c8bc0f7a3daa467500fb06f2a924bcb2070c139
+    environment:
+      DATABASE_URL: postgresql://electric:electric_local_dev@postgres:5432/morrow?sslmode=disable
+      ELECTRIC_SECRET: morrow_local_electric_secret
+      ELECTRIC_MANUAL_TABLE_PUBLISHING: "true"
+    ports:
+      - "127.0.0.1:3010:3000"
+    volumes:
+      - electric_data:/var/lib/electric
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
   # S3-compatible storage for avatars; production uses Cloudflare R2 through
   # the same S3_* variables. `minio-init` makes the buckets public-read, as the
@@ -69,6 +95,8 @@ services:
       DATABASE_URL: postgresql://morrow:morrow_local_dev@postgres:5432/morrow
       AUTH_SECRET: ${AUTH_SECRET:-local-development-secret-change-before-deploying-000000}
       MORROW_CLIENT_URL: ${MORROW_CLIENT_URL:-http://localhost:1337}
+      ELECTRIC_URL: http://electric:3000
+      ELECTRIC_SECRET: morrow_local_electric_secret
       MAX_WORKSPACES_PER_USER: ${MAX_WORKSPACES_PER_USER:-3}
       MORROW_EMAIL_CONSOLE: ${MORROW_EMAIL_CONSOLE:-false}
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
@@ -97,3 +125,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  electric_data:
