@@ -10,6 +10,10 @@
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
 		},
+		"./capabilities": {
+			"types": "./dist/capabilities.d.ts",
+			"default": "./dist/capabilities.js"
+		},
 		"./workspace-slug": {
 			"types": "./dist/workspace-slug.d.ts",
 			"default": "./dist/workspace-slug.js"

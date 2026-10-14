@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { authClient } from "./lib/auth-client";
+import { forgetSession } from "./lib/session";
 import { cleanupSyncedCollections } from "@/app/sync/synced-collections";
 
 export function useSignOut() {
@@ -14,6 +15,7 @@ export function useSignOut() {
           onSuccess: async () => {
             // Drop user-scoped data before leaving so the next sign-in on this
             // browser never sees it.
+            forgetSession();
             queryClient.clear();
             await cleanupSyncedCollections();
             await navigate({ to: "/auth/sign-in" });

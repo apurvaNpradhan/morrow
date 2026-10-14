@@ -1,5 +1,6 @@
 import { redirect } from "@tanstack/react-router";
 import { workspaceUrl } from "@morrow/permissions/workspace-url";
+import { forgetSession } from "@/auth";
 import { rpc } from "@/app/lib/orpc";
 import { toNavigation } from "./destination";
 
@@ -25,6 +26,7 @@ export async function finishOnboarding({
   workspaceSlug?: string;
 }): Promise<never> {
   await rpc.onboarding.complete();
+  forgetSession();
   const destination = getFinishDestination({ redirectTo, workspaceSlug });
   throw redirect({ ...toNavigation(destination), replace: true } as never);
 }

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { useWorkspacePermission } from "./use-workspace-permission";
 
-const { can } = vi.hoisted(() => ({ can: vi.fn() }));
+const { capabilities } = vi.hoisted(() => ({ capabilities: vi.fn() }));
 
 vi.mock("./use-active-workspace", () => ({
   useActiveWorkspace: () => ({ data: { id: "workspace-1" } }),
@@ -13,7 +13,7 @@ vi.mock("@/members/queries/use-active-workspace-user", () => ({
   useGetActiveWorkspaceUser: () => ({ data: { role: "member" } }),
 }));
 vi.mock("@/app/lib/orpc", () => ({
-  rpc: { workspace: { can } },
+  rpc: { workspace: { capabilities } },
 }));
 
 function createWrapper() {
@@ -28,16 +28,13 @@ function createWrapper() {
 }
 
 describe("useWorkspacePermission", () => {
-  beforeEach(() => can.mockReset());
+  beforeEach(() => capabilities.mockReset());
 
-  it("checks workspace and member capabilities through the server", async () => {
-    can.mockImplementation(
-      async (input?: { permissions: Record<string, string[]> }) => ({
-        success:
-          input?.permissions.workspace?.includes("read") === true ||
-          input?.permissions.invitation?.includes("create") === true,
-      }),
-    );
+  it("reads every capability from the server in one call", async () => {
+    capabilities.mockResolvedValue({
+      inviteUsers: true,
+      deleteWorkspace: false,
+    });
 
     const { result } = renderHook(() => useWorkspacePermission(), {
       wrapper: createWrapper(),
@@ -48,5 +45,7 @@ describe("useWorkspacePermission", () => {
     );
     expect(result.current.canInviteUsers()).toBe(true);
     expect(result.current.canDeleteWorkspace()).toBe(false);
+    expect(result.current.canManageRoles()).toBe(false);
+    expect(capabilities).toHaveBeenCalledTimes(1);
   });
 });

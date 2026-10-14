@@ -1,6 +1,7 @@
 import { beforeEach, expect, it, vi } from "vite-plus/test";
 import { Route } from "./auth";
 
+import { forgetSession } from "@/auth/lib/session";
 const mocks = vi.hoisted(() => ({ getSession: vi.fn() }));
 vi.mock("@/auth/lib/auth-client", () => ({ authClient: mocks }));
 vi.mock("@tanstack/react-router", () => ({
@@ -11,7 +12,10 @@ const beforeLoad = Route.options.beforeLoad as (context: {
   location: { pathname: string };
 }) => Promise<unknown>;
 
-beforeEach(() => mocks.getSession.mockReset());
+beforeEach(() => {
+  mocks.getSession.mockReset();
+  forgetSession();
+});
 
 it.each(["/auth/sign-in", "/auth/sign-up", "/auth/verify-otp"])(
   "keeps the authenticated redirect on %s",

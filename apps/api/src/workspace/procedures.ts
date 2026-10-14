@@ -2,6 +2,7 @@ import { type } from "@orpc/server";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { CAPABILITIES } from "@morrow/permissions/capabilities";
 import { recordWorkspaceActivity } from "#api/activity/index";
 import { db } from "#api/platform/database/index";
 import { workspaceUserTable } from "#api/platform/database/schema";
@@ -202,6 +203,31 @@ export const can = authed
     success: await userCan(context.user, input.workspaceId, input.permissions),
   }));
 
+export const capabilities = authed
+  .input(z.object({ workspaceId }))
+  .output(z.record(z.string(), z.boolean()))
+  .handler(async ({ context, input }) => {
+    const entries = await Promise.all(
+      Object.entries(CAPABILITIES).map(
+        async ([name, permissions]) =>
+          [
+            name,
+            await userCan(
+              context.user,
+              input.workspaceId,
+              Object.fromEntries(
+                Object.entries(permissions).map(([resource, actions]) => [
+                  resource,
+                  [...actions],
+                ]),
+              ),
+            ),
+          ] as const,
+      ),
+    );
+    return Object.fromEntries(entries);
+  });
+
 export const workspaceRouter = {
   list,
   create,
@@ -209,6 +235,7 @@ export const workspaceRouter = {
   remove,
   setActive,
   can,
+  capabilities,
   get,
   resolve,
   renameSlug,

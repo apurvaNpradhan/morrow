@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { adminAccessQueryOptions } from "@/admin";
-import { authClient } from "@/auth";
+import { loadSession } from "@/auth";
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/$slug/settings/admin",
@@ -8,7 +8,7 @@ export const Route = createFileRoute(
   beforeLoad: async ({ context, params }) => {
     let userId = context.session?.user.id;
     if (!userId && context.sessionError) {
-      const { data } = await authClient.getSession();
+      const { data } = await loadSession();
       userId = data?.user.id;
       if (!userId) {
         throw redirect({ to: "/auth/sign-in" });

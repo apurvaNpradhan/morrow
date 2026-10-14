@@ -84,6 +84,15 @@ describe("workspace procedures", () => {
       }),
     ).toEqual({ success: true });
 
+    expect(
+      await client.workspace.capabilities({ workspaceId: created.id }),
+    ).toMatchObject({
+      manageWorkspace: true,
+      deleteWorkspace: true,
+      inviteUsers: true,
+      manageRoles: true,
+    });
+
     await client.workspace.remove({ workspaceId: created.id });
     expect(await client.workspace.list()).toEqual([]);
   });

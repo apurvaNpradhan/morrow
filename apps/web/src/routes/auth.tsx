@@ -1,11 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { authClient } from "@/auth";
+import { loadSession } from "@/auth";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
     let session = null;
     try {
-      const { data } = await authClient.getSession();
+      const { data } = await loadSession();
       session = data;
     } catch (error) {
       if (import.meta.env.DEV) console.warn("getSession failed", error);

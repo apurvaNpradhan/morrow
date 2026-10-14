@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { Route } from "./_authenticated";
 
+import { forgetSession } from "@/auth/lib/session";
 const getSession = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
@@ -33,7 +34,10 @@ const beforeLoad = (
 const unfinished = { user: { id: "u1", onboardingCompletedAt: null } };
 const finished = { user: { id: "u1", onboardingCompletedAt: new Date() } };
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  forgetSession();
+});
 
 describe("authenticated layout guard", () => {
   it("sends an unfinished user into onboarding, remembering the deep link", async () => {
