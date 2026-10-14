@@ -120,9 +120,6 @@ function evictPrivateQueries(
     });
     const privatePrefixes = new Set([
       "active-organization",
-      "workspace-users",
-      "workspace-user",
-      "active-workspace-users",
       "workspace-roles",
       "workspace-capabilities",
       "workspace-invites",

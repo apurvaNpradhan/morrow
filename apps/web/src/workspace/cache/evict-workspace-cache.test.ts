@@ -19,7 +19,7 @@ it("evicts revoked workspace data while preserving another workspace", () => {
     name: "Private workspace",
   });
   client.setQueryData(
-    ["workspace-users", "revoked"],
+    ["workspace-roles", "revoked"],
     [{ id: "member-1", workspaceId: "revoked" }],
   );
   client.setQueryData(
@@ -35,7 +35,7 @@ it("evicts revoked workspace data while preserving another workspace", () => {
   expect(
     client.getQueryData(["workspace-metadata", "revoked"]),
   ).toBeUndefined();
-  expect(client.getQueryData(["workspace-users", "revoked"])).toBeUndefined();
+  expect(client.getQueryData(["workspace-roles", "revoked"])).toBeUndefined();
   expect(client.getQueryData([["activity", "list"], {}])).toBeUndefined();
   client.clear();
 });
@@ -44,7 +44,7 @@ it("cancels an unscoped member query when workspace access is revoked", async ()
   const client = new QueryClient();
   let finish!: (value: unknown) => void;
   const pending = client.fetchQuery({
-    queryKey: ["workspace-users", "unknown"],
+    queryKey: ["workspace-roles", "unknown"],
     queryFn: () =>
       new Promise((resolve) => {
         finish = resolve;
@@ -54,7 +54,7 @@ it("cancels an unscoped member query when workspace access is revoked", async ()
   evictWorkspaceCache(client, "revoked");
   finish([{ id: "member-1", workspaceId: "revoked" }]);
   await pending.catch(() => undefined);
-  expect(client.getQueryData(["workspace-users", "unknown"])).toBeUndefined();
+  expect(client.getQueryData(["workspace-roles", "unknown"])).toBeUndefined();
   client.clear();
 });
 
@@ -72,7 +72,7 @@ it("reconciles missed revocations against a reconnect access snapshot", () => {
     name: "Private workspace",
   });
   client.setQueryData(
-    ["workspace-users", "revoked"],
+    ["workspace-roles", "revoked"],
     [{ id: "member-1", workspaceId: "revoked" }],
   );
 
@@ -84,7 +84,7 @@ it("reconciles missed revocations against a reconnect access snapshot", () => {
   expect(
     client.getQueryData(["workspace-metadata", "revoked"]),
   ).toBeUndefined();
-  expect(client.getQueryData(["workspace-users", "revoked"])).toBeUndefined();
+  expect(client.getQueryData(["workspace-roles", "revoked"])).toBeUndefined();
   client.clear();
 });
 
@@ -93,7 +93,7 @@ it("refetches an active member query whose pending response has no scope yet", a
   let finishOld!: (value: unknown) => void;
   let reads = 0;
   const options = {
-    queryKey: ["workspace-users", "unknown"],
+    queryKey: ["workspace-roles", "unknown"],
     staleTime: Infinity,
     retry: false,
     queryFn: () => {
@@ -123,8 +123,8 @@ it.each(["revocation", "snapshot"])(
   "preserves nested workspace-scoped member keys during %s",
   (kind) => {
     const client = new QueryClient();
-    const allowedKey = ["workspace-users", { workspaceId: "allowed" }];
-    const revokedKey = ["workspace-users", { workspaceId: "revoked" }];
+    const allowedKey = ["workspace-roles", { workspaceId: "allowed" }];
+    const revokedKey = ["workspace-roles", { workspaceId: "revoked" }];
     client.setQueryData(allowedKey, [{ id: "member-1" }]);
     client.setQueryData(revokedKey, [{ id: "member-2" }]);
 

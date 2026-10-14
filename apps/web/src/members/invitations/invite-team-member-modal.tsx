@@ -1,5 +1,4 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -41,7 +40,6 @@ type InviteMemberValues = z.infer<typeof inviteMemberSchema>;
 export function InviteTeamMemberModal({ open, onClose }: Props) {
   const { t } = useTranslation();
   const { mutateAsync } = useInviteWorkspaceUser();
-  const queryClient = useQueryClient();
   const { data: workspace } = useActiveWorkspace();
   const workspaceId = workspace?.id;
   const { canInviteUsers } = useWorkspacePermission();
@@ -55,11 +53,6 @@ export function InviteTeamMemberModal({ open, onClose }: Props) {
   });
 
   const closeModal = () => {
-    if (workspaceId) {
-      void queryClient.invalidateQueries({
-        queryKey: ["workspace-users", workspaceId],
-      });
-    }
     onClose();
   };
 
@@ -73,9 +66,6 @@ export function InviteTeamMemberModal({ open, onClose }: Props) {
         email,
         workspaceId,
         role: "member",
-      });
-      await queryClient.refetchQueries({
-        queryKey: ["workspace-users", workspaceId],
       });
       toast.success(t("team:inviteModal.success"));
       if (invitation?.id) {
