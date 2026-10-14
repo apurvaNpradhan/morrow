@@ -93,6 +93,7 @@ export async function invite(page: Page, slug: string, email: string) {
   await page.getByRole("button", { name: "Send Invitation" }).click();
   await expect(page.getByText("Invitation created")).toBeVisible();
   await expect.poll(() => consoleInvitationId(email)).toBeTruthy();
+  await page.getByRole("button", { name: "Done" }).click();
   return consoleInvitationId(email) as string;
 }
 

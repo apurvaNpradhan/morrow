@@ -1,4 +1,5 @@
 import { rpc } from "@/app/lib/orpc";
+import { waitForRow } from "@/app/sync/wait-for-row";
 import { workspaceCollection } from "@/workspace";
 import { setActiveWorkspace } from "@/workspace";
 import { workspaceMemberCollection } from "../../collections/workspace-member-collection";
@@ -34,9 +35,9 @@ export async function acceptInvitation(invitationId: string, userId: string) {
   await setActiveWorkspace(workspaceId).catch(() => {});
   try {
     await waitForMembership(workspaceId, userId);
-    // The invitation already delivered the workspace row.
-    const workspace = workspaceCollection.get(workspaceId);
-    if (!workspace) throw new Error("Workspace has not synced");
+    // The pending invitation had delivered the workspace row, and the row
+    // leaves with it before the membership brings it back.
+    const workspace = await waitForRow(workspaceCollection, workspaceId);
     return { workspaceId, slug: workspace.slug };
   } catch {
     throw new InvitationAcceptedError();
