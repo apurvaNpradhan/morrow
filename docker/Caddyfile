@@ -1,0 +1,13 @@
+# Dev only: serves the Vite dev server over HTTPS so the browser uses HTTP/2.
+# Over HTTP/1.1 it opens at most six connections per host, and the sync
+# long-polls hold five of them, which stalls every other request.
+{
+	skip_install_trust
+	auto_https disable_redirects
+}
+
+localhost:5443 {
+	bind 127.0.0.1
+	tls internal
+	reverse_proxy localhost:5173
+}

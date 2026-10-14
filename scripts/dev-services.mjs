@@ -1,4 +1,5 @@
-// Starts the local Postgres, MinIO (S3 for avatars) and Electric (sync), makes
+// Starts the local Postgres, MinIO (S3 for avatars), Electric (sync) and Caddy
+// (HTTPS/HTTP2 for the dev server), makes
 // the buckets and applies migrations. Safe to re-run; `pnpm dev` runs it first.
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -22,7 +23,7 @@ const compose = [
   "compose.local.yml",
 ];
 
-run("docker", [...compose, "up", "-d", "--wait", "postgres", "minio"]);
+run("docker", [...compose, "up", "-d", "--wait", "postgres", "minio", "caddy"]);
 // A volume created before Electric existed has no `electric` role; the init
 // script only runs on a fresh volume, so apply it again (it is idempotent).
 run("docker", [
@@ -45,5 +46,5 @@ run("pnpm", ["--filter", "@morrow/api", "db:migrate"]);
 // Electric needs the publication the migrations create.
 run("docker", [...compose, "up", "-d", "--wait", "electric"]);
 console.log(
-  "dev-services: Postgres, MinIO and Electric are ready on :5432, :9020 (console :9021) and :3010",
+  "dev-services: Postgres, MinIO and Electric are ready on :5432, :9020 (console :9021) and :3010. Open the app at https://localhost:5443",
 );

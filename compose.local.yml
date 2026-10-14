@@ -41,6 +41,18 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Dev only: HTTPS and HTTP/2 in front of the Vite dev server (see
+  # docker/Caddyfile). Open https://localhost:5443.
+  caddy:
+    image: caddy@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+    # On the host network it reaches the dev server on localhost without a
+    # firewall rule for container-to-host traffic.
+    network_mode: host
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    restart: unless-stopped
+
   # S3-compatible storage for avatars; production uses Cloudflare R2 through
   # the same S3_* variables. `minio-init` makes the buckets public-read, as the
   # R2 bucket is. Ports differ from Callus's MinIO so both can run together.
@@ -126,3 +138,4 @@ volumes:
   postgres_data:
   minio_data:
   electric_data:
+  caddy_data:
