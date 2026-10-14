@@ -22,7 +22,7 @@ import { Alert, AlertDescription } from "@/design-system/ui/alert";
 import { Button } from "@/design-system/ui/button";
 import { acceptInvitation, InvitationAcceptedError } from "@/members";
 import { useGetInvitationDetails } from "@/members";
-import { authClient, forgetSession } from "@/auth";
+import { authClient } from "@/auth";
 import { toast } from "@/design-system/toast";
 import { AuthLayout } from "@/auth";
 import { errorMessage } from "@/app/lib/error-message";
@@ -109,7 +109,6 @@ function AcceptInvitation() {
     try {
       const { error } = await authClient.signOut();
       if (error) throw error;
-      forgetSession();
       queryClient.clear();
       await cleanupSyncedCollections();
       await navigate({
