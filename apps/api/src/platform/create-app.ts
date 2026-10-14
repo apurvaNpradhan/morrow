@@ -13,6 +13,7 @@ import { clientIpMiddleware } from "./http/client-ip";
 import { requestLoggingOptions } from "./logger";
 import { mountOrpc } from "./orpc/mount";
 import { serveWebApp } from "./serve-web-app";
+import { shapeRoutes } from "./sync/shape-proxy";
 
 type AppVariables = {
   Variables: {
@@ -69,7 +70,12 @@ export function createApp() {
     Sentry.captureException(err);
     return c.json({ message: "Internal Server Error" }, 500);
   });
-  app.use(compress());
+  // Shape responses are streamed to a client that long-polls them; buffering
+  // them for compression would stall every update.
+  const compressResponses = compress();
+  app.use(async (c, next) =>
+    c.req.path.startsWith("/api/shapes/") ? next() : compressResponses(c, next),
+  );
 
   const api = new Hono<ApiVariables>();
 
@@ -81,6 +87,7 @@ export function createApp() {
   api.route("/", mcpRoutes);
 
   api.use("*", authenticateApi);
+  api.route("/", shapeRoutes);
 
   app.route("/", mcpWellKnownRoutes);
 

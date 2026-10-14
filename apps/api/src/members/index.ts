@@ -1,4 +1,5 @@
 export { membersRouter } from "./procedures";
+export { membersShapes } from "./shapes";
 export { memberHooks } from "./lifecycle";
 export { sendInvitationEmail } from "./invitations/invitation-email";
 export { membersMcpTools } from "./mcp-tools";

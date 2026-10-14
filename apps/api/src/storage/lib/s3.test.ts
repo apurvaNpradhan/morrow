@@ -231,8 +231,8 @@ describe("S3 draft asset helpers", () => {
       accessKeyId: "",
       secretAccessKey: "",
     });
-    delete process.env.S3_ENDPOINT;
-    delete process.env.S3_BUCKET;
+    process.env.S3_ENDPOINT = "";
+    process.env.S3_BUCKET = "";
     expect(() => assertStorageConfigured()).toThrow(
       /S3 uploads are not configured/,
     );
