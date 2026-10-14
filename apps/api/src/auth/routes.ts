@@ -92,7 +92,14 @@ export const authenticateApi: MiddlewareHandler = async (c, next) => {
       return await eventContext.run({ actorUserId: c.get("userId") }, next);
     } catch (error) {
       if (!(error instanceof HTTPException)) {
-        logFailure("auth.api-authentication", {}, error);
+        logFailure(
+          "auth.api-authentication",
+          {
+            cause: error instanceof Error ? error.message : String(error),
+            code: (error as { code?: string }).code,
+          },
+          error,
+        );
         throw new HTTPException(500, { message: "Internal Server Error" });
       }
       throw error;
