@@ -27,13 +27,16 @@ const workspaceMembers = defineShape({
   }),
 });
 
-/** The people behind those members: name, email and avatar, never tokens. */
+/**
+ * The people behind those members, and the people who invited the user:
+ * name, email and avatar, never tokens.
+ */
 const workspaceMemberUsers = defineShape({
   shape: workspaceMemberUsersShape,
   table: userTable,
-  where: ({ userId }) => ({
-    sql: "id IN (SELECT user_id FROM workspace_member WHERE workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1))",
-    params: [userId],
+  where: ({ userId, verifiedEmail }) => ({
+    sql: "id IN (SELECT user_id FROM workspace_member WHERE workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)) OR id IN (SELECT inviter_id FROM invitation WHERE status = 'pending' AND lower(email) = lower($2))",
+    params: [userId, verifiedEmail],
   }),
 });
 
@@ -55,9 +58,9 @@ const workspaceInvitations = defineShape({
 const myInvitations = defineShape({
   shape: myInvitationsShape,
   table: invitationTable,
-  where: ({ userEmail }) => ({
+  where: ({ verifiedEmail }) => ({
     sql: "status = 'pending' AND lower(email) = lower($1)",
-    params: [userEmail],
+    params: [verifiedEmail],
   }),
 });
 
