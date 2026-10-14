@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { recordWorkspaceActivity } from "#api/activity/index";
 import { config } from "#api/platform/config";
 import { db, schema } from "#api/platform/database/index";
+import { projectBackgroundKeys } from "#api/projects/index";
 import { ownedImageKey, queueStorageCleanup } from "#api/storage/index";
 import { getCreationState } from "./operations/get-creation-status";
 import { decideWorkspaceCreation } from "./lib/creation-policy";
@@ -38,6 +39,13 @@ function assertNoClientLogo(logo: string | null | undefined) {
     message: "Change the workspace logo with the logo upload endpoint.",
   });
 }
+
+/**
+ * Background images of a workspace that is being deleted, by workspace id: the
+ * project rows go with the workspace, so their keys are read beforehand and
+ * queued once the deletion has succeeded.
+ */
+const backgroundsOfDeletedWorkspaces = new Map<string, string[]>();
 
 /** Workspace lifecycle: limits, name and slug rules, role seeding, activity. */
 export const workspaceHooks = {
@@ -118,14 +126,24 @@ export const workspaceHooks = {
       );
     }
   },
+  beforeDeleteOrganization: async ({ organization }) => {
+    backgroundsOfDeletedWorkspaces.set(
+      organization.id,
+      await projectBackgroundKeys(db, organization.id),
+    );
+  },
   afterDeleteOrganization: async ({ organization }) => {
-    const key = ownedImageKey(
+    const logo = ownedImageKey(
       organization.logo,
       "workspace-logos",
       organization.id,
     );
-    if (key) {
-      await queueStorageCleanup(db, [key]).catch(() => {
+    const backgrounds =
+      backgroundsOfDeletedWorkspaces.get(organization.id) ?? [];
+    backgroundsOfDeletedWorkspaces.delete(organization.id);
+    const keys = logo ? [logo, ...backgrounds] : backgrounds;
+    if (keys.length > 0) {
+      await queueStorageCleanup(db, keys).catch(() => {
         logFailure("workspace.queue-logo-cleanup");
       });
     }

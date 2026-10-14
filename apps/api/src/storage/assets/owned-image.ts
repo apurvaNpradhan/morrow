@@ -12,7 +12,7 @@ import {
 import { logFailure } from "#api/platform/logger";
 
 /** Each public image lives under `<folder>/<ownerId>/`, so ownership can be read off the key. */
-export type ImageFolder = "avatars" | "workspace-logos";
+export type ImageFolder = "avatars" | "workspace-logos" | "project-backgrounds";
 
 const unavailable = () =>
   new ORPCError("SERVICE_UNAVAILABLE", {

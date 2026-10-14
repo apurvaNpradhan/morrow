@@ -97,6 +97,51 @@ describe("shape proxy", () => {
     expect(upstream.searchParams.get("params[2]")).toBe(user.email);
   });
 
+  it("serves projects, archived ones included, of the user's workspaces", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await get("projects?offset=-1");
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("project");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,workspace_id,key,name,description,icon,background_url,archived_at,last_task_number,position,created_at,updated_at",
+    );
+    expect(upstream.searchParams.get("where")).toBe(
+      "workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",
+    );
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
+  it("serves the columns of those projects only", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await app.request(
+      "/api/shapes/project-columns?" +
+        new URLSearchParams({
+          offset: "-1",
+          table: "user",
+          where: "true",
+          "params[1]": "someone-else",
+        }),
+    );
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("project_column");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,project_id,name,category,color,position,created_at,updated_at",
+    );
+    expect(upstream.searchParams.get("where")).toContain(
+      "project_id IN (SELECT id FROM project WHERE workspace_id IN (",
+    );
+    expect(upstream.searchParams.get("where")).toContain("user_id = $1");
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
   it("serves only pending invitations of the user's workspaces", async () => {
     const { user } = await createWorkspaceMember();
     mockAuthenticatedSession(user);

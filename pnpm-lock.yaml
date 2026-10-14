@@ -162,6 +162,9 @@ importers:
       evlog:
         specifier: ^2.31.0
         version: 2.31.0(@orpc/server@2.0.0-beta.43)(hono@4.13.13)(next@16.3.8(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@types/node@26.6.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.0))
+      fractional-indexing:
+        specifier: ^4.0.0
+        version: 4.0.0
       hono:
         specifier: 4.13.13
         version: 4.13.13
@@ -280,6 +283,9 @@ importers:
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0
+      fractional-indexing:
+        specifier: ^4.0.0
+        version: 4.0.0
       framer-motion:
         specifier: ^13.4.6
         version: 13.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -4888,6 +4894,10 @@ packages:
 
   fractional-indexing@3.4.0:
     resolution: {integrity: sha512-8J3glhz2rrpKG6KmI7wmJo3zH1VjeOpN+vTJSw1fOyO+Viqq3zX6/5NGh6oaZB2qIAYdOYuu5Dz9xp4faOO0Pg==}
+    engines: {node: ^14.13.1 || >=16.0.0}
+
+  fractional-indexing@4.0.0:
+    resolution: {integrity: sha512-Nr2P1Yyaj2sy1Qdt/wI3GcByxrUdbSKg5+cGvw8f18hT2SkQt6V72iOjBpk7IO3UkzBsdlGRs2a4z6dLrJprgw==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
   framer-motion@13.4.6:
@@ -10299,6 +10309,8 @@ snapshots:
       package-manager-detector: 1.9.0
 
   fractional-indexing@3.4.0: {}
+
+  fractional-indexing@4.0.0: {}
 
   framer-motion@13.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
     dependencies:

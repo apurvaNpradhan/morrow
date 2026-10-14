@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { COLUMN_CATEGORIES, COLUMN_COLORS } from "./projects";
+
+export * from "./projects";
 
 /**
  * The columns each shape may send, in camelCase as the browser sees them. The
@@ -73,3 +76,40 @@ export const myInvitationsShape = shape("my-invitations", invitationColumns);
 
 export type WorkspaceRow = z.infer<typeof workspacesShape.schema>;
 export type InvitationRow = z.infer<typeof myInvitationsShape.schema>;
+
+/** Every Project of the Workspaces the user belongs to, archived ones included. */
+export const projectsShape = shape(
+  "projects",
+  z.object({
+    id: z.string(),
+    workspaceId: z.string(),
+    key: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    icon: z.string().nullable(),
+    backgroundUrl: z.string().nullable(),
+    archivedAt: z.date().nullable(),
+    lastTaskNumber: z.number(),
+    position: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
+/** The Columns of those Projects. */
+export const projectColumnsShape = shape(
+  "project-columns",
+  z.object({
+    id: z.string(),
+    projectId: z.string(),
+    name: z.string(),
+    category: z.enum(COLUMN_CATEGORIES),
+    color: z.enum(COLUMN_COLORS),
+    position: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
+export type ProjectRow = z.infer<typeof projectsShape.schema>;
+export type ProjectColumnRow = z.infer<typeof projectColumnsShape.schema>;

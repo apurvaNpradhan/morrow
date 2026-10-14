@@ -2,6 +2,7 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "#api/platform/database/index";
 import { projectStoredWorkspaceActivity } from "#api/activity/index";
+import { listProjects } from "#api/projects/index";
 
 /**
  * Everything Morrow holds about one user, as a single JSON-ready document.
@@ -34,6 +35,28 @@ export async function exportAccountData(user: { id: string; email: string }) {
       eq(schema.workspaceUserTable.workspaceId, schema.workspaceTable.id),
     )
     .where(eq(schema.workspaceUserTable.userId, user.id));
+
+  // The projects (and their columns) of the workspaces the user belongs to.
+  const projects = (
+    await Promise.all(
+      memberships.map(async ({ workspaceId }) =>
+        (await listProjects(workspaceId)).map((project) => ({
+          workspaceId,
+          id: project.id,
+          key: project.key,
+          name: project.name,
+          description: project.description,
+          icon: project.icon,
+          archivedAt: project.archivedAt,
+          columns: project.columns.map(({ name, category, color }) => ({
+            name,
+            category,
+            color,
+          })),
+        })),
+      ),
+    )
+  ).flat();
 
   const activityRows = await db
     .select({
@@ -86,6 +109,7 @@ export async function exportAccountData(user: { id: string; email: string }) {
     exportedAt: new Date(),
     profile: profile ?? null,
     memberships,
+    projects,
     activity,
   };
 }

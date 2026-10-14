@@ -1,7 +1,7 @@
 import type { WorkspaceActivityEvent } from "#api/activity/recording/events";
 
 export type PublicWorkspaceActivity = {
-  resourceType: "user" | "workspace";
+  resourceType: "user" | "workspace" | "project";
   resourceId: string;
   eventData: Record<string, unknown>;
 };
@@ -52,6 +52,27 @@ export function projectWorkspaceActivity(
         resourceId: event.ownerId,
         eventData: { ownerName: event.ownerName },
       };
+    case "project.created":
+    case "project.archived":
+    case "project.unarchived":
+    case "project.deleted":
+      return {
+        resourceType: "project",
+        resourceId: event.projectId,
+        eventData: {
+          projectKey: event.projectKey,
+          projectName: event.projectName,
+        },
+      };
+    case "project.key_changed":
+      return {
+        resourceType: "project",
+        resourceId: event.projectId,
+        eventData: {
+          previousKey: event.previousKey,
+          projectKey: event.projectKey,
+        },
+      };
   }
 }
 
@@ -88,6 +109,11 @@ export function projectStoredWorkspaceActivity(input: {
       "workspace.member_role_changed": ["memberName", "previousRole", "role"],
       "workspace.updated": ["fields"],
       "workspace.ownership_transferred": ["ownerName"],
+      "project.created": ["projectKey", "projectName"],
+      "project.archived": ["projectKey", "projectName"],
+      "project.unarchived": ["projectKey", "projectName"],
+      "project.deleted": ["projectKey", "projectName"],
+      "project.key_changed": ["previousKey", "projectKey"],
     } satisfies Record<string, string[]>),
   );
   const eventData = Object.fromEntries(
@@ -95,6 +121,9 @@ export function projectStoredWorkspaceActivity(input: {
       .filter((key) => key in input.eventData)
       .map((key) => [key, input.eventData[key]]),
   );
+  if (input.resourceType === "project") {
+    return { resourceType: "project", resourceId: input.resourceId, eventData };
+  }
   const isWorkspaceResource = input.resourceType === "workspace";
   return {
     resourceType: isWorkspaceResource ? "workspace" : "user",

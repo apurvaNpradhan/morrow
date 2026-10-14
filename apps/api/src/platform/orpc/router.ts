@@ -5,6 +5,7 @@ import { authRouter } from "#api/auth/index";
 import { membersRouter } from "#api/members/index";
 import { workspaceRouter } from "#api/workspace/index";
 import { onboardingRouter } from "#api/onboarding/index";
+import { projectsRouter } from "#api/projects/index";
 
 /** The app router. A vertical adds its router here. */
 export const appRouter = {
@@ -14,6 +15,7 @@ export const appRouter = {
   activity: activityRouter,
   members: membersRouter,
   onboarding: onboardingRouter,
+  projects: projectsRouter,
   workspace: workspaceRouter,
 };
 

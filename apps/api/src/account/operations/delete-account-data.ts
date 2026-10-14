@@ -3,6 +3,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { recordWorkspaceActivity } from "#api/activity/index";
 import { db } from "#api/platform/database/index";
 import { eventContext } from "#api/platform/event-context";
+import { projectBackgroundKeys } from "#api/projects/index";
 import { ownedImageKey, queueStorageCleanup } from "#api/storage/index";
 import {
   userTable,
@@ -82,7 +83,8 @@ export async function deleteAccountData(userId: string) {
   await queueAvatarCleanup(userId, account?.image);
 
   if (plan.workspaceIdsToDelete.length > 0) {
-    // A direct delete skips Better Auth's delete hook, so queue the logos here.
+    // A direct delete skips Better Auth's delete hook, so queue the logos and
+    // the projects' background images here.
     const logos = await db
       .select({ id: workspaceTable.id, logo: workspaceTable.logo })
       .from(workspaceTable)
@@ -91,6 +93,9 @@ export async function deleteAccountData(userId: string) {
       const key = ownedImageKey(logo, "workspace-logos", id);
       return key ? [key] : [];
     });
+    for (const workspaceId of plan.workspaceIdsToDelete) {
+      logoKeys.push(...(await projectBackgroundKeys(db, workspaceId)));
+    }
     await db
       .delete(workspaceTable)
       .where(inArray(workspaceTable.id, plan.workspaceIdsToDelete));

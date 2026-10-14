@@ -39,6 +39,25 @@ export const workspaceActivityEventSchema = z.discriminatedUnion("type", [
     fields: z.array(z.literal("details")).min(1),
   }),
   z.object({
+    type: z.enum([
+      "project.created",
+      "project.archived",
+      "project.unarchived",
+      "project.deleted",
+    ]),
+    workspaceId: z.string(),
+    projectId: z.string(),
+    projectKey: z.string(),
+    projectName: z.string(),
+  }),
+  z.object({
+    type: z.literal("project.key_changed"),
+    workspaceId: z.string(),
+    projectId: z.string(),
+    previousKey: z.string(),
+    projectKey: z.string(),
+  }),
+  z.object({
     type: z.literal("workspace.ownership_transferred"),
     workspaceId: z.string(),
     ownerId: z.string(),
