@@ -13,6 +13,8 @@ import { ProjectIcon } from "./project-icon";
 type ProjectsListProps = {
   slug: string;
   projects: ProjectRow[];
+  /** Every project of the workspace, archived included, in order. */
+  allProjects: ProjectRow[];
   canReorder: boolean;
   /** Whether rows get a shortcut to the project's settings. */
   canOpenSettings: boolean;
@@ -22,12 +24,14 @@ type ProjectsListProps = {
 export function ProjectsList({
   slug,
   projects,
+  allProjects,
   canReorder,
   canOpenSettings,
 }: ProjectsListProps) {
   const { t } = useTranslation("projects");
   const sortable = useSortableList({
     items: projects,
+    allItems: allProjects,
     disabled: !canReorder,
     onMove: (project, position) => updateProject(project.id, { position }),
     onError: (error) =>

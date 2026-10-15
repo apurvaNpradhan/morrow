@@ -64,4 +64,40 @@ describe("positionForMove", () => {
     ];
     expect(() => positionForMove(clash, "a", 1)).toThrow();
   });
+
+  describe("with items hidden from the list", () => {
+    // The projects page shows only active projects, but archived ones keep
+    // their positions and the unique index covers them.
+    const all = [
+      { id: "archived", position: "a1" },
+      { id: "x", position: "a2" },
+      { id: "y", position: "a3" },
+    ];
+    const visible = all.filter((item) => item.id !== "archived");
+
+    it("does not reuse the position of a hidden item when moving to the front", () => {
+      const position = positionForMove(visible, "y", 0, all);
+      expect(position).not.toBeNull();
+      expect(all.map((item) => item.position)).not.toContain(position);
+      const order = all
+        .map((item) =>
+          item.id === "y" ? { ...item, position: position! } : item,
+        )
+        .sort(comparePosition)
+        .map((item) => item.id);
+      expect(order.filter((id) => id !== "archived")).toEqual(["y", "x"]);
+    });
+
+    it("does not reuse the position of a hidden item between visible neighbours", () => {
+      const spread = [
+        { id: "p", position: "a0" },
+        { id: "hidden", position: "a0V" },
+        { id: "q", position: "a1" },
+        { id: "r", position: "a2" },
+      ];
+      const shown = spread.filter((item) => item.id !== "hidden");
+      const position = positionForMove(shown, "r", 1, spread);
+      expect(spread.map((item) => item.position)).not.toContain(position);
+    });
+  });
 });

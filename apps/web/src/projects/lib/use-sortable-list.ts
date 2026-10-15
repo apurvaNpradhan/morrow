@@ -6,6 +6,8 @@ type Item = { id: string; position: string };
 type SortableOptions<T extends Item> = {
   /** In their current order. */
   items: readonly T[];
+  /** Every item in order, when `items` leaves some out. */
+  allItems?: readonly T[];
   disabled?: boolean;
   /** Receives the item and the position computed from its new neighbours. */
   onMove: (item: T, position: string) => Promise<unknown>;
@@ -19,6 +21,7 @@ type SortableOptions<T extends Item> = {
  */
 export function useSortableList<T extends Item>({
   items,
+  allItems,
   disabled = false,
   onMove,
   onError,
@@ -30,7 +33,7 @@ export function useSortableList<T extends Item>({
     const item = items.find((candidate) => candidate.id === id);
     if (!item) return;
     try {
-      const position = positionForMove(items, id, toIndex);
+      const position = positionForMove(items, id, toIndex, allItems);
       if (position !== null) await onMove(item, position);
     } catch (error) {
       onError(error);

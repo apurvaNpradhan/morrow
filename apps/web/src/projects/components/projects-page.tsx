@@ -84,6 +84,7 @@ export function ProjectsPage({
             <ProjectsList
               slug={workspace.slug}
               projects={shown}
+              allProjects={projects}
               // Archived projects keep their place; only active ones reorder.
               canReorder={canManageProjects() && tab === "active"}
               canOpenSettings={canManageProjects()}
