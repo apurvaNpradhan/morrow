@@ -1013,6 +1013,8 @@
 			"whoBody": "Members of a workspace see your name, picture and role in it, and the activity you perform there. Other people on this instance cannot see your data. The person who runs this instance can access the database.",
 			"controlTitle": "Your control",
 			"controlBody": "You can download everything tied to your account, and you can delete your account from your personal information settings. Deleting your account removes your profile, notifications and preferences.",
+			"back": "Back"
+		}
 	},
 	"projects": {
 		"pageTitle": "Projects",
@@ -1189,8 +1191,6 @@
 			"deleteConfirm": "Delete column",
 			"deleteSuccess": "Column deleted",
 			"deleteError": "Couldn't delete the column."
-		}
-			"back": "Back"
 		}
 	}
 }
