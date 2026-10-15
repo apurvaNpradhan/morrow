@@ -14,6 +14,7 @@ import {
 import { useWorkspacePermission } from "@/workspace";
 import { useProjectsWithoutSuspense } from "../queries/use-projects";
 import { CreateProjectDialog } from "./create-project-dialog";
+import { ProjectMenu } from "./project-menu";
 import { ProjectIcon } from "./project-icon";
 
 /** The active projects of the current workspace, in the shared order. */
@@ -54,7 +55,9 @@ export function SidebarProjects({
                 <SidebarMenuButton
                   className="h-8 text-sm"
                   tooltip={project.name}
-                  isActive={pathname === path}
+                  isActive={
+                    pathname === path || pathname.startsWith(`${path}/`)
+                  }
                   render={
                     <Link
                       to="/$slug/projects/$key"
@@ -65,6 +68,7 @@ export function SidebarProjects({
                   <ProjectIcon project={project} />
                   <span className="truncate">{project.name}</span>
                 </SidebarMenuButton>
+                <ProjectMenu workspace={workspace} project={project} />
               </SidebarMenuItem>
             );
           })}

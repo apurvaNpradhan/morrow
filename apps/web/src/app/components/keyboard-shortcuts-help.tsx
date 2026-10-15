@@ -12,7 +12,7 @@ import {
 import { Input } from "@/design-system/ui/input";
 import { KbdSequence } from "@/design-system/ui/kbd";
 
-const GROUP_ORDER = ["general", "navigate", "create", "view"] as const;
+const GROUP_ORDER = ["general", "navigate", "create", "tasks", "view"] as const;
 
 function useShortcutCategories(searchQuery: string) {
   const { t } = useTranslation();

@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAdminAccess } from "@/admin";
+import { openCreateTask } from "@/tasks";
 import { setTheme } from "@/app/preferences/set-theme";
 import { useSignOut } from "@/auth";
 import { useActiveWorkspace, useWorkspacePermission } from "@/workspace";
@@ -33,6 +34,7 @@ export function useCommands(): Command[] {
 
   const slug = workspace?.slug;
   const canCreateProjects = permission.canCreateProjects();
+  const canCreateTasks = permission.canCreateTasks();
   const canInvite = permission.canInviteUsers();
   const canManageRoles = permission.canManageRoles();
 
@@ -105,6 +107,14 @@ export function useCommands(): Command[] {
           run: () => openOverlay("workspaceSwitcher"),
         });
       }
+      if (canCreateTasks) {
+        entries.push({
+          id: "createTask",
+          group: "create",
+          hotkey: "createTask",
+          run: () => openCreateTask(),
+        });
+      }
       if (canCreateProjects) {
         entries.push({
           id: "createProject",
@@ -156,6 +166,7 @@ export function useCommands(): Command[] {
     slug,
     navigate,
     canCreateProjects,
+    canCreateTasks,
     canInvite,
     canManageRoles,
     isInstanceAdmin,

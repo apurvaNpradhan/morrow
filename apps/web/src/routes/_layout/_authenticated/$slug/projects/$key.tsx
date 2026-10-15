@@ -1,12 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ProjectBoardPage } from "@/projects";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
+/** A Project's address: its board and list are the pages inside it. */
 export const Route = createFileRoute(
   "/_layout/_authenticated/$slug/projects/$key",
-)({ component: RouteComponent });
-
-function RouteComponent() {
-  const { workspace } = Route.useRouteContext();
-  const { key } = Route.useParams();
-  return <ProjectBoardPage workspace={workspace} projectKey={key} />;
-}
+)({ component: Outlet });

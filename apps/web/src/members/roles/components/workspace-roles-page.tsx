@@ -54,10 +54,16 @@ export function WorkspaceRolesPage() {
           title={t("settings:workspaceRoles.title")}
           description={
             isCheckingPermissions
-              ? t("settings:workspaceRoles.loading")
+              ? undefined
               : t("settings:workspaceRoles.noAccess")
           }
-        />
+        >
+          {isCheckingPermissions ? (
+            <SettingsCard>
+              <SettingsRowsSkeleton rows={3} withDescription />
+            </SettingsCard>
+          ) : null}
+        </SettingsPage>
       </>
     );
   }

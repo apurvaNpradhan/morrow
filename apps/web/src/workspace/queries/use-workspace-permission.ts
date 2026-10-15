@@ -63,6 +63,10 @@ export function useWorkspacePermission() {
       canCreateProjects: () => can.createProjects,
       canManageProjects: () => can.manageProjects,
       canDeleteProjects: () => can.deleteProjects,
+      canCreateTasks: () => can.createTasks,
+      canEditTasks: () => can.editTasks,
+      canDeleteTasks: () => can.deleteTasks,
+      canAssignTasks: () => can.assignTasks,
     };
   }, [can]);
 

@@ -3,6 +3,11 @@ import {
   localStorageCollectionOptions,
 } from "@tanstack/react-db";
 import { z } from "zod";
+import {
+  FILTER_OPERATORS,
+  FILTER_SUBJECTS,
+  SORT_FIELDS,
+} from "./task-view-options";
 
 /**
  * Settings that belong to this browser, not to the signed-in user: they stay
@@ -16,6 +21,36 @@ export const devicePreferencesSchema = z.object({
   compactMode: z.boolean().default(false),
   sidebarDefaultOpen: z.boolean().default(true),
   showProjectBackgrounds: z.boolean().default(true),
+  /** The layout a Project opens in. */
+  taskView: z.enum(["board", "list"]).default("board"),
+  /** What cards and rows show; every field is on until switched off. */
+  showTaskNumbers: z.boolean().default(true),
+  showTaskAssignees: z.boolean().default(true),
+  showTaskDueDates: z.boolean().default(true),
+  showTaskPriority: z.boolean().default(true),
+  showTaskChecklist: z.boolean().default(true),
+  /** Filters and sort of each Project's board and list, by Project id. */
+  taskFilters: z
+    .record(
+      z.string(),
+      z.array(
+        z.object({
+          subject: z.enum(FILTER_SUBJECTS),
+          operator: z.enum(FILTER_OPERATORS),
+          values: z.array(z.string()),
+        }),
+      ),
+    )
+    .default({}),
+  taskSorts: z
+    .record(
+      z.string(),
+      z.object({
+        field: z.enum(SORT_FIELDS),
+        direction: z.enum(["asc", "desc"]),
+      }),
+    )
+    .default({}),
 });
 
 export type DevicePreferences = z.infer<typeof devicePreferencesSchema>;

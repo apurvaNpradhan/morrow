@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Browser, type Page } from "@playwright/test";
 
 /** The disposable stack's Morrow log; emails are written to it (no Resend key). */
 function morrowLogs() {
@@ -115,4 +115,48 @@ export async function joinWorkspace(
   await expect(page).toHaveURL(new RegExp(`/${slug}|/onboarding`));
   await page.goto(`/${slug}/members`);
   await expect(page.getByText(email)).toBeVisible();
+}
+
+/** An admin who owns a workspace and a second member, each in their own browser. */
+export async function twoPeople(browser: Browser, label: string) {
+  const adminContext = await browser.newContext();
+  const memberContext = await browser.newContext();
+  const admin = await adminContext.newPage();
+  const member = await memberContext.newPage();
+
+  // Addresses are lower-cased by the server, so its log (which the helpers read) is too.
+  const prefix = label.toLowerCase();
+  const memberEmail = uniqueEmail(`${prefix}-member`);
+  await signUp(admin, uniqueEmail(`${prefix}-admin`), `${label} Admin`);
+  const slug = await createWorkspace(admin, `${label} Space`);
+  const invitationId = await invite(admin, slug, memberEmail);
+  await joinWorkspace(
+    member,
+    memberEmail,
+    `${label} Member`,
+    slug,
+    invitationId,
+  );
+
+  return {
+    admin,
+    member,
+    slug,
+    close: () => Promise.all([adminContext.close(), memberContext.close()]),
+  };
+}
+
+/** Creates a project through the dialog on the projects page. */
+export async function createProject(
+  page: Page,
+  slug: string,
+  name: string,
+  key: string,
+) {
+  await page.goto(`/${slug}/projects`);
+  await page.getByRole("button", { name: "New project" }).first().click();
+  await page.getByLabel("Name", { exact: true }).fill(name);
+  await page.getByLabel("Key", { exact: true }).fill(key);
+  await page.getByRole("button", { name: "Create project" }).click();
+  await expect(page).toHaveURL(new RegExp(`/${slug}/projects/${key}/board$`));
 }

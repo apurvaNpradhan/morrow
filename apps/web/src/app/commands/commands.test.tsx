@@ -21,8 +21,10 @@ import { appHotkeys } from "./hotkeys";
 import { closeOverlay } from "./overlay-store";
 
 const navigate = vi.fn();
+const openCreateTask = vi.fn();
 const capabilities = {
   createProjects: true,
+  createTasks: true,
   inviteUsers: true,
   manageRoles: true,
 };
@@ -46,6 +48,7 @@ vi.mock("@/workspace", () => ({
   ],
   useWorkspacePermission: () => ({
     canCreateProjects: () => capabilities.createProjects,
+    canCreateTasks: () => capabilities.createTasks,
     canInviteUsers: () => capabilities.inviteUsers,
     canManageRoles: () => capabilities.manageRoles,
   }),
@@ -60,6 +63,12 @@ vi.mock("@/projects", () => ({
   ],
   CreateProjectDialog: ({ open }: { open: boolean }) =>
     open ? <div>create-project-dialog</div> : null,
+}));
+
+vi.mock("@/tasks", () => ({
+  openCreateTask: () => openCreateTask(),
+  CreateTaskDialog: () => null,
+  useTicketLookup: () => undefined,
 }));
 
 vi.mock("@/members", () => ({
@@ -99,6 +108,7 @@ beforeEach(() => {
   adminAccess = false;
   Object.assign(capabilities, {
     createProjects: true,
+    createTasks: true,
     inviteUsers: true,
     manageRoles: true,
   });
@@ -108,6 +118,7 @@ afterEach(() => {
   cleanup();
   closeOverlay();
   navigate.mockReset();
+  openCreateTask.mockReset();
 });
 
 describe("hotkey registry", () => {
@@ -139,6 +150,9 @@ describe("palette", () => {
     expect(
       screen.getByText("navigation:commands.createProject"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("navigation:commands.createTask"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Morrow")).toBeNull();
   });
 
@@ -165,10 +179,12 @@ describe("palette", () => {
 
   it("hides commands the user lacks the capability for", () => {
     capabilities.createProjects = false;
+    capabilities.createTasks = false;
     capabilities.inviteUsers = false;
     mount();
     press("k", { ctrlKey: true });
     expect(screen.queryByText("navigation:commands.createProject")).toBeNull();
+    expect(screen.queryByText("navigation:commands.createTask")).toBeNull();
     expect(screen.queryByText("navigation:commands.inviteMember")).toBeNull();
   });
 
@@ -198,8 +214,11 @@ describe("hotkeys", () => {
     });
   });
 
-  it("opens create project with c and create workspace with w c", () => {
+  it("opens create task with c, create project with p c and create workspace with w c", () => {
     mount();
+    press("c");
+    expect(openCreateTask).toHaveBeenCalledTimes(1);
+    press("p");
     press("c");
     expect(screen.getByText("create-project-dialog")).toBeInTheDocument();
     press("w");
@@ -208,10 +227,14 @@ describe("hotkeys", () => {
     expect(screen.queryByText("create-project-dialog")).toBeNull();
   });
 
-  it("does nothing for c when the user cannot create projects", () => {
+  it("does nothing for c and p c when the user cannot create tasks or projects", () => {
     capabilities.createProjects = false;
+    capabilities.createTasks = false;
     mount();
     press("c");
+    press("p");
+    press("c");
+    expect(openCreateTask).not.toHaveBeenCalled();
     expect(screen.queryByText("create-project-dialog")).toBeNull();
   });
 
@@ -224,7 +247,7 @@ describe("hotkeys", () => {
     } finally {
       field.remove();
     }
-    expect(screen.queryByText("create-project-dialog")).toBeNull();
+    expect(openCreateTask).not.toHaveBeenCalled();
   });
 
   it("does nothing while another modal dialog is open", () => {
@@ -240,7 +263,7 @@ describe("hotkeys", () => {
     } finally {
       modal.remove();
     }
-    expect(screen.queryByText("create-project-dialog")).toBeNull();
+    expect(openCreateTask).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
   });

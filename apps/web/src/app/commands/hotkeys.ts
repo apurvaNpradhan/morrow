@@ -15,8 +15,27 @@ export const appHotkeys = defineAppHotkeys({
   goSettings: { hotkey: ["G", "S"], meta: { group: "navigate" } },
   goAccount: { hotkey: ["G", "A"], meta: { group: "navigate" } },
   switchWorkspace: { hotkey: ["W", "S"], meta: { group: "navigate" } },
-  createProject: { hotkey: "C", meta: { group: "create" } },
+  createTask: { hotkey: "C", meta: { group: "create" } },
+  createProject: { hotkey: ["P", "C"], meta: { group: "create" } },
   createWorkspace: { hotkey: ["W", "C"], meta: { group: "create" } },
+  // Tasks: bound by the project page, not offered as commands.
+  filterTasks: { hotkey: "F", meta: { group: "tasks" } },
+  displayOptions: { hotkey: "Shift+V", meta: { group: "tasks" } },
+  searchTasks: { hotkey: "Mod+F", meta: { group: "tasks" } },
+  nextTask: { hotkey: "J", meta: { group: "tasks" } },
+  previousTask: { hotkey: "K", meta: { group: "tasks" } },
+  // These act on the focused task, or the open one in the sheet.
+  setTaskColumn: { hotkey: "S", meta: { group: "tasks" } },
+  setTaskPriority: { hotkey: "P", meta: { group: "tasks" } },
+  assignTask: { hotkey: "A", meta: { group: "tasks" } },
+  assignTaskToMe: { hotkey: "I", meta: { group: "tasks" } },
+  setTaskDueDate: { hotkey: "Shift+D", meta: { group: "tasks" } },
+  // Ctrl+Backspace also deletes a word, so never while typing.
+  deleteTask: {
+    hotkey: "Mod+Backspace",
+    meta: { group: "tasks" },
+    options: { ignoreInputs: true },
+  },
 });
 
 export type HotkeyId = keyof typeof appHotkeys;

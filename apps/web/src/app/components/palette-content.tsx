@@ -20,6 +20,7 @@ import {
 } from "@/design-system/ui/command";
 import { Kbd, KbdGroup } from "@/design-system/ui/kbd";
 import { useNavProjects } from "@/projects";
+import { useTicketLookup } from "@/tasks";
 import { useActiveWorkspace, useMyWorkspaces } from "@/workspace";
 
 type PaletteItem = {
@@ -46,6 +47,7 @@ export function PaletteContent({ commands }: { commands: AppCommand[] }) {
   const projects = useNavProjects(workspace?.id);
   const workspaces = useMyWorkspaces();
   const [query, setQuery] = useState("");
+  const ticket = useTicketLookup(workspace?.id, query);
 
   const groups = useMemo<PaletteGroup[]>(() => {
     const run = (action: () => void) => () => {
@@ -80,6 +82,28 @@ export function PaletteContent({ commands }: { commands: AppCommand[] }) {
     });
 
     if (query.trim()) {
+      if (workspace && ticket) {
+        const id = query.trim().toUpperCase();
+        result.push({
+          value: "tasks",
+          label: t("navigation:commandPalette.groups.tasks"),
+          items: [
+            {
+              value: `task:${id}`,
+              label: t("navigation:commandPalette.openTicket", { id }),
+              // The title is what a person remembers; the id is what they typed.
+              search: `${query} ${ticket.task.title}`,
+              hint: ticket.task.title,
+              onRun: run(() =>
+                navigate({
+                  to: "/$slug/tasks/$ticketId",
+                  params: { slug: workspace.slug, ticketId: id },
+                }),
+              ),
+            },
+          ],
+        });
+      }
       if (workspace) {
         result.push({
           value: "projects",
@@ -111,7 +135,17 @@ export function PaletteContent({ commands }: { commands: AppCommand[] }) {
       });
     }
     return result.filter((group) => group.items.length > 0);
-  }, [commands, hotkeys, navigate, projects, query, t, workspace, workspaces]);
+  }, [
+    commands,
+    hotkeys,
+    navigate,
+    projects,
+    query,
+    t,
+    ticket,
+    workspace,
+    workspaces,
+  ]);
 
   return (
     <Command

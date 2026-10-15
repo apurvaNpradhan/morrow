@@ -9,6 +9,7 @@ export const RESOURCE_LABELS = new Map(
     ac: "Roles and permissions",
     workspace: "Workspace",
     project: "Projects",
+    task: "Tasks",
   } satisfies Record<string, string>),
 );
 
@@ -98,7 +99,24 @@ export const PERMISSION_LABELS = new Map(
     },
     "project:delete": {
       label: "Delete projects",
-      description: "Permanently delete archived projects.",
+      description: "Permanently delete projects and their tasks.",
+    },
+    "task:create": {
+      label: "Create tasks",
+      description: "Add tasks to projects, and import them.",
+    },
+    "task:update": {
+      label: "Edit tasks",
+      description:
+        "Change tasks, move and archive them, and take or release a task for yourself.",
+    },
+    "task:delete": {
+      label: "Delete tasks",
+      description: "Permanently delete tasks.",
+    },
+    "task:assign": {
+      label: "Assign tasks",
+      description: "Assign tasks to other members.",
     },
   } satisfies Record<string, { label: string; description: string }>),
 );
