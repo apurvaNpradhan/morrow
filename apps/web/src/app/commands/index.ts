@@ -4,6 +4,7 @@ export { appHotkeys } from "./hotkeys";
 export { displayKeys } from "./display-hotkey";
 export {
   closeOverlay,
+  isOverlayOpen,
   openOverlay,
   toggleOverlay,
   useIsOverlayOpen,
