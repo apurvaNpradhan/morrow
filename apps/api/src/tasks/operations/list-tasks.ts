@@ -3,10 +3,10 @@ import {
   comparePosition,
   ticketId,
 } from "@morrow/sync-schemas";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "#api/platform/database/index";
 import { projectColumnTable, projectTable } from "#api/projects/index";
-import { taskTable } from "#api/tasks/tables";
+import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 
 /**
  * Tasks of a workspace (or one of its projects) in board order: by column,
@@ -20,6 +20,7 @@ export async function listTasks(workspaceId: string, projectId?: string) {
       projectKey: projectTable.key,
       column: projectColumnTable,
       assigneeName: schema.userTable.name,
+      description: sql<string>`coalesce(${taskDescriptionTable.description}, '')`,
     })
     .from(taskTable)
     .innerJoin(projectTable, eq(projectTable.id, taskTable.projectId))
@@ -28,6 +29,10 @@ export async function listTasks(workspaceId: string, projectId?: string) {
       eq(projectColumnTable.id, taskTable.columnId),
     )
     .leftJoin(schema.userTable, eq(schema.userTable.id, taskTable.assigneeId))
+    .leftJoin(
+      taskDescriptionTable,
+      eq(taskDescriptionTable.taskId, taskTable.id),
+    )
     .where(
       and(
         eq(projectTable.workspaceId, workspaceId),
@@ -42,8 +47,9 @@ export async function listTasks(workspaceId: string, projectId?: string) {
         compareColumns(a.column, b.column) ||
         comparePosition(a.task, b.task),
     )
-    .map(({ task, projectKey, column, assigneeName }) => ({
+    .map(({ task, projectKey, column, assigneeName, description }) => ({
       ...task,
+      description,
       ticketId: ticketId(projectKey, task.number),
       columnName: column.name,
       category: column.category,

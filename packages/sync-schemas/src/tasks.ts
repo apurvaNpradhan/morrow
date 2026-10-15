@@ -73,3 +73,20 @@ export function parseTicketId(
   if (!match) return null;
   return { key: match[1]!.toUpperCase(), number: Number(match[2]) };
 }
+
+const CHECKLIST_ITEM = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+\[([ xX])\]/gm;
+
+/**
+ * The task-list items of a markdown description, ticked and in all. A Task row
+ * carries these two counts (the API writes them with the description), so a
+ * card can show progress without the description itself.
+ */
+export function checklistCounts(markdown: string) {
+  let total = 0;
+  let done = 0;
+  for (const match of markdown.matchAll(CHECKLIST_ITEM)) {
+    total += 1;
+    if (match[1] !== " ") done += 1;
+  }
+  return { done, total };
+}

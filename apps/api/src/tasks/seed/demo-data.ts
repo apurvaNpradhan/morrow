@@ -1,4 +1,8 @@
-import type { ColumnCategory, TaskPriority } from "@morrow/sync-schemas";
+import {
+  checklistCounts,
+  type ColumnCategory,
+  type TaskPriority,
+} from "@morrow/sync-schemas";
 import { generateNKeysBetween } from "fractional-indexing";
 
 /** A small seeded generator (mulberry32), so every run makes the same data. */
@@ -185,13 +189,17 @@ export function demoTasks(
     const column = byCategory.get(category)!;
     const closed = category === "done" || category === "canceled";
     const createdAt = new Date(now - (1 - index / count) * 365 * DAY);
+    const description = demoDescription(random);
+    const { done, total } = checklistCounts(description);
     return {
       id: taskId(random),
       projectId,
       columnId: column.id,
       number: index + 1,
       title: demoTitle(random),
-      description: demoDescription(random),
+      description,
+      checklistDone: done,
+      checklistTotal: total,
       priority: random.weighted(PRIORITY_WEIGHTS),
       assigneeId: random.chance(0.6) ? random.pick(memberIds) : null,
       dueDate:

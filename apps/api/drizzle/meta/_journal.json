@@ -113,6 +113,20 @@
       "when": 1792074327478,
       "tag": "0015_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792086797754,
+      "tag": "0016_tasks_description_split",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792086814057,
+      "tag": "0017_tasks_drop_description",
+      "breakpoints": true
     }
   ]
 }

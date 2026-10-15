@@ -126,7 +126,8 @@ export const tasksShape = shape(
     columnId: z.string(),
     number: z.number(),
     title: z.string(),
-    description: z.string(),
+    checklistDone: z.number(),
+    checklistTotal: z.number(),
     priority: z.enum(TASK_PRIORITIES),
     assigneeId: z.string().nullable(),
     dueDate: z.string().nullable(),
@@ -140,3 +141,19 @@ export const tasksShape = shape(
 );
 
 export type TaskRow = z.infer<typeof tasksShape.schema>;
+
+/**
+ * A Task's markdown description, apart from the Task so that the list never
+ * downloads text it does not show. Read on demand, one Task at a time, when
+ * the Task is opened. Every Task has one.
+ */
+export const taskDescriptionsShape = shape(
+  "task-descriptions",
+  z.object({
+    taskId: z.string(),
+    projectId: z.string(),
+    description: z.string(),
+  }),
+);
+
+export type TaskDescriptionRow = z.infer<typeof taskDescriptionsShape.schema>;

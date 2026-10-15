@@ -13,10 +13,11 @@ import {
 } from "#api/projects/index";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import type { TaskActor } from "#api/tasks/lib/assignee";
+import { saveDescription } from "#api/tasks/lib/description";
 import { findTask } from "#api/tasks/lib/find-task";
 import { freePosition } from "#api/tasks/lib/free-position";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
-import { taskTable } from "#api/tasks/tables";
+import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 
 const COPY_SUFFIX = " (copy)";
 
@@ -61,7 +62,8 @@ export async function duplicateTask(
           columnId: source.columnId,
           number: counter.number,
           title: `${source.title.slice(0, TASK_TITLE_MAX - COPY_SUFFIX.length)}${COPY_SUFFIX}`,
-          description: source.description,
+          checklistDone: source.checklistDone,
+          checklistTotal: source.checklistTotal,
           priority: source.priority,
           assigneeId,
           dueDate: source.dueDate,
@@ -75,6 +77,16 @@ export async function duplicateTask(
           title: taskTable.title,
         });
       if (!task) throw new Error("Task insert returned no row");
+      const [sourceDescription] = await tx
+        .select({ description: taskDescriptionTable.description })
+        .from(taskDescriptionTable)
+        .where(eq(taskDescriptionTable.taskId, sourceId));
+      await saveDescription(
+        tx,
+        projectId,
+        task.id,
+        sourceDescription?.description ?? "",
+      );
       await recordTaskActivity(tx, "task.created", workspaceId, project, task);
       return task;
     });

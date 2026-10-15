@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { lockProject } from "#api/projects/index";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
+import { checklistColumns, saveDescription } from "#api/tasks/lib/description";
 import { findTask } from "#api/tasks/lib/find-task";
 import { taskTable } from "#api/tasks/tables";
 
@@ -39,9 +40,20 @@ export async function updateTask(
         task.assigneeId,
       );
     }
+    const { description, ...fields } = patch;
     // `updatedAt` always changes, so the write reaches sync even when the
     // value did not.
-    await tx.update(taskTable).set(patch).where(eq(taskTable.id, taskId));
+    await tx
+      .update(taskTable)
+      .set(
+        description === undefined
+          ? fields
+          : { ...fields, ...checklistColumns(description) },
+      )
+      .where(eq(taskTable.id, taskId));
+    if (description !== undefined) {
+      await saveDescription(tx, projectId, taskId, description);
+    }
   });
   return { txid };
 }
