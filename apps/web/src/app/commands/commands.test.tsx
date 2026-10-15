@@ -227,6 +227,24 @@ describe("hotkeys", () => {
     expect(screen.queryByText("create-project-dialog")).toBeNull();
   });
 
+  it("does nothing while another modal dialog is open", () => {
+    mount();
+    const modal = document.createElement("div");
+    modal.setAttribute("role", "alertdialog");
+    document.body.append(modal);
+    try {
+      press("c");
+      press("g");
+      press("p");
+      press("k", { ctrlKey: true });
+    } finally {
+      modal.remove();
+    }
+    expect(screen.queryByText("create-project-dialog")).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("opens one overlay at a time", () => {
     mount();
     press("k", { ctrlKey: true });

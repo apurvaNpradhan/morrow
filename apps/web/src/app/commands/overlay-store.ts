@@ -37,6 +37,10 @@ export function closeOverlay(overlay?: Overlay) {
   set(null);
 }
 
+export function isOverlayOpen(overlay: Overlay) {
+  return current === overlay;
+}
+
 export function useIsOverlayOpen(overlay: Overlay) {
   return useSyncExternalStore(subscribe, () => current === overlay);
 }
