@@ -13,20 +13,13 @@ import {
 import { VersionDisplay } from "./version-display";
 import { SidebarProjects } from "@/projects";
 import { useActiveWorkspace, WorkspaceSwitcher } from "@/workspace";
-import { shortcuts } from "@/app/lib/shortcuts";
-import { useRegisterShortcuts } from "@/app/hooks/use-keyboard-shortcuts";
+import { useRegisterSidebarToggle } from "@/app/commands";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { toggleSidebar } = useSidebar();
   const { data: workspace } = useActiveWorkspace();
 
-  useRegisterShortcuts({
-    modifierShortcuts: {
-      [shortcuts.sidebar.prefix]: {
-        [shortcuts.sidebar.toggle]: toggleSidebar,
-      },
-    },
-  });
+  useRegisterSidebarToggle(toggleSidebar);
 
   return (
     <Sidebar

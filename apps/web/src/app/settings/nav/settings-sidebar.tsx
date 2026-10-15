@@ -9,8 +9,7 @@ import {
   SidebarContent,
   useSidebar,
 } from "@/design-system/ui/sidebar";
-import { shortcuts } from "@/app/lib/shortcuts";
-import { useRegisterShortcuts } from "@/app/hooks/use-keyboard-shortcuts";
+import { useRegisterSidebarToggle } from "@/app/commands";
 
 type SettingsSidebarProps = {
   nav: SettingsNav;
@@ -23,13 +22,7 @@ export function SettingsSidebar({ nav, onLeave }: SettingsSidebarProps) {
   });
   const { setOpenMobile, toggleSidebar } = useSidebar();
 
-  useRegisterShortcuts({
-    modifierShortcuts: {
-      [shortcuts.sidebar.prefix]: {
-        [shortcuts.sidebar.toggle]: toggleSidebar,
-      },
-    },
-  });
+  useRegisterSidebarToggle(toggleSidebar);
 
   useEffect(() => {
     if (pathname) setOpenMobile(false);

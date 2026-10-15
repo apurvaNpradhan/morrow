@@ -1,0 +1,253 @@
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+import { findHotkeyConflicts } from "@tanstack/react-hotkeys";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vite-plus/test";
+import { CommandPalette } from "@/app/components/command-palette";
+import { KeyboardShortcutsHelp } from "@/app/components/keyboard-shortcuts-help";
+import { AppHotkeysProvider } from "./app-hotkeys-provider";
+import { appHotkeys } from "./hotkeys";
+import { closeOverlay } from "./overlay-store";
+
+const navigate = vi.fn();
+const capabilities = {
+  createProjects: true,
+  inviteUsers: true,
+  manageRoles: true,
+};
+let adminAccess = false;
+
+vi.mock("react-i18next", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-i18next")>()),
+  useTranslation: () => ({ t: (key: string) => key }),
+  Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
+}));
+
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => navigate,
+}));
+
+vi.mock("@/workspace", () => ({
+  useActiveWorkspace: () => ({ data: { id: "w1", slug: "acme" } }),
+  useMyWorkspaces: () => [
+    { id: "w1", slug: "acme", name: "Acme" },
+    { id: "w2", slug: "side", name: "Side Project" },
+  ],
+  useWorkspacePermission: () => ({
+    canCreateProjects: () => capabilities.createProjects,
+    canInviteUsers: () => capabilities.inviteUsers,
+    canManageRoles: () => capabilities.manageRoles,
+  }),
+  CreateWorkspaceModal: ({ open }: { open: boolean }) =>
+    open ? <div>create-workspace-modal</div> : null,
+}));
+
+vi.mock("@/projects", () => ({
+  useNavProjects: () => [
+    { key: "MOR", name: "Morrow", icon: () => null },
+    { key: "WEB", name: "Website", icon: () => null },
+  ],
+  CreateProjectDialog: ({ open }: { open: boolean }) =>
+    open ? <div>create-project-dialog</div> : null,
+}));
+
+vi.mock("@/members", () => ({
+  InviteTeamMemberModal: ({ open }: { open: boolean }) =>
+    open ? <div>invite-member-modal</div> : null,
+}));
+
+vi.mock("@/admin", () => ({
+  useAdminAccess: () => ({ data: adminAccess }),
+}));
+
+vi.mock("@/auth", () => ({
+  useSignOut: () => ({ mutate: vi.fn() }),
+}));
+
+vi.mock("@/app/preferences/set-theme", () => ({ setTheme: vi.fn() }));
+
+function press(
+  key: string,
+  init: KeyboardEventInit = {},
+  target: Element | Document = document,
+) {
+  fireEvent.keyDown(target, { key, ...init });
+  fireEvent.keyUp(target, { key, ...init });
+}
+
+function mount() {
+  return render(
+    <AppHotkeysProvider>
+      <CommandPalette />
+      <KeyboardShortcutsHelp />
+    </AppHotkeysProvider>,
+  );
+}
+
+beforeEach(() => {
+  adminAccess = false;
+  Object.assign(capabilities, {
+    createProjects: true,
+    inviteUsers: true,
+    manageRoles: true,
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  closeOverlay();
+  navigate.mockReset();
+});
+
+describe("hotkey registry", () => {
+  it("declares no conflicting hotkeys", () => {
+    for (const hotkey of Object.values(appHotkeys)) {
+      if (!hotkey.hotkey) continue;
+      const conflicts = findHotkeyConflicts(hotkey.hotkey, { scope: "all" });
+      expect(conflicts).toHaveLength(0);
+    }
+  });
+});
+
+describe("palette", () => {
+  it("toggles with Mod+K, also from inside an input", () => {
+    mount();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    press("k", { ctrlKey: true });
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    press("k", { ctrlKey: true }, screen.getByRole("combobox"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("shows the default groups without projects or workspaces", () => {
+    mount();
+    press("k", { ctrlKey: true });
+    expect(
+      screen.getByText("navigation:commands.goProjects"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("navigation:commands.createProject"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Morrow")).toBeNull();
+  });
+
+  it("searches only: letters typed in the palette run nothing", () => {
+    mount();
+    press("k", { ctrlKey: true });
+    const input = screen.getByRole("combobox");
+    for (const key of ["w", "c"]) press(key, {}, input);
+    expect(screen.queryByText("create-workspace-modal")).toBeNull();
+  });
+
+  it("adds matching projects and workspaces while typing, and navigates on Enter", () => {
+    mount();
+    press("k", { ctrlKey: true });
+    const input = screen.getByRole("combobox");
+    fireEvent.change(input, { target: { value: "Website" } });
+    expect(screen.getByText("Website")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Website"));
+    expect(navigate).toHaveBeenCalledWith({
+      to: "/$slug/projects/$key",
+      params: { slug: "acme", key: "WEB" },
+    });
+  });
+
+  it("hides commands the user lacks the capability for", () => {
+    capabilities.createProjects = false;
+    capabilities.inviteUsers = false;
+    mount();
+    press("k", { ctrlKey: true });
+    expect(screen.queryByText("navigation:commands.createProject")).toBeNull();
+    expect(screen.queryByText("navigation:commands.inviteMember")).toBeNull();
+  });
+
+  it("shows admin commands only to instance admins", () => {
+    mount();
+    press("k", { ctrlKey: true });
+    expect(screen.queryByText("navigation:commands.adminUsers")).toBeNull();
+    cleanup();
+    closeOverlay();
+    adminAccess = true;
+    mount();
+    press("k", { ctrlKey: true });
+    expect(
+      screen.getByText("navigation:commands.adminUsers"),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("hotkeys", () => {
+  it("navigates with g then p", () => {
+    mount();
+    press("g");
+    press("p");
+    expect(navigate).toHaveBeenCalledWith({
+      to: "/$slug/projects",
+      params: { slug: "acme" },
+    });
+  });
+
+  it("opens create project with c and create workspace with w c", () => {
+    mount();
+    press("c");
+    expect(screen.getByText("create-project-dialog")).toBeInTheDocument();
+    press("w");
+    press("c");
+    expect(screen.getByText("create-workspace-modal")).toBeInTheDocument();
+    expect(screen.queryByText("create-project-dialog")).toBeNull();
+  });
+
+  it("does nothing for c when the user cannot create projects", () => {
+    capabilities.createProjects = false;
+    mount();
+    press("c");
+    expect(screen.queryByText("create-project-dialog")).toBeNull();
+  });
+
+  it("ignores letter hotkeys while typing in a field", () => {
+    mount();
+    const field = document.createElement("input");
+    document.body.append(field);
+    try {
+      press("c", {}, field);
+    } finally {
+      field.remove();
+    }
+    expect(screen.queryByText("create-project-dialog")).toBeNull();
+  });
+
+  it("opens one overlay at a time", () => {
+    mount();
+    press("k", { ctrlKey: true });
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    act(() => {
+      press("?");
+    });
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+  });
+});
+
+describe("shortcuts help", () => {
+  it("opens with ? and lists the declared hotkeys", () => {
+    mount();
+    press("?");
+    expect(
+      screen.getByText("navigation:keyboardShortcuts.title"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("navigation:commands.goProjects"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("navigation:commands.palette")).toBeInTheDocument();
+  });
+});

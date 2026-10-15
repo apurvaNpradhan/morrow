@@ -23,3 +23,4 @@ export { resolveSidebarTarget } from "./routing/lib/resolve-sidebar-target";
 export { WorkspaceSwitcher } from "./workspace-switcher";
 export { WorkspaceLogoSetting } from "./logo/workspace-logo-setting";
 export { WorkspaceGeneralPage } from "./general/components/workspace-general-page";
+export { useMyWorkspaces } from "./queries/use-my-workspaces";
