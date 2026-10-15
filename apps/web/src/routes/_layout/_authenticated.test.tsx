@@ -16,7 +16,13 @@ vi.mock("@/app/hooks/use-track-signup", () => ({ useTrackSignup: vi.fn() }));
 // The layout preloads these; the guard is what is under test.
 vi.mock("@/members", () => ({
   myInvitationCollection: { preload: vi.fn() },
+  workspaceInvitationCollection: { preload: vi.fn() },
   workspaceMemberCollection: { preload: vi.fn() },
+  workspaceMemberUserCollection: { preload: vi.fn() },
+}));
+vi.mock("@/projects", () => ({
+  projectCollection: { preload: vi.fn() },
+  projectColumnCollection: { preload: vi.fn() },
 }));
 vi.mock("@/workspace", () => ({
   workspaceCollection: { preload: vi.fn() },
@@ -93,5 +99,21 @@ describe("authenticated layout guard", () => {
     await expect(
       beforeLoad({ location: { href: "/acme", pathname: "/acme" } }),
     ).resolves.toEqual({ session: null, sessionError: true });
+  });
+
+  it("does not mistake a failed session request for a signed-out visitor", async () => {
+    getSession.mockResolvedValue({ data: null, error: { status: 429 } });
+    await expect(
+      beforeLoad({ location: { href: "/acme", pathname: "/acme" } }),
+    ).resolves.toEqual({ session: null, sessionError: true });
+  });
+
+  it("asks again after a failed session request", async () => {
+    getSession.mockResolvedValueOnce({ data: null, error: { status: 503 } });
+    await beforeLoad({ location: { href: "/acme", pathname: "/acme" } });
+    getSession.mockResolvedValue({ data: finished });
+    await expect(
+      beforeLoad({ location: { href: "/acme", pathname: "/acme" } }),
+    ).resolves.toMatchObject({ session: finished });
   });
 });

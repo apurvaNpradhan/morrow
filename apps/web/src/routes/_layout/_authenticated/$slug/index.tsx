@@ -53,13 +53,10 @@ function WorkspaceHome() {
               </CardHeader>
               <CardContent>
                 {activity.isPending ? (
-                  <div className="flex flex-col gap-3">
-                    <p role="status">{t("workspace:home.activity.loading")}</p>
-                    <div aria-hidden="true" className="flex flex-col gap-3">
-                      <Skeleton className="h-4 w-64" />
-                      <Skeleton className="h-4 w-48" />
-                      <Skeleton className="h-4 w-56" />
-                    </div>
+                  <div aria-busy="true" className="flex flex-col gap-3">
+                    <Skeleton className="h-4 w-64" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-56" />
                   </div>
                 ) : activity.isError && items.length === 0 ? (
                   <div className="flex flex-col gap-3">
