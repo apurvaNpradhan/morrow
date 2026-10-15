@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/node";
 import type { Session, User } from "better-auth/types";
 import { Hono } from "hono";
-import { compress } from "hono/compress";
+import { compressResponses } from "#api/platform/http/compress-responses";
 import { ORPCError } from "@orpc/server";
 import { HTTPException } from "hono/http-exception";
 import { evlog, type EvlogVariables } from "evlog/hono";
@@ -70,12 +70,7 @@ export function createApp() {
     Sentry.captureException(err);
     return c.json({ message: "Internal Server Error" }, 500);
   });
-  // Shape responses are streamed to a client that long-polls them; buffering
-  // them for compression would stall every update.
-  const compressResponses = compress();
-  app.use(async (c, next) =>
-    c.req.path.startsWith("/api/shapes/") ? next() : compressResponses(c, next),
-  );
+  app.use(compressResponses);
 
   const api = new Hono<ApiVariables>();
 

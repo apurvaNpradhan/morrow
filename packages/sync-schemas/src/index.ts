@@ -91,10 +91,8 @@ export const projectsShape = shape(
     icon: z.string().nullable(),
     backgroundUrl: z.string().nullable(),
     archivedAt: z.date().nullable(),
-    lastTaskNumber: z.number(),
     position: z.string(),
     createdAt: z.date(),
-    updatedAt: z.date(),
   }),
 );
 
