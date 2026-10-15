@@ -37,7 +37,10 @@ export const taskTable = pgTable(
       .references(() => projectColumnTable.id),
     number: integer("number").notNull(),
     title: text("title").notNull(),
-    description: text("description").notNull().default(""),
+    // Counted from the description whenever it is written, so a card shows
+    // progress without the description (see `taskDescriptionTable`).
+    checklistDone: integer("checklist_done").notNull().default(0),
+    checklistTotal: integer("checklist_total").notNull().default(0),
     priority: text("priority", { enum: TASK_PRIORITIES })
       .notNull()
       .default("none"),
@@ -70,4 +73,24 @@ export const taskTable = pgTable(
       sql`${table.priority} IN ('none', 'low', 'medium', 'high', 'urgent')`,
     ),
   ],
+);
+
+/*
+ * A task's markdown, apart from the task so the synced task rows stay small.
+ * Every task has exactly one row, written in the same transaction as the task.
+ * `project_id` repeats the task's so the shape can be scoped by membership
+ * without a join.
+ */
+export const taskDescriptionTable = pgTable(
+  "task_description",
+  {
+    taskId: text("task_id")
+      .primaryKey()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projectTable.id, { onDelete: "cascade" }),
+    description: text("description").notNull().default(""),
+  },
+  (table) => [index("task_description_projectId_idx").on(table.projectId)],
 );

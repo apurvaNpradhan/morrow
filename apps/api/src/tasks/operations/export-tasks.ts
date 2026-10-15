@@ -1,12 +1,12 @@
 import { compareColumns, comparePosition } from "@morrow/sync-schemas";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, schema } from "#api/platform/database/index";
 import {
   projectColumnTable,
   projectNotFound,
   projectTable,
 } from "#api/projects/index";
-import { taskTable } from "#api/tasks/tables";
+import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 
 /**
  * A project's tasks as a portable document: columns by name and category,
@@ -29,9 +29,17 @@ export async function exportTasks(workspaceId: string, projectId: string) {
   const columnById = new Map(columns.map((column) => [column.id, column]));
 
   const rows = await db
-    .select({ task: taskTable, assigneeEmail: schema.userTable.email })
+    .select({
+      task: taskTable,
+      assigneeEmail: schema.userTable.email,
+      description: sql<string>`coalesce(${taskDescriptionTable.description}, '')`,
+    })
     .from(taskTable)
     .leftJoin(schema.userTable, eq(schema.userTable.id, taskTable.assigneeId))
+    .leftJoin(
+      taskDescriptionTable,
+      eq(taskDescriptionTable.taskId, taskTable.id),
+    )
     .where(eq(taskTable.projectId, projectId));
 
   rows.sort(
@@ -43,12 +51,12 @@ export async function exportTasks(workspaceId: string, projectId: string) {
   return {
     project: { key: project.key, name: project.name },
     columns: columns.map(({ name, category }) => ({ name, category })),
-    tasks: rows.map(({ task, assigneeEmail }) => {
+    tasks: rows.map(({ task, assigneeEmail, description }) => {
       const column = columnById.get(task.columnId);
       return {
         number: task.number,
         title: task.title,
-        description: task.description,
+        description,
         column: column?.name ?? "",
         category: column?.category ?? "unstarted",
         priority: task.priority,

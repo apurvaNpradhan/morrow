@@ -14,6 +14,7 @@ import {
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import { freePosition } from "#api/tasks/lib/free-position";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
+import { checklistColumns, saveDescription } from "#api/tasks/lib/description";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
 
@@ -75,7 +76,7 @@ export async function createTask(
           columnId: input.columnId,
           number: counter.number,
           title: input.title,
-          description: input.description ?? "",
+          ...checklistColumns(input.description ?? ""),
           priority: input.priority ?? "none",
           assigneeId: input.assigneeId ?? null,
           dueDate: input.dueDate ?? null,
@@ -89,6 +90,7 @@ export async function createTask(
           title: taskTable.title,
         });
       if (!task) throw new Error("Task insert returned no row");
+      await saveDescription(tx, projectId, task.id, input.description ?? "");
       await recordTaskActivity(tx, "task.created", workspaceId, project, task);
       return task;
     });

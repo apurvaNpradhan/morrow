@@ -11,6 +11,7 @@ import {
 } from "#api/projects/index";
 import { taskError } from "#api/tasks/errors";
 import type { TaskActor } from "#api/tasks/lib/assignee";
+import { checklistColumns } from "#api/tasks/lib/description";
 import {
   importDocument,
   MAX_IMPORT_BYTES,
@@ -18,7 +19,7 @@ import {
 } from "#api/tasks/lib/import-document";
 import { matchColumn } from "#api/tasks/lib/match-column";
 import type { ImportWarning } from "#api/tasks/response";
-import { taskTable } from "#api/tasks/tables";
+import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 
 /** Rows per insert: a task has 12 bound columns and Postgres allows 65,535 parameters. */
 const INSERT_CHUNK = 1000;
@@ -150,7 +151,7 @@ export async function importTasks(
       columnId: column.id,
       number: numberOf.get(index)!,
       title: task.title,
-      description: task.description,
+      ...checklistColumns(task.description),
       priority: task.priority,
       assigneeId,
       dueDate: task.dueDate,
@@ -164,6 +165,16 @@ export async function importTasks(
     }));
     for (let at = 0; at < rows.length; at += INSERT_CHUNK) {
       await tx.insert(taskTable).values(rows.slice(at, at + INSERT_CHUNK));
+    }
+    const descriptions = rows.map((row, at) => ({
+      taskId: row.id,
+      projectId,
+      description: placed[at]!.task.description,
+    }));
+    for (let at = 0; at < descriptions.length; at += INSERT_CHUNK) {
+      await tx
+        .insert(taskDescriptionTable)
+        .values(descriptions.slice(at, at + INSERT_CHUNK));
     }
 
     for (const [column, { usedColumn, count }] of unmatched) {

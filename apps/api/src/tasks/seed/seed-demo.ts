@@ -19,6 +19,7 @@ import { db, getDatabasePool } from "#api/platform/database/index";
 import {
   projectColumnTable,
   projectTable,
+  taskDescriptionTable,
   taskTable,
   userTable,
   workspaceRoleTable,
@@ -51,7 +52,7 @@ const PROJECTS = [
   ["SUP", "Support tooling"],
   ["PLAT", "Platform"],
 ] as const;
-// Postgres takes 65,535 parameters in one statement; a task row has 16.
+// Postgres takes 65,535 parameters in one statement; a task row has 17.
 const CHUNK = 2_000;
 
 function say(message: string) {
@@ -167,7 +168,17 @@ async function main() {
         now,
       });
       for (let from = 0; from < rows.length; from += CHUNK) {
-        await tx.insert(taskTable).values(rows.slice(from, from + CHUNK));
+        const chunk = rows.slice(from, from + CHUNK);
+        await tx
+          .insert(taskTable)
+          .values(chunk.map(({ description: _, ...task }) => task));
+        await tx.insert(taskDescriptionTable).values(
+          chunk.map((row) => ({
+            taskId: row.id,
+            projectId,
+            description: row.description,
+          })),
+        );
       }
       total += count;
       say(`${key}: ${count} tasks`);
