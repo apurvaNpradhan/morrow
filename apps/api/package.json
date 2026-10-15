@@ -23,7 +23,8 @@
     "test:watch": "vp test --config vitest.config.ts",
     "db:generate": "varlock run -- drizzle-kit generate",
     "db:migrate": "varlock run -- drizzle-kit migrate",
-    "db:studio": "varlock run -- drizzle-kit studio"
+    "db:studio": "varlock run -- drizzle-kit studio",
+    "seed:demo": "varlock run -- tsx src/tasks/seed/seed-demo.ts"
   },
   "varlock": {
     "loadPath": "../../"
