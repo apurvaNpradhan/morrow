@@ -9,14 +9,6 @@ export const txid = z
 
 export const txidResult = z.object({ txid });
 
-export const nullableTxidResult = z.object({
-  txid: txid
-    .nullable()
-    .describe(
-      "Null when the call changed nothing, so there is nothing to wait for.",
-    ),
-});
-
 export const createdResult = z.object({
   id: z.string(),
   number: z.number().describe("The Project's next ticket number."),
