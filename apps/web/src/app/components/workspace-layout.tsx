@@ -7,7 +7,6 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/design-system/ui/breadcrumb";
-import { KbdSequence } from "@/design-system/ui/kbd";
 import { SidebarTrigger } from "@/design-system/ui/sidebar";
 import {
   Tooltip,
@@ -15,7 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/design-system/ui/tooltip";
-import { shortcuts } from "@/app/lib/shortcuts";
+import { ToggleSidebarKeys } from "@/app/commands";
 import { useActiveWorkspace } from "@/workspace";
 import { cn } from "@/design-system/cn";
 
@@ -51,12 +50,7 @@ export function WorkspaceLayout({
                 <TooltipContent>
                   <p className="flex items-center gap-2 text-[10px]">
                     Toggle sidebar
-                    <KbdSequence
-                      keys={[
-                        shortcuts.sidebar.prefix,
-                        shortcuts.sidebar.toggle,
-                      ]}
-                    />
+                    <ToggleSidebarKeys />
                   </p>
                 </TooltipContent>
               </Tooltip>

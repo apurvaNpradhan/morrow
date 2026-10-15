@@ -7,3 +7,4 @@ export { SidebarProjects } from "./components/sidebar-projects";
 export { ProjectGeneralPage } from "./settings/project-general-page";
 export { ProjectWorkflowPage } from "./settings/project-workflow-page";
 export { ProjectsSettingsIndex } from "./settings/projects-settings-index";
+export { CreateProjectDialog } from "./components/create-project-dialog";

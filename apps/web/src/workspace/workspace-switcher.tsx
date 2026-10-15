@@ -18,15 +18,16 @@ import {
   SidebarMenuItem,
 } from "@/design-system/ui/sidebar";
 import { UserAvatar } from "@/design-system/user-avatar";
-import { shortcuts } from "@/app/lib/shortcuts";
 import { useActiveWorkspace } from "./queries/use-active-workspace";
 import { useMyWorkspaces } from "./queries/use-my-workspaces";
+import { formatForDisplay } from "@tanstack/react-hotkeys";
 import {
-  getModifierKeyText,
-  useRegisterShortcuts,
-} from "@/app/hooks/use-keyboard-shortcuts";
+  closeOverlay,
+  openOverlay,
+  useIsOverlayOpen,
+  useRegisterOverlayHost,
+} from "@/app/commands";
 import type { WorkspaceSummary } from "./types";
-import { CreateWorkspaceModal } from "./create-workspace-modal";
 import { WorkspaceLogo } from "./logo/workspace-logo";
 
 export function WorkspaceSwitcher() {
@@ -35,9 +36,12 @@ export function WorkspaceSwitcher() {
 
   const workspaces = useMyWorkspaces();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isCreateWorkspaceModalOpen, setIsCreateWorkspaceModalOpen] =
-    React.useState(false);
+  useRegisterOverlayHost("workspaceSwitcher");
+  const isOpen = useIsOverlayOpen("workspaceSwitcher");
+  const setIsOpen = React.useCallback((open: boolean) => {
+    if (open) openOverlay("workspaceSwitcher");
+    else closeOverlay("workspaceSwitcher");
+  }, []);
 
   // The workspace route records itself as the last used one, so switching is
   // only navigation and cannot fail halfway.
@@ -70,20 +74,7 @@ export function WorkspaceSwitcher() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, workspaces, handleWorkspaceChange]);
-
-  useRegisterShortcuts({
-    sequentialShortcuts: {
-      [shortcuts.workspace.prefix]: {
-        [shortcuts.workspace.switch]: () => {
-          setIsOpen(true);
-        },
-        [shortcuts.workspace.create]: () => {
-          setIsCreateWorkspaceModalOpen(true);
-        },
-      },
-    },
-  });
+  }, [isOpen, workspaces, handleWorkspaceChange, setIsOpen]);
 
   if (!workspace) {
     return null;
@@ -150,7 +141,7 @@ export function WorkspaceSwitcher() {
                     />
                     <span className="flex-1 text-left">{ws.name}</span>
                     <DropdownMenuShortcut>
-                      {getModifierKeyText()} {index > 8 ? "0" : index + 1}
+                      {formatForDisplay(`Mod+${index > 8 ? 0 : index + 1}`)}
                     </DropdownMenuShortcut>
                   </DropdownMenuItem>
                 ))}
@@ -158,8 +149,7 @@ export function WorkspaceSwitcher() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
-                    setIsCreateWorkspaceModalOpen(true);
-                    setIsOpen(false);
+                    openOverlay("createWorkspace");
                   }}
                   className="h-7 text-sm data-highlighted:bg-sidebar-accent data-highlighted:text-sidebar-accent-foreground"
                 >
@@ -176,11 +166,6 @@ export function WorkspaceSwitcher() {
           </div>
         </div>
       </div>
-
-      <CreateWorkspaceModal
-        open={isCreateWorkspaceModalOpen}
-        onClose={() => setIsCreateWorkspaceModalOpen(false)}
-      />
     </>
   );
 }

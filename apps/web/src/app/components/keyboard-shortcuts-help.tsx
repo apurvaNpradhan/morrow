@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useAppHotkeyList } from "@tanstack/react-hotkeys";
+import { useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { closeOverlay, displayKeys, useIsOverlayOpen } from "@/app/commands";
 import {
   Dialog,
   DialogContent,
@@ -9,104 +11,53 @@ import {
 } from "@/design-system/ui/dialog";
 import { Input } from "@/design-system/ui/input";
 import { KbdSequence } from "@/design-system/ui/kbd";
-import { shortcuts } from "@/app/lib/shortcuts";
 
-type ShortcutItem = {
-  keys: string[];
-  description: string;
-  icon?: React.ReactNode;
-};
+const GROUP_ORDER = ["general", "navigate", "create", "view"] as const;
 
-type ShortcutCategory = {
-  title: string;
-  shortcuts: ShortcutItem[];
-};
-
-function useShortcutCategories(): ShortcutCategory[] {
+function useShortcutCategories(searchQuery: string) {
   const { t } = useTranslation();
+  const items = useAppHotkeyList();
+  const query = searchQuery.toLowerCase();
 
-  return useMemo(
-    () => [
-      {
-        title: t("navigation:keyboardShortcuts.categories.general"),
-        shortcuts: [
+  return GROUP_ORDER.flatMap((group) => {
+    const shortcuts = items.flatMap(({ appHotkey }) => {
+      if (!appHotkey.hotkey || appHotkey.meta?.group !== group) return [];
+      const description = t(`navigation:commands.${appHotkey.id}`);
+      const displayed = displayKeys(appHotkey.hotkey);
+      const matches =
+        description.toLowerCase().includes(query) ||
+        displayed.keys.some((key) => key.toLowerCase().includes(query));
+      return matches ? [{ id: appHotkey.id, description, ...displayed }] : [];
+    });
+    return shortcuts.length > 0
+      ? [
           {
-            keys: [shortcuts.palette.prefix, shortcuts.palette.open],
-            description: t(
-              "navigation:keyboardShortcuts.items.openCommandPalette",
-            ),
+            group,
+            title: t(`navigation:commandPalette.groups.${group}`),
+            shortcuts,
           },
-          {
-            keys: [shortcuts.sidebar.prefix, shortcuts.sidebar.toggle],
-            description: t("navigation:keyboardShortcuts.items.toggleSidebar"),
-          },
-          {
-            keys: ["?"],
-            description: t("navigation:keyboardShortcuts.items.showShortcuts"),
-          },
-          {
-            keys: ["Escape"],
-            description: t("navigation:keyboardShortcuts.items.closeModal"),
-          },
-        ],
-      },
-      {
-        title: t("navigation:keyboardShortcuts.categories.create"),
-        shortcuts: [
-          {
-            keys: [shortcuts.workspace.prefix, shortcuts.workspace.create],
-            description: t(
-              "navigation:keyboardShortcuts.items.createWorkspace",
-            ),
-          },
-        ],
-      },
-    ],
-    [t],
-  );
+        ]
+      : [];
+  });
 }
 
 export function KeyboardShortcutsHelp() {
   const { t } = useTranslation();
-  const shortcutCategories = useShortcutCategories();
-  const [open, setOpen] = useState(false);
+  const open = useIsOverlayOpen("help");
   const [searchQuery, setSearchQuery] = useState("");
+  const filteredCategories = useShortcutCategories(searchQuery);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      const isTyping =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.contentEditable === "true";
-
-      if (e.key === "?" && !isTyping) {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const filteredCategories = shortcutCategories
-    .map((category) => ({
-      ...category,
-      shortcuts: category.shortcuts.filter(
-        (shortcut) =>
-          shortcut.description
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          shortcut.keys.some((key) =>
-            key.toLowerCase().includes(searchQuery.toLowerCase()),
-          ),
-      ),
-    }))
-    .filter((category) => category.shortcuts.length > 0);
+    if (!open) setSearchQuery("");
+  }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) closeOverlay("help");
+      }}
+    >
       <DialogContent className="px-4 max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>{t("navigation:keyboardShortcuts.title")}</DialogTitle>
@@ -125,18 +76,21 @@ export function KeyboardShortcutsHelp() {
         <div className="overflow-y-auto flex-1">
           <div className="space-y-4">
             {filteredCategories.map((category) => (
-              <div key={category.title}>
+              <div key={category.group}>
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   {category.title}
                 </h3>
                 <div className="space-y-1">
                   {category.shortcuts.map((shortcut) => (
                     <div
-                      key={`${category.title}-${shortcut.description}-${shortcut.keys.join("+")}`}
+                      key={shortcut.id}
                       className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50"
                     >
                       <span className="text-xs">{shortcut.description}</span>
-                      <KbdSequence keys={shortcut.keys} />
+                      <KbdSequence
+                        keys={shortcut.keys}
+                        separator={shortcut.separator}
+                      />
                     </div>
                   ))}
                 </div>

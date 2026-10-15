@@ -14,7 +14,7 @@ import { ThemeProvider } from "./app/components/theme-provider";
 import { applyTheme } from "./app/preferences/apply-theme";
 import { readDevicePreferences } from "./app/preferences/use-device-preferences";
 import { ErrorBoundary } from "./design-system/ui/error-boundary";
-import { KeyboardShortcutsProvider } from "./app/hooks/use-keyboard-shortcuts";
+import { AppHotkeysProvider } from "./app/commands";
 import { AppI18nProvider } from "./app/i18n/provider";
 import { routeTree } from "./routeTree.gen";
 
@@ -108,7 +108,7 @@ if (!rootElement.innerHTML) {
           <ThemeProvider>
             <AuthProvider>
               <AppI18nProvider>
-                <KeyboardShortcutsProvider>
+                <AppHotkeysProvider>
                   <App />
                   <KeyboardShortcutsHelp />
                   {Devtools ? (
@@ -116,7 +116,7 @@ if (!rootElement.innerHTML) {
                       <Devtools router={router} />
                     </Suspense>
                   ) : null}
-                </KeyboardShortcutsProvider>
+                </AppHotkeysProvider>
               </AppI18nProvider>
             </AuthProvider>
           </ThemeProvider>

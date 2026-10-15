@@ -256,6 +256,9 @@ importers:
       '@tanstack/react-db':
         specifier: ^0.5.8
         version: 0.5.8(react@19.3.0)(typescript@7.0.2)
+      '@tanstack/react-hotkeys':
+        specifier: 0.14.0
+        version: 0.14.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tanstack/react-query':
         specifier: ^5.104.2
         version: 5.104.2(react@19.3.0)
@@ -3444,6 +3447,10 @@ packages:
     resolution: {integrity: sha512-utTS5L2OkeYUzXGohL1Z8sefu1GLNOJcxe8Hd6iIdc/Xo1K1nDB2JEp4iSFhvYh33xKC9V91TxrS8qfrpoKobQ==}
     engines: {node: '>=20.19'}
 
+  '@tanstack/hotkeys@0.12.0':
+    resolution: {integrity: sha512-DvVl1VMEFQbhOJPBlIouieJPq6Kq+ZuDOe/FC7c1rkEq5d7ZSnn32yDL6L7hlp5n4Z1Cj4F6cEcbcB7lIUC7KQ==}
+    engines: {node: '>=20'}
+
   '@tanstack/intent@0.5.5':
     resolution: {integrity: sha512-Ei5RqUWgV96HrezTEyDbScy0wZN+17dNo59Am8/3ncv0YIaIxApkiX5LkM488wxe4a1Imdi09nhjFxblxwLMSQ==}
     engines: {node: '>=20.12.0'}
@@ -3474,6 +3481,13 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8'
       '@types/react-dom': '>=16.8'
+      react: '>=16.8'
+      react-dom: '>=16.8'
+
+  '@tanstack/react-hotkeys@0.14.0':
+    resolution: {integrity: sha512-LrjU1wCT6VFaoZd99KuisrhN0OOqoM512BFE2UNRHQCtGU6cYNufDKadYypCOiSq+pqvyLIxWEIpHykYgjePlQ==}
+    engines: {node: '>=20'}
+    peerDependencies:
       react: '>=16.8'
       react-dom: '>=16.8'
 
@@ -9095,6 +9109,10 @@ snapshots:
 
   '@tanstack/history@1.162.4': {}
 
+  '@tanstack/hotkeys@0.12.0':
+    dependencies:
+      '@tanstack/store': 0.11.2
+
   '@tanstack/intent@0.5.5': {}
 
   '@tanstack/match-sorter-utils@9.2.6':
@@ -9140,6 +9158,13 @@ snapshots:
       - csstype
       - solid-js
       - utf-8-validate
+
+  '@tanstack/react-hotkeys@0.14.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      '@tanstack/hotkeys': 0.12.0
+      '@tanstack/react-store': 0.11.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react: 19.3.0
+      react-dom: 19.3.0(react@19.3.0)
 
   '@tanstack/react-query-devtools@5.104.2(@tanstack/react-query@5.104.2(react@19.3.0))(@types/react@19.3.0)(csstype@3.2.3)(react@19.3.0)':
     dependencies:

@@ -1,8 +1,21 @@
 import { useNavigate } from "@tanstack/react-router";
+import { formatForDisplay, useAppHotkeys } from "@tanstack/react-hotkeys";
 import { ArrowDownIcon, ArrowUpIcon, CornerDownLeftIcon } from "lucide-react";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CreateWorkspaceModal } from "@/workspace";
+import {
+  closeOverlay,
+  CommandHotkeys,
+  useCommands,
+  useIsOverlayOpen,
+} from "@/app/commands";
+import { InviteTeamMemberModal } from "@/members";
+import { CreateProjectDialog, useNavProjects } from "@/projects";
+import {
+  CreateWorkspaceModal,
+  useActiveWorkspace,
+  useMyWorkspaces,
+} from "@/workspace";
 import {
   Command,
   CommandCollection,
@@ -20,183 +33,125 @@ import {
   CommandShortcut,
 } from "@/design-system/ui/command";
 import { Kbd, KbdGroup } from "@/design-system/ui/kbd";
-import { shortcuts } from "@/app/lib/shortcuts";
-import { useActiveWorkspace } from "@/workspace";
-import { useRegisterShortcuts } from "@/app/hooks/use-keyboard-shortcuts";
-import { setTheme } from "@/app/preferences/set-theme";
 
-type PaletteActionItem = {
+type PaletteItem = {
   value: string;
   label: string;
+  /** What the query matches against; defaults to the label. */
+  search?: string;
   shortcut?: string;
+  /** Secondary text, for example a project key. */
+  hint?: string;
   onRun: () => void;
 };
 
-type PaletteGroup = {
-  value: string;
-  label: string;
-  items: PaletteActionItem[];
-};
+type PaletteGroup = { value: string; label: string; items: PaletteItem[] };
+
+const COMMAND_GROUPS = ["navigate", "create", "view", "account"] as const;
 
 export function CommandPalette() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const hotkeys = useAppHotkeys();
   const { data: workspace } = useActiveWorkspace();
-  const [open, setOpen] = useState(false);
-  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
-
-  useRegisterShortcuts({
-    shortcuts: {
-      [shortcuts.help.key]: () => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
-      },
-    },
-    modifierShortcuts: {
-      [shortcuts.palette.prefix]: {
-        [shortcuts.palette.open]: () => {
-          setOpen((prev) => !prev);
-        },
-      },
-    },
-    sequentialShortcuts: {
-      [shortcuts.workspace.prefix]: {
-        [shortcuts.workspace.create]: () => {
-          setIsCreateWorkspaceOpen(true);
-        },
-      },
-    },
-  });
-
-  const runCommand = useCallback((command: () => void) => {
-    command();
-    setOpen(false);
-  }, []);
-
-  const groupedItems = useMemo<PaletteGroup[]>(
-    () => [
-      {
-        value: "suggestions",
-        label: t("navigation:commandPalette.suggestions"),
-        items: [
-          {
-            value: "members",
-            label: t("navigation:commandPalette.members", {
-              defaultValue: "Members",
-            }),
-            onRun: () => {
-              if (!workspace) return;
-              navigate({
-                to: "/$slug/settings/workspace/members",
-                params: { slug: workspace.slug },
-              });
-            },
-          },
-        ],
-      },
-      {
-        value: "commands",
-        label: t("navigation:commandPalette.commands"),
-        items: [
-          {
-            value: "create-workspace",
-            label: t("navigation:commandPalette.createWorkspace"),
-            shortcut: `${shortcuts.workspace.prefix} ${shortcuts.workspace.create}`,
-            onRun: () => setIsCreateWorkspaceOpen(true),
-          },
-          {
-            value: "theme-light",
-            label: t("navigation:commandPalette.lightTheme"),
-            onRun: () => setTheme("light"),
-          },
-          {
-            value: "theme-dark",
-            label: t("navigation:commandPalette.darkTheme"),
-            onRun: () => setTheme("dark"),
-          },
-          {
-            value: "theme-system",
-            label: t("navigation:commandPalette.systemTheme"),
-            onRun: () => setTheme("system"),
-          },
-          {
-            value: "keyboard-shortcuts",
-            label: t("navigation:commandPalette.keyboardShortcuts"),
-            shortcut: "?",
-            onRun: () => {
-              setTimeout(() => {
-                document.dispatchEvent(
-                  new KeyboardEvent("keydown", { key: "?" }),
-                );
-              }, 100);
-            },
-          },
-        ],
-      },
-    ],
-    [navigate, t, workspace],
-  );
-
-  const shortcutHandlers = useMemo(() => {
-    const handlers = new Map<string, () => void>();
-    for (const group of groupedItems) {
-      for (const item of group.items) {
-        if (!item.shortcut) continue;
-        handlers.set(
-          item.shortcut.replace(/\s+/g, "").toLowerCase(),
-          item.onRun,
-        );
-      }
-    }
-    return handlers;
-  }, [groupedItems]);
+  const commands = useCommands();
+  const projects = useNavProjects(workspace?.id);
+  const workspaces = useMyWorkspaces();
+  const open = useIsOverlayOpen("palette");
+  const createWorkspaceOpen = useIsOverlayOpen("createWorkspace");
+  const createProjectOpen = useIsOverlayOpen("createProject");
+  const inviteMemberOpen = useIsOverlayOpen("inviteMember");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) setQuery("");
+  }, [open]);
 
-    let sequence = "";
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey ||
-        event.key === "Shift"
-      ) {
-        return;
-      }
-
-      if (event.key.length !== 1 && event.key !== "?") {
-        return;
-      }
-
-      sequence = `${sequence}${event.key.toLowerCase()}`.slice(-3);
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        sequence = "";
-      }, 700);
-
-      const handler = shortcutHandlers.get(sequence);
-      if (!handler) return;
-
-      event.preventDefault();
-      runCommand(handler);
-      sequence = "";
-      clearTimeout(timeout);
+  const groups = useMemo<PaletteGroup[]>(() => {
+    const run = (action: () => void) => () => {
+      closeOverlay("palette");
+      action();
     };
 
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      clearTimeout(timeout);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, shortcutHandlers, runCommand]);
+    const result = COMMAND_GROUPS.flatMap((group): PaletteGroup[] => {
+      const items = commands.flatMap((command): PaletteItem[] =>
+        command.group === group
+          ? [
+              {
+                value: command.id,
+                label: command.label,
+                shortcut: command.hotkey
+                  ? formatForDisplay(hotkeys[command.hotkey].hotkey ?? "")
+                  : undefined,
+                onRun: run(command.run),
+              },
+            ]
+          : [],
+      );
+      return items.length > 0
+        ? [
+            {
+              value: group,
+              label: t(`navigation:commandPalette.groups.${group}`),
+              items,
+            },
+          ]
+        : [];
+    });
+
+    if (query.trim()) {
+      if (workspace) {
+        result.push({
+          value: "projects",
+          label: t("navigation:commandPalette.groups.projects"),
+          items: projects.map((project) => ({
+            value: `project:${project.key}`,
+            label: project.name,
+            search: `${project.name} ${project.key}`,
+            hint: project.key,
+            onRun: run(() =>
+              navigate({
+                to: "/$slug/projects/$key",
+                params: { slug: workspace.slug, key: project.key },
+              }),
+            ),
+          })),
+        });
+      }
+      result.push({
+        value: "workspaces",
+        label: t("navigation:commandPalette.groups.workspaces"),
+        items: workspaces.map((other) => ({
+          value: `workspace:${other.slug}`,
+          label: other.name,
+          onRun: run(() =>
+            navigate({ to: "/$slug", params: { slug: other.slug } }),
+          ),
+        })),
+      });
+    }
+    return result.filter((group) => group.items.length > 0);
+  }, [commands, hotkeys, navigate, projects, query, t, workspace, workspaces]);
 
   return (
     <>
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandHotkeys commands={commands} />
+      <CommandDialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) closeOverlay("palette");
+        }}
+      >
         <CommandDialogPopup instant>
-          <Command items={groupedItems}>
+          <Command
+            items={groups}
+            value={query}
+            onValueChange={setQuery}
+            itemToStringValue={(item: unknown) => {
+              const { search, label } = item as PaletteItem;
+              return search ?? label;
+            }}
+          >
             <CommandInput
               placeholder={t("navigation:commandPalette.inputPlaceholder")}
             />
@@ -210,28 +165,27 @@ export function CommandPalette() {
                     <CommandGroup items={group.items}>
                       <CommandGroupLabel>{group.label}</CommandGroupLabel>
                       <CommandCollection>
-                        {(item: PaletteActionItem) => {
-                          return (
-                            <CommandItem
-                              key={item.value}
-                              value={item.value}
-                              onClick={() => runCommand(item.onRun)}
-                              className="px-3"
-                            >
-                              <span className="flex-1">{item.label}</span>
-                              {item.shortcut && (
-                                <CommandShortcut>
-                                  {item.shortcut}
-                                </CommandShortcut>
-                              )}
-                            </CommandItem>
-                          );
-                        }}
+                        {(item: PaletteItem) => (
+                          <CommandItem
+                            key={item.value}
+                            value={item}
+                            onClick={item.onRun}
+                            className="px-3"
+                          >
+                            <span className="flex-1">{item.label}</span>
+                            {item.hint && (
+                              <span className="text-muted-foreground text-xs">
+                                {item.hint}
+                              </span>
+                            )}
+                            {item.shortcut && (
+                              <CommandShortcut>{item.shortcut}</CommandShortcut>
+                            )}
+                          </CommandItem>
+                        )}
                       </CommandCollection>
                     </CommandGroup>
-                    {groupIndex < groupedItems.length - 1 && (
-                      <CommandSeparator />
-                    )}
+                    {groupIndex < groups.length - 1 && <CommandSeparator />}
                   </Fragment>
                 )}
               </CommandList>
@@ -266,8 +220,21 @@ export function CommandPalette() {
       </CommandDialog>
 
       <CreateWorkspaceModal
-        open={isCreateWorkspaceOpen}
-        onClose={() => setIsCreateWorkspaceOpen(false)}
+        open={createWorkspaceOpen}
+        onClose={() => closeOverlay("createWorkspace")}
+      />
+      {workspace ? (
+        <CreateProjectDialog
+          workspace={workspace}
+          open={createProjectOpen}
+          onOpenChange={(next) => {
+            if (!next) closeOverlay("createProject");
+          }}
+        />
+      ) : null}
+      <InviteTeamMemberModal
+        open={inviteMemberOpen}
+        onClose={() => closeOverlay("inviteMember")}
       />
     </>
   );

@@ -784,21 +784,43 @@
 	},
 	"navigation": {
 		"commandPalette": {
-			"suggestions": "Suggestions",
-			"commands": "Commands",
-			"members": "Members",
-			"createWorkspace": "Create workspace",
-			"lightTheme": "Light theme",
-			"darkTheme": "Dark theme",
-			"systemTheme": "System theme",
-			"keyboardShortcuts": "Keyboard shortcuts",
-			"inputPlaceholder": "Search for apps and commands...",
+			"groups": {
+				"general": "General",
+				"navigate": "Navigate",
+				"create": "Create",
+				"view": "View",
+				"account": "Account",
+				"projects": "Projects",
+				"workspaces": "Workspaces"
+			},
+			"inputPlaceholder": "Search commands, projects and workspaces...",
 			"empty": "No results found.",
 			"footer": {
 				"navigate": "Navigate",
 				"open": "Open",
 				"close": "Close"
 			}
+		},
+		"commands": {
+			"palette": "Open command palette",
+			"help": "Keyboard shortcuts",
+			"toggleSidebar": "Toggle sidebar",
+			"goHome": "Go to Home",
+			"goProjects": "Go to Projects",
+			"goMembers": "Go to Members",
+			"goSettings": "Workspace settings",
+			"goAccount": "Account settings",
+			"goRoles": "Roles",
+			"adminUsers": "Admin: Users",
+			"adminWorkspaces": "Admin: Workspaces",
+			"switchWorkspace": "Switch workspace",
+			"createProject": "Create project",
+			"createWorkspace": "Create workspace",
+			"inviteMember": "Invite member",
+			"themeLight": "Light theme",
+			"themeDark": "Dark theme",
+			"themeSystem": "System theme",
+			"signOut": "Sign out"
 		},
 		"sidebar": {
 			"home": "Home"
@@ -829,18 +851,7 @@
 			"title": "Keyboard Shortcuts",
 			"subtitle": "Speed up your workflow with keyboard shortcuts",
 			"searchPlaceholder": "Search shortcuts...",
-			"footer": "Press <kbd>Escape</kbd> to close",
-			"categories": {
-				"general": "General",
-				"create": "Create"
-			},
-			"items": {
-				"openCommandPalette": "Open command palette",
-				"toggleSidebar": "Toggle sidebar",
-				"showShortcuts": "Show keyboard shortcuts",
-				"closeModal": "Close modal/popover",
-				"createWorkspace": "Create workspace"
-			}
+			"footer": "Press <kbd>Escape</kbd> to close"
 		}
 	},
 	"emails": {
