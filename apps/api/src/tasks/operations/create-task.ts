@@ -12,6 +12,7 @@ import {
   projectTable,
 } from "#api/projects/index";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
+import { freePosition } from "#api/tasks/lib/free-position";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
@@ -28,7 +29,8 @@ export type NewTask = {
 };
 
 /**
- * Creates a task at the position the client chose. The id and position come
+ * Creates a task at the position the client chose (or right after whatever
+ * holds it, see `freePosition`). The id and position come
  * from the browser so the card can appear before the server answers; the
  * ticket number is the Project's next one, taken under the project lock so two
  * creates never share a number. A task created in a done or canceled Column
@@ -77,7 +79,7 @@ export async function createTask(
           priority: input.priority ?? "none",
           assigneeId: input.assigneeId ?? null,
           dueDate: input.dueDate ?? null,
-          position: input.position,
+          position: await freePosition(tx, input.columnId, input.position),
           completedAt: isClosedCategory(column.category) ? new Date() : null,
           createdBy: actor.userId,
         })

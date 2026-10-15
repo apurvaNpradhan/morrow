@@ -8,14 +8,16 @@ import {
 } from "#api/projects/index";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import { findTask } from "#api/tasks/lib/find-task";
+import { freePosition } from "#api/tasks/lib/free-position";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
 
 /**
  * Puts a task at a position the client computed among the tasks of the target
  * column. Entering a done or canceled column stamps it completed (and records
- * it); leaving one clears that. Two people landing on the same spot at once
- * collide on the unique index; the later one is told to try again.
+ * it); leaving one clears that. A slot that is already held (two people landing
+ * on the same spot, or an archived task the browser cannot see) is resolved by
+ * `freePosition`, so a move never fails for it.
  */
 export async function moveTask(
   workspaceId: string,
@@ -36,7 +38,7 @@ export async function moveTask(
         .update(taskTable)
         .set({
           columnId: to.id,
-          position: target.position,
+          position: await freePosition(tx, to.id, target.position, taskId),
           completedAt: nextCompletedAt(
             task.completedAt,
             from.category,
