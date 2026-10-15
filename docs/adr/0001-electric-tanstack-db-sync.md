@@ -18,6 +18,7 @@ The web app read everything through oRPC queries cached by TanStack Query. A cha
 **Reads: shapes**
 
 - The browser never talks to Electric. `GET /api/shapes/:name` checks the Better Auth session (401 without), looks the name up in a registry (404 if unknown) and forwards to Electric. It copies only Electric's protocol parameters from the request and sets `table`, `columns`, `where`, the positional params and `secret` itself.
+- The browser may narrow a shape with subset queries (`subset__where`, `subset__params`) but never widen it: Electric combines a subset with the shape's own filter by AND. A collection over a large table may therefore use `syncMode: "on-demand"` and load only what its live queries ask for (see [0004](0004-tasks.md)). `preload()` is a no-op on such a collection; a route loader preloads a live query instead.
 - A shape is declared once in its Vertical (`shapes.ts`): a name, a table, a Zod schema of the columns that may be sent, and a `where` builder that receives the session. The column allowlist is the schema's keys; there is no way to send all columns. The schemas live in `@morrow/sync-schemas` so the web bundle never imports API runtime code.
 - Shapes are scoped to the user through membership subqueries, not to one Workspace. Switching Workspaces needs no new sync, a join or removal reaches the browser live, and pages filter by Workspace in live queries. A per-Workspace collection is for a future table where some roles cannot read.
 

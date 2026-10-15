@@ -11,6 +11,12 @@ Morrow is a personal workspace platform run as a single instance (the owner's Do
 - **Project key** — 2–6 upper-case letters and digits, starting with a letter. Unique per Workspace; the URL segment of a Project and the prefix of its future ticket ids.
 - **Column** — one step of a Project's workflow. Belongs to one Column category, has a name and a colour, and is ordered by a fractional-index position. Every Project keeps at least one `unstarted` and one `done` Column.
 - **Column category** — what a Column means: `backlog`, `unstarted`, `started`, `done` or `canceled`. Fixed; Projects choose the names, not the categories.
+- **Task** — a unit of work in a Project, sitting in one Column. Its state is the Column's category; there is no separate status. Has a title, a markdown description, a Priority, an optional Assignee and due date, and a ticket id.
+- **Ticket id** — the Project key and the Task's per-Project number, as in `MOR-12`. Numbers are never reused; renaming the key renames every ticket id.
+- **Assignee** — the one Member a Task is assigned to, if any. Taking a Task for yourself needs only `task: update`; assigning anyone else needs `task: assign`. Leaving the Workspace clears assignments.
+- **Priority** — `none`, `low`, `medium`, `high` or `urgent`.
+- **Completed task** — a Task in a `done` or `canceled` Column, stamped with when it got there (`completedAt`); leaving the Column clears it.
+- **Archived task** — a Task taken off the board and list but kept in its Column and position, so unarchiving puts it back. Still editable.
 - **Admin** — a user whose verified session email is in `ADMIN_EMAILS`. Not stored in the database. Admins are exempt from the workspace limit and reach other workspaces through the administration pages, not the workspace URL.
 - **Registration** — sign-up by email OTP, Google or GitHub. Closed by `REGISTRATION_OPEN=false`.
 - **Vertical** — a folder named by what its code does, with the same name in API and web (`workspace`, `members`, …). It has one public `index.ts`; other verticals import only that.

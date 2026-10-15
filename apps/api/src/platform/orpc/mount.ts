@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import { RPCHandler } from "@orpc/server/fetch";
 import type { Env, Hono } from "hono";
 import { MAX_IMAGE_REQUEST_BYTES } from "#api/storage/index";
+import { MAX_TASK_IMPORT_REQUEST_BYTES } from "#api/tasks/index";
 import { boundedRequestBody } from "#api/platform/http/bounded-request-body";
 import { requireTrustedOrigin } from "#api/platform/http/require-trusted-origin";
 import { appRouter } from "./router";
@@ -28,9 +29,16 @@ const rpcHandler = new RPCHandler(appRouter, {
  */
 export function mountOrpc<E extends Env>(app: Hono<E>) {
   // Every procedure is bounded before any parser reads the body, and only the
-  // web origin may use the browser's cookie. Image uploads are the largest input.
+  // web origin may use the browser's cookie. Image uploads are the largest
+  // input, except a task import, which carries a whole document.
+  const boundImage = boundedRequestBody(MAX_IMAGE_REQUEST_BYTES);
+  const boundTaskImport = boundedRequestBody(MAX_TASK_IMPORT_REQUEST_BYTES);
   app.use("/rpc/*", requireTrustedOrigin());
-  app.use("/rpc/*", boundedRequestBody(MAX_IMAGE_REQUEST_BYTES));
+  app.use("/rpc/*", (c, next) =>
+    c.req.path === "/rpc/tasks/import"
+      ? boundTaskImport(c, next)
+      : boundImage(c, next),
+  );
   app.use("/rpc/*", async (c, next) => {
     const { matched, response } = await rpcHandler.handle(c.req.raw, {
       prefix: "/rpc",

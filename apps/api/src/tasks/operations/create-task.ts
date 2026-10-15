@@ -1,0 +1,97 @@
+import {
+  isClosedCategory,
+  type TaskPriority,
+  TASK_ID_PATTERN,
+} from "@morrow/sync-schemas";
+import { eq, sql } from "drizzle-orm";
+import { withTxid } from "#api/platform/sync/with-txid";
+import {
+  assertValidPosition,
+  findColumn,
+  lockProject,
+  projectTable,
+} from "#api/projects/index";
+import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
+import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
+import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
+import { taskTable } from "#api/tasks/tables";
+
+export type NewTask = {
+  id: string;
+  columnId: string;
+  position: string;
+  title: string;
+  description?: string;
+  priority?: TaskPriority;
+  assigneeId?: string | null;
+  dueDate?: string | null;
+};
+
+/**
+ * Creates a task at the position the client chose. The id and position come
+ * from the browser so the card can appear before the server answers; the
+ * ticket number is the Project's next one, taken under the project lock so two
+ * creates never share a number. A task created in a done or canceled Column
+ * starts out completed.
+ */
+export async function createTask(
+  workspaceId: string,
+  projectId: string,
+  actor: TaskActor,
+  input: NewTask,
+) {
+  if (!TASK_ID_PATTERN.test(input.id)) throw taskError("INVALID_ID");
+  assertValidPosition(input.position);
+  try {
+    const { result, txid } = await withTxid(async (tx) => {
+      const project = await lockProject(tx, workspaceId, projectId);
+      const column = await findColumn(tx, projectId, input.columnId).catch(
+        () => {
+          throw taskError("COLUMN_NOT_IN_PROJECT");
+        },
+      );
+      await assertAssignable(
+        tx,
+        workspaceId,
+        actor,
+        input.assigneeId ?? null,
+        null,
+      );
+
+      const [counter] = await tx
+        .update(projectTable)
+        .set({ lastTaskNumber: sql`${projectTable.lastTaskNumber} + 1` })
+        .where(eq(projectTable.id, projectId))
+        .returning({ number: projectTable.lastTaskNumber });
+      if (!counter) throw new Error("Project counter returned no row");
+
+      const [task] = await tx
+        .insert(taskTable)
+        .values({
+          id: input.id,
+          projectId,
+          columnId: input.columnId,
+          number: counter.number,
+          title: input.title,
+          description: input.description ?? "",
+          priority: input.priority ?? "none",
+          assigneeId: input.assigneeId ?? null,
+          dueDate: input.dueDate ?? null,
+          position: input.position,
+          completedAt: isClosedCategory(column.category) ? new Date() : null,
+          createdBy: actor.userId,
+        })
+        .returning({
+          id: taskTable.id,
+          number: taskTable.number,
+          title: taskTable.title,
+        });
+      if (!task) throw new Error("Task insert returned no row");
+      await recordTaskActivity(tx, "task.created", workspaceId, project, task);
+      return task;
+    });
+    return { id: result.id, number: result.number, txid };
+  } catch (error) {
+    rethrowTaskViolation(error);
+  }
+}
