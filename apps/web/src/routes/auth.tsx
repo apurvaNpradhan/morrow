@@ -5,8 +5,7 @@ export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
     let session = null;
     try {
-      const { data } = await loadSession();
-      session = data;
+      session = await loadSession();
     } catch (error) {
       if (import.meta.env.DEV) console.warn("getSession failed", error);
       // getSession() rejected (e.g. network error) — treat as unauthenticated, allow auth pages to render

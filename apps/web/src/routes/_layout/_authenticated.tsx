@@ -1,6 +1,12 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useTrackSignup } from "@/app/hooks/use-track-signup";
-import { myInvitationCollection, workspaceMemberCollection } from "@/members";
+import {
+  myInvitationCollection,
+  workspaceInvitationCollection,
+  workspaceMemberCollection,
+  workspaceMemberUserCollection,
+} from "@/members";
+import { projectCollection, projectColumnCollection } from "@/projects";
 import {
   useLeaveLostWorkspace,
   workspaceCollection,
@@ -17,8 +23,7 @@ export const Route = createFileRoute("/_layout/_authenticated")({
     let session = null;
     let sessionError = false;
     try {
-      const { data } = await loadSession();
-      session = data;
+      session = await loadSession();
     } catch (error) {
       sessionError = true;
       if (import.meta.env.DEV) console.warn("getSession failed", error);
@@ -47,8 +52,18 @@ export const Route = createFileRoute("/_layout/_authenticated")({
     }
     // What the pages after this one read: the user's Workspaces, their own
     // memberships and the invitations sent to them. Without a session there is
-    // nothing to sync.
+    // nothing to sync. The Workspace page's shapes are scoped by membership,
+    // not by slug, so they start now too instead of after the redirect to
+    // `/$slug`; its loader then waits on syncs already under way.
     if (session) {
+      for (const collection of [
+        workspaceMemberUserCollection,
+        workspaceInvitationCollection,
+        projectCollection,
+        projectColumnCollection,
+      ]) {
+        void collection.preload();
+      }
       await Promise.all([
         workspaceCollection.preload(),
         workspaceMemberCollection.preload(),

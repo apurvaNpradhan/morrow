@@ -8,8 +8,7 @@ export const Route = createFileRoute(
   beforeLoad: async ({ context, params }) => {
     let userId = context.session?.user.id;
     if (!userId && context.sessionError) {
-      const { data } = await loadSession();
-      userId = data?.user.id;
+      userId = (await loadSession())?.user.id;
       if (!userId) {
         throw redirect({ to: "/auth/sign-in" });
       }
