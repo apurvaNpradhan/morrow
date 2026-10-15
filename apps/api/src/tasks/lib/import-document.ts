@@ -35,5 +35,3 @@ export const importDocument = z.object({
     }),
   ),
 });
-
-export type ImportDocument = z.infer<typeof importDocument>;
