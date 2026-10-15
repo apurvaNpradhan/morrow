@@ -2,7 +2,6 @@ import { Readable } from "node:stream";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
-  HeadObjectCommand,
   type HeadObjectCommandOutput,
   PutObjectCommand,
   S3Client,
@@ -11,6 +10,12 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createId } from "@paralleldrive/cuid2";
 import { config as appConfig } from "#api/platform/config";
+import { logFailure } from "#api/platform/logger";
+import {
+  describeStorageError,
+  headUploadedObject,
+  isMissingObjectError,
+} from "./head-uploaded-object";
 
 const allowedImageMimeTypes = new Set([
   "image/apng",
@@ -278,21 +283,12 @@ export async function verifyDraftAssetUpload(
   const abortSignal = AbortSignal.timeout(10_000);
   let object: HeadObjectCommandOutput;
   try {
-    object = await client.send(
-      new HeadObjectCommand({ Bucket: config.bucket, Key: key }),
-      { abortSignal },
-    );
+    object = await headUploadedObject(client, config.bucket, key, abortSignal);
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (error.name === "NotFound" ||
-        error.name === "NoSuchKey" ||
-        ("$metadata" in error &&
-          (error.$metadata as { httpStatusCode?: number }).httpStatusCode ===
-            404))
-    ) {
+    if (isMissingObjectError(error)) {
       throw new InvalidUploadedAssetError("Uploaded object was not found.");
     }
+    logFailure("storage.verify-upload", describeStorageError(error));
     // Provider errors may include endpoints, signed URLs or other secrets.
     throw new Error("Unable to verify uploaded object.");
   }
@@ -306,7 +302,11 @@ export async function verifyDraftAssetUpload(
         new DeleteObjectCommand({ Bucket: config.bucket, Key: key }),
         { abortSignal },
       );
-    } catch {
+    } catch (error) {
+      logFailure(
+        "storage.remove-oversized-upload",
+        describeStorageError(error),
+      );
       throw new Error("Unable to remove oversized uploaded object.");
     }
     throw new InvalidUploadedAssetError(
