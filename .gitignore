@@ -64,3 +64,6 @@ apps/web/.tanstack/
 
 # Local HTTPS certificates (mkcert)
 docker/certs
+
+# Reference clones for AI agents (read-only, not part of the build)
+repos/
