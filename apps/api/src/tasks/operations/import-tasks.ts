@@ -21,7 +21,7 @@ import { matchColumn } from "#api/tasks/lib/match-column";
 import type { ImportWarning } from "#api/tasks/response";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 
-/** Rows per insert: a task has 12 bound columns and Postgres allows 65,535 parameters. */
+/** Rows per insert: a task has 15 bound columns and Postgres allows 65,535 parameters. */
 const INSERT_CHUNK = 1000;
 
 /**
