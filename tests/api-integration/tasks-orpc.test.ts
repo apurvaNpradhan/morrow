@@ -89,52 +89,50 @@ describe("creating a task", () => {
     expect((await taskRow(id))?.completedAt).toBeInstanceOf(Date);
   });
 
-  it("refuses a malformed id, a taken id and a taken position", async () => {
+  it("refuses a malformed id, a taken id and a bad position", async () => {
     const { client, base, byName, addTask } = await setupTasks();
     const existing = await addTask();
     const column = byName("To Do");
+    const create = (input: Record<string, unknown>) =>
+      client.tasks.create({
+        ...base,
+        id: newTaskId(),
+        columnId: column.id,
+        position: positionAt(5),
+        title: "x",
+        ...input,
+      });
 
-    const malformed = await rejection(
-      client.tasks.create({
-        ...base,
-        id: "not-a-cuid",
-        columnId: column.id,
-        position: "a5",
-        title: "x",
-      }),
-    );
-    const idTaken = await rejection(
-      client.tasks.create({
-        ...base,
-        id: existing.id,
-        columnId: column.id,
-        position: "a5",
-        title: "x",
-      }),
-    );
-    const positionTaken = await rejection(
-      client.tasks.create({
-        ...base,
-        id: newTaskId(),
-        columnId: column.id,
-        position: positionAt(0),
-        title: "x",
-      }),
-    );
-    const badPosition = await rejection(
-      client.tasks.create({
-        ...base,
-        id: newTaskId(),
-        columnId: column.id,
-        position: "not a key",
-        title: "x",
-      }),
-    );
+    const malformed = await rejection(create({ id: "not-a-cuid" }));
+    const idTaken = await rejection(create({ id: existing.id }));
+    const badPosition = await rejection(create({ position: "not a key" }));
 
     expect(malformed.data?.code).toBe("INVALID_ID");
     expect(idTaken.data?.code).toBe("ID_TAKEN");
-    expect(positionTaken.data?.code).toBe("POSITION_TAKEN");
     expect(badPosition.data?.code).toBe("INVALID_POSITION");
+  });
+
+  it("puts a task right after whatever already holds its position", async () => {
+    const { client, base, byName, addTask } = await setupTasks();
+    const column = byName("To Do");
+    const first = await addTask();
+    const second = await addTask();
+    // An archived task keeps its slot and the browser does not see it.
+    await client.tasks.archive({ ...base, taskId: second.id });
+
+    const created = await addTask("To Do", { position: positionAt(1) });
+    const clash = await addTask("To Do", { position: positionAt(0) });
+
+    const positions = await Promise.all(
+      [first, second, created, clash].map(
+        async (task) => (await taskRow(task.id))!.position,
+      ),
+    );
+    expect(positions[2]! > positions[1]!).toBe(true);
+    expect(positions[3]! > positions[0]!).toBe(true);
+    expect(positions[3]! < positions[1]!).toBe(true);
+    expect(new Set(positions).size).toBe(4);
+    expect(column.id).toBe((await taskRow(created.id))?.columnId);
   });
 
   it("does not spend a ticket number on a refused create", async () => {
@@ -145,7 +143,7 @@ describe("creating a task", () => {
         ...base,
         id: newTaskId(),
         columnId: byName("To Do").id,
-        position: positionAt(0),
+        position: "not a key",
         title: "x",
       }),
     );
@@ -471,24 +469,40 @@ describe("moving and completing", () => {
     expect(txid).toBe(await xminOfTask(first.id));
   });
 
-  it("refuses a position another task of the column holds, a bad key and a foreign column", async () => {
+  it("resolves a position another task holds, and refuses a bad key and a foreign column", async () => {
     const { client, base, workspace, byName, addTask } = await setupTasks();
     const first = await addTask();
-    await addTask();
+    const second = await addTask();
     const other = await createProject(client, workspace.id, "OTH");
     const [foreign] = await columnsOf(other.id);
     const move = (columnId: string, position: string) =>
       client.tasks.move({ ...base, taskId: first.id, columnId, position });
 
-    expect(
-      (await rejection(move(byName("To Do").id, positionAt(1)))).data?.code,
-    ).toBe("POSITION_TAKEN");
+    await move(byName("To Do").id, positionAt(1));
+    const moved = (await taskRow(first.id))!.position;
+    expect(moved > positionAt(1)).toBe(true);
+    expect((await taskRow(second.id))?.position).toBe(positionAt(1));
+
     expect((await rejection(move(byName("To Do").id, "!!"))).data?.code).toBe(
       "INVALID_POSITION",
     );
     expect((await rejection(move(foreign!.id, positionAt(0)))).data?.code).toBe(
       "COLUMN_NOT_IN_PROJECT",
     );
+  });
+
+  it("lets a task stay where it is", async () => {
+    const { client, base, byName, addTask } = await setupTasks();
+    const { id } = await addTask();
+
+    await client.tasks.move({
+      ...base,
+      taskId: id,
+      columnId: byName("To Do").id,
+      position: positionAt(0),
+    });
+
+    expect((await taskRow(id))?.position).toBe(positionAt(0));
   });
 
   it("brings the completion of a column's tasks in line when its category changes", async () => {

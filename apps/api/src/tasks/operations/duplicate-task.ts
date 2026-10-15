@@ -14,6 +14,7 @@ import {
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import type { TaskActor } from "#api/tasks/lib/assignee";
 import { findTask } from "#api/tasks/lib/find-task";
+import { freePosition } from "#api/tasks/lib/free-position";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
 
@@ -64,7 +65,7 @@ export async function duplicateTask(
           priority: source.priority,
           assigneeId,
           dueDate: source.dueDate,
-          position: copy.position,
+          position: await freePosition(tx, source.columnId, copy.position),
           completedAt: isClosedCategory(column.category) ? new Date() : null,
           createdBy: actor.userId,
         })
