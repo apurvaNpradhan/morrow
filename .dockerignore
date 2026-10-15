@@ -3,6 +3,7 @@
 .scratch
 .claude
 .agents
+repos
 .codegraph
 .turbo
 **/.next

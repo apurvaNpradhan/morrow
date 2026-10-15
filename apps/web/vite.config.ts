@@ -100,6 +100,7 @@ export default defineConfig({
     noExternal: ["better-auth"],
   },
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },

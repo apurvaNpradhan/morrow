@@ -15,6 +15,7 @@ const ignorePatterns = [
   "**/.pi/**",
   "**/.pi-subagents/**",
   "**/.agents/**",
+  "repos/**",
   "**/.codex/**",
   "tools/oxlint/anti-slop/**",
   "**/routeTree.gen.ts",
