@@ -14,7 +14,12 @@ function morrowLogs() {
       "--no-log-prefix",
       "morrow",
     ],
-    { cwd: new URL("../..", import.meta.url).pathname, encoding: "utf8" },
+    {
+      cwd: new URL("../..", import.meta.url).pathname,
+      encoding: "utf8",
+      // The log grows with every request of the run; the default 1 MB overflows.
+      maxBuffer: 256 * 1024 * 1024,
+    },
   );
 }
 

@@ -40,14 +40,14 @@ services:
     build:
       context: ../..
       dockerfile: Dockerfile
-    ports:
-      - "127.0.0.1:18173:1337"
+    expose:
+      - "1337"
     environment:
       DATABASE_URL: postgresql://morrow_e2e:morrow_e2e@postgres:5432/morrow_e2e
       ELECTRIC_URL: http://electric:3000
       ELECTRIC_SECRET: browser-tests-only-electric-secret
       AUTH_SECRET: browser-tests-only-not-a-production-secret
-      MORROW_CLIENT_URL: http://localhost:18173
+      MORROW_CLIENT_URL: https://localhost:18173
       # Required in production. Nothing here uploads avatars, so these only
       # have to be well-formed.
       S3_ENDPOINT: http://storage.invalid:9000
@@ -63,4 +63,15 @@ services:
       MORROW_EMAIL_CONSOLE: "true"
     depends_on:
       postgres:
+        condition: service_healthy
+
+  # HTTPS and HTTP/2 for the browser (see Caddyfile); this is the published port.
+  proxy:
+    image: caddy@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+    ports:
+      - "127.0.0.1:18173:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      morrow:
         condition: service_healthy

@@ -22,7 +22,7 @@ pnpm test:e2e            # run from the repository root
 docker compose -f tests/e2e/compose.yml down --volumes
 ```
 
-The instance binds to `http://localhost:18173` (Compose project `morrow-e2e`).
+The instance binds to `https://localhost:18173` (Compose project `morrow-e2e`), through a Caddy proxy that serves HTTP/2: over HTTP/1.1 the sync long-polls would use up the browser's six connections per host.
 Tests create unique synthetic users and workspaces. Stop the stack afterwards,
 including after failed runs. Reports, screenshots, and traces are written to
 `.cache/e2e/`.

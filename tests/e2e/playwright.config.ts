@@ -17,7 +17,9 @@ export default defineConfig({
   use: {
     actionTimeout: 15_000,
     // This port belongs to the disposable Compose stack, never a live instance.
-    baseURL: "http://localhost:18173",
+    baseURL: "https://localhost:18173",
+    // Caddy signs with its own internal CA.
+    ignoreHTTPSErrors: true,
     locale: "en-US",
     timezoneId: "UTC",
     viewport: { width: 1440, height: 1000 },

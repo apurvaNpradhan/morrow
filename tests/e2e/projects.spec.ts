@@ -14,8 +14,10 @@ async function twoPeople(browser: Browser, label: string) {
   const admin = await adminContext.newPage();
   const member = await memberContext.newPage();
 
-  const memberEmail = uniqueEmail(`${label}-member`);
-  await signUp(admin, uniqueEmail(`${label}-admin`), `${label} Admin`);
+  // Addresses are lower-cased by the server, so its log (which the helpers read) is too.
+  const prefix = label.toLowerCase();
+  const memberEmail = uniqueEmail(`${prefix}-member`);
+  await signUp(admin, uniqueEmail(`${prefix}-admin`), `${label} Admin`);
   const slug = await createWorkspace(admin, `${label} Space`);
   const invitationId = await invite(admin, slug, memberEmail);
   await joinWorkspace(
@@ -155,7 +157,8 @@ test("archiving a project moves it out of everyone's sidebar", async ({
 
   await expect(member.getByRole("link", { name: "Old plan" })).toHaveCount(0);
   await member.getByRole("tab", { name: /Archived/ }).click();
-  await expect(member.getByRole("link", { name: "Old plan" })).toBeVisible();
+  // The row link, not the "Settings for Old plan" shortcut next to it.
+  await expect(member.getByRole("link", { name: /^Old plan/ })).toBeVisible();
   // The settings are read-only until it is restored.
   await expect(admin.getByLabel("Name", { exact: true })).toBeDisabled();
   await expect(admin.getByRole("button", { name: "Unarchive" })).toBeVisible();
@@ -180,7 +183,9 @@ test("changing a key moves the project and leaves the old URL empty", async ({
   );
 
   await page.goto(`/${slug}/projects/OLD`);
-  await expect(page.getByText("Project not found")).toBeVisible();
+  await expect(
+    page.getByText("It may have been deleted, or its key may have changed."),
+  ).toBeVisible();
   await page.goto(`/${slug}/projects/NEW`);
   await expect(page.getByRole("heading", { name: "Backlog" })).toBeVisible();
 });

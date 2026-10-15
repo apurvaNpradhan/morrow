@@ -1,0 +1,17 @@
+# HTTPS and HTTP/2 in front of Morrow, as Dokploy's Traefik gives it in
+# production. Over HTTP/1.1 a browser opens at most six connections per host and
+# the sync long-polls would hold them all, stalling every other request.
+# The certificate is Caddy's own internal CA: Playwright ignores it.
+# The browser tests send a different X-Forwarded-For for each user (see
+# compose.yml); Caddy must pass it through instead of replacing it.
+{
+	auto_https disable_redirects
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+localhost:443 {
+	tls internal
+	reverse_proxy morrow:1337
+}
