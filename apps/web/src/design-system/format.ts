@@ -10,14 +10,26 @@ function getLocale(locale?: string) {
   return locale || i18n.resolvedLanguage || i18n.language || "en-US";
 }
 
+// Building an Intl formatter is the expensive part of formatting a date, and a
+// list formats one per row.
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+function formatterFor(locale: string, options?: Intl.DateTimeFormatOptions) {
+  const key = `${locale}|${JSON.stringify(options ?? {})}`;
+  let formatter = formatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, options);
+    formatters.set(key, formatter);
+  }
+  return formatter;
+}
+
 export function formatDate(
   value: DateInput,
   options?: Intl.DateTimeFormatOptions,
   locale?: string,
 ) {
-  return new Intl.DateTimeFormat(getLocale(locale), options).format(
-    toDate(value),
-  );
+  return formatterFor(getLocale(locale), options).format(toDate(value));
 }
 
 export function formatDateMedium(value: DateInput, locale?: string) {
