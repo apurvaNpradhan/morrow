@@ -14,6 +14,10 @@ export const CAPABILITIES = {
   createProjects: { project: ["create"] },
   manageProjects: { project: ["update"] },
   deleteProjects: { project: ["delete"] },
+  createTasks: { task: ["create"] },
+  editTasks: { task: ["update"] },
+  deleteTasks: { task: ["delete"] },
+  assignTasks: { task: ["assign"] },
   // Better Auth guards role administration with its access-control resource.
   manageRoles: { ac: ["create", "update", "delete"] },
 } as const satisfies Record<string, Record<string, string[]>>;

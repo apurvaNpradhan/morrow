@@ -19,6 +19,7 @@ export {
 } from "#api/members/tables";
 export { activityTable } from "#api/activity/tables";
 export { projectColumnTable, projectTable } from "#api/projects/tables";
+export { taskTable } from "#api/tasks/tables";
 export { assetTable } from "#api/storage/tables";
 export {
   oauthAccessTokenTable,

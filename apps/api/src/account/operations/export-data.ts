@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, schema } from "#api/platform/database/index";
 import { projectStoredWorkspaceActivity } from "#api/activity/index";
 import { listProjects } from "#api/projects/index";
+import { listTasks } from "#api/tasks/index";
 
 /**
  * Everything Morrow holds about one user, as a single JSON-ready document.
@@ -53,6 +54,30 @@ export async function exportAccountData(user: { id: string; email: string }) {
             category,
             color,
           })),
+        })),
+      ),
+    )
+  ).flat();
+
+  // The tasks of those workspaces. Other people's names are left out, as in
+  // the activity below; an assignee shows only as "you" or not.
+  const tasks = (
+    await Promise.all(
+      memberships.map(async ({ workspaceId }) =>
+        (await listTasks(workspaceId)).map((task) => ({
+          workspaceId,
+          projectId: task.projectId,
+          ticketId: task.ticketId,
+          title: task.title,
+          description: task.description,
+          column: task.columnName,
+          category: task.category,
+          priority: task.priority,
+          assignedToYou: task.assigneeId === user.id,
+          dueDate: task.dueDate,
+          completedAt: task.completedAt,
+          archivedAt: task.archivedAt,
+          createdAt: task.createdAt,
         })),
       ),
     )
@@ -110,6 +135,7 @@ export async function exportAccountData(user: { id: string; email: string }) {
     profile: profile ?? null,
     memberships,
     projects,
+    tasks,
     activity,
   };
 }

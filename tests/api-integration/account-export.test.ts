@@ -1,3 +1,5 @@
+import { as } from "./helpers/projects";
+import { newTaskId, positionAt } from "./helpers/tasks";
 import type { ORPCError } from "@orpc/client";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { db, schema } from "../../apps/api/src/platform/database";
@@ -91,4 +93,61 @@ describe("account.export", () => {
       "Canceled",
     ]);
   });
+  it("includes the tasks of the caller's workspaces, not others'", async () => {
+    const { user, workspace } = await createWorkspaceMember({ role: "owner" });
+    const other = await createWorkspaceMember({ role: "owner" });
+    const mine = await setupTasksIn(
+      user,
+      workspace.id,
+      "MOR",
+      "Plan the launch",
+    );
+    const theirs = await setupTasksIn(
+      other.user,
+      other.workspace.id,
+      "SEC",
+      "Secret plan",
+    );
+    expect(theirs.number).toBe(1);
+    mockAuthenticatedSession(user);
+
+    const data = await createTestClient(app).account.export();
+
+    expect(data.tasks).toHaveLength(1);
+    expect(data.tasks[0]).toMatchObject({
+      workspaceId: workspace.id,
+      ticketId: "MOR-1",
+      title: "Plan the launch",
+      column: "To Do",
+      assignedToYou: true,
+    });
+    expect(mine.number).toBe(1);
+  });
 });
+
+/** A project with one task assigned to the user, made through the API. */
+async function setupTasksIn(
+  user: Parameters<typeof as>[0],
+  workspaceId: string,
+  key: string,
+  title: string,
+) {
+  const client = as(user);
+  const project = await client.projects.create({
+    workspaceId,
+    name: key,
+    key,
+  });
+  const [column] = (
+    await client.projects.list({ workspaceId })
+  )[0]!.columns.filter((candidate) => candidate.name === "To Do");
+  return client.tasks.create({
+    workspaceId,
+    projectId: project.id,
+    id: newTaskId(),
+    columnId: column!.id,
+    position: positionAt(0),
+    title,
+    assigneeId: user.id,
+  });
+}

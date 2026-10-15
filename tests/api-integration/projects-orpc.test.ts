@@ -625,23 +625,40 @@ describe("archiving a project", () => {
     });
   });
 
-  it("refuses to unarchive or delete a project that is not archived", async () => {
+  it("refuses to unarchive a project that is not archived", async () => {
     const { client, workspace } = await setup();
     const created = await client.projects.create({
       workspaceId: workspace.id,
       name: "Morrow",
       key: "MOR",
     });
-    const base = { workspaceId: workspace.id, projectId: created.id };
 
-    for (const attempt of [
-      () => client.projects.unarchive(base),
-      () => client.projects.remove(base),
-    ]) {
-      expect((await rejection(attempt())).data?.code).toBe(
-        "PROJECT_NOT_ARCHIVED",
-      );
-    }
+    const error = await rejection(
+      client.projects.unarchive({
+        workspaceId: workspace.id,
+        projectId: created.id,
+      }),
+    );
+
+    expect(error.data?.code).toBe("PROJECT_NOT_ARCHIVED");
+  });
+
+  it("deletes an active project without archiving it first", async () => {
+    const { client, workspace } = await setup();
+    const created = await client.projects.create({
+      workspaceId: workspace.id,
+      name: "Morrow",
+      key: "MOR",
+    });
+
+    await client.projects.remove({
+      workspaceId: workspace.id,
+      projectId: created.id,
+    });
+
+    expect(await client.projects.list({ workspaceId: workspace.id })).toEqual(
+      [],
+    );
   });
 
   it("deletes the project and its columns for good", async () => {

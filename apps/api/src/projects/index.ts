@@ -3,3 +3,8 @@ export { projectsShapes } from "./shapes";
 export { projectsMcpTools } from "./mcp-tools";
 export { projectBackgroundKeys } from "./lib/background-keys";
 export { listProjects } from "./operations/list-projects";
+export { lockProject } from "./lib/lock-project";
+export { assertValidPosition } from "./lib/position";
+export { findColumn } from "./columns/lib/find-column";
+export { projectError, projectNotFound, violatedConstraint } from "./errors";
+export { projectColumnTable, projectTable } from "./tables";

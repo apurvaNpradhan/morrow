@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { COLUMN_CATEGORIES, COLUMN_COLORS } from "./projects.js";
+import { TASK_PRIORITIES } from "./tasks.js";
 
 export * from "./projects.js";
+export * from "./tasks.js";
 
 /**
  * The columns each shape may send, in camelCase as the browser sees them. The
@@ -113,3 +115,30 @@ export const projectColumnsShape = shape(
 
 export type ProjectRow = z.infer<typeof projectsShape.schema>;
 export type ProjectColumnRow = z.infer<typeof projectColumnsShape.schema>;
+
+/**
+ * Every Task of the Projects of the Workspaces the user belongs to, archived
+ * ones included. `dueDate` is a `YYYY-MM-DD` string, never a Date.
+ */
+export const tasksShape = shape(
+  "tasks",
+  z.object({
+    id: z.string(),
+    projectId: z.string(),
+    columnId: z.string(),
+    number: z.number(),
+    title: z.string(),
+    description: z.string(),
+    priority: z.enum(TASK_PRIORITIES),
+    assigneeId: z.string().nullable(),
+    dueDate: z.string().nullable(),
+    position: z.string(),
+    completedAt: z.date().nullable(),
+    archivedAt: z.date().nullable(),
+    createdBy: z.string().nullable(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
+export type TaskRow = z.infer<typeof tasksShape.schema>;

@@ -1,7 +1,7 @@
 import type { WorkspaceActivityEvent } from "#api/activity/recording/events";
 
 export type PublicWorkspaceActivity = {
-  resourceType: "user" | "workspace" | "project";
+  resourceType: "user" | "workspace" | "project" | "task";
   resourceId: string;
   eventData: Record<string, unknown>;
 };
@@ -64,6 +64,19 @@ export function projectWorkspaceActivity(
           projectName: event.projectName,
         },
       };
+    case "task.created":
+    case "task.completed":
+    case "task.canceled":
+    case "task.deleted":
+      return {
+        resourceType: "task",
+        resourceId: event.taskId,
+        eventData: {
+          projectId: event.projectId,
+          ticketId: event.ticketId,
+          taskTitle: event.taskTitle,
+        },
+      };
     case "project.key_changed":
       return {
         resourceType: "project",
@@ -114,6 +127,10 @@ export function projectStoredWorkspaceActivity(input: {
       "project.unarchived": ["projectKey", "projectName"],
       "project.deleted": ["projectKey", "projectName"],
       "project.key_changed": ["previousKey", "projectKey"],
+      "task.created": ["projectId", "ticketId", "taskTitle"],
+      "task.completed": ["projectId", "ticketId", "taskTitle"],
+      "task.canceled": ["projectId", "ticketId", "taskTitle"],
+      "task.deleted": ["projectId", "ticketId", "taskTitle"],
     } satisfies Record<string, string[]>),
   );
   const eventData = Object.fromEntries(
@@ -121,8 +138,12 @@ export function projectStoredWorkspaceActivity(input: {
       .filter((key) => key in input.eventData)
       .map((key) => [key, input.eventData[key]]),
   );
-  if (input.resourceType === "project") {
-    return { resourceType: "project", resourceId: input.resourceId, eventData };
+  if (input.resourceType === "project" || input.resourceType === "task") {
+    return {
+      resourceType: input.resourceType,
+      resourceId: input.resourceId,
+      eventData,
+    };
   }
   const isWorkspaceResource = input.resourceType === "workspace";
   return {

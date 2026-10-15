@@ -142,6 +142,34 @@ describe("shape proxy", () => {
     expect(upstream.searchParams.get("params[1]")).toBe(user.id);
   });
 
+  it("serves the tasks of those projects only, with every column", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await app.request(
+      "/api/shapes/tasks?" +
+        new URLSearchParams({
+          offset: "-1",
+          table: "user",
+          columns: "id,email",
+          where: "true",
+          "params[1]": "someone-else",
+        }),
+    );
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("task");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,project_id,column_id,number,title,description,priority,assignee_id,due_date,position,completed_at,archived_at,created_by,created_at,updated_at",
+    );
+    expect(upstream.searchParams.get("where")).toContain(
+      "project_id IN (SELECT id FROM project WHERE workspace_id IN (",
+    );
+    expect(upstream.searchParams.get("where")).toContain("user_id = $1");
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
   it("serves only pending invitations of the user's workspaces", async () => {
     const { user } = await createWorkspaceMember();
     mockAuthenticatedSession(user);
