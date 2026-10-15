@@ -56,6 +56,26 @@ describe("workspace activity item", () => {
       { previousKey: "OLD", projectKey: "MOR" },
       "A project's key changed from OLD to MOR",
     ],
+    [
+      "task.created",
+      { ticketId: "MOR-12", taskTitle: "Write docs" },
+      "MOR-12 “Write docs” was created",
+    ],
+    [
+      "task.completed",
+      { ticketId: "MOR-12", taskTitle: "Write docs" },
+      "MOR-12 “Write docs” was completed",
+    ],
+    [
+      "task.canceled",
+      { ticketId: "MOR-12", taskTitle: "Write docs" },
+      "MOR-12 “Write docs” was canceled",
+    ],
+    [
+      "task.deleted",
+      { ticketId: "MOR-12", taskTitle: "Write docs" },
+      "MOR-12 “Write docs” was deleted",
+    ],
   ])("describes %s", async (type, eventData, text) => {
     await preloadNamespaces("en-US");
     render(

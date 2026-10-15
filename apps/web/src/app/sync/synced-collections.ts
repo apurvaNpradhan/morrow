@@ -4,6 +4,12 @@ import {
 } from "@/app/devtools/sync/collection-registry";
 
 const syncedCollections: Array<{ cleanup: () => Promise<void> }> = [];
+const cleanupHooks: Array<() => void> = [];
+
+/** Runs `hook` after the synced collections are cleared, for caches built on top of them. */
+export function onSyncedCollectionsCleared(hook: () => void) {
+  cleanupHooks.push(hook);
+}
 
 /**
  * Every synced collection is registered here when it is created, so signing
@@ -26,4 +32,5 @@ export async function cleanupSyncedCollections(): Promise<void> {
   await Promise.all(
     syncedCollections.map((collection) => collection.cleanup()),
   );
+  for (const hook of cleanupHooks) hook();
 }

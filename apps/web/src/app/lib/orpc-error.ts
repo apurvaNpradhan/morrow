@@ -35,6 +35,14 @@ const DOMAIN_KEYS = new Map(
     LAST_REQUIRED_COLUMN: "common:errors.lastRequiredColumn",
     INVALID_POSITION: "common:errors.invalidPosition",
     INVALID_TARGET_COLUMN: "common:errors.invalidTargetColumn",
+    INVALID_ID: "common:errors.taskInvalidId",
+    ID_TAKEN: "common:errors.taskIdTaken",
+    COLUMN_NOT_IN_PROJECT: "common:errors.taskColumnNotInProject",
+    COLUMN_NOT_CLOSED: "common:errors.taskColumnNotClosed",
+    ASSIGNEE_NOT_MEMBER: "common:errors.taskAssigneeNotMember",
+    FORBIDDEN_ASSIGN: "common:errors.taskForbiddenAssign",
+    IMPORT_TOO_LARGE: "common:errors.taskImportTooLarge",
+    IMPORT_INVALID: "common:errors.taskImportInvalid",
   } satisfies Record<string, string>),
 );
 

@@ -8,6 +8,7 @@ import { useDevicePreferences } from "@/app/preferences/use-device-preferences";
 import { LanguageRow } from "./language-row";
 import { ProjectBackgroundsRow } from "./project-backgrounds-row";
 import { SidebarDefaultRow } from "./sidebar-default-row";
+import { TaskDetailsSection } from "./task-details-section";
 
 export function PreferencesPage() {
   const { t } = useTranslation();
@@ -35,6 +36,8 @@ export function PreferencesPage() {
           <ProjectBackgroundsRow />
         </SettingsCard>
       </SettingsSection>
+
+      <TaskDetailsSection />
     </SettingsPage>
   );
 }

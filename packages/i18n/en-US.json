@@ -99,7 +99,15 @@
 			"columnNameTaken": "Another column in this project already has that name.",
 			"lastRequiredColumn": "Every project needs at least one To Do (unstarted) column and one Done column.",
 			"invalidPosition": "That position isn't valid. Try again.",
-			"invalidTargetColumn": "Choose another column of this project to move the items to."
+			"invalidTargetColumn": "Choose another column of this project to move the items to.",
+			"taskInvalidId": "That task id isn't valid. Try again.",
+			"taskIdTaken": "That task already exists. Try again.",
+			"taskColumnNotInProject": "That column isn't part of this project.",
+			"taskColumnNotClosed": "Only done and canceled columns can be archived this way.",
+			"taskAssigneeNotMember": "Only members of this workspace can be assigned.",
+			"taskForbiddenAssign": "You can only assign tasks to yourself.",
+			"taskImportTooLarge": "That import is too large. Use a file under 5 MB and 5,000 tasks.",
+			"taskImportInvalid": "That file isn't a task export Morrow can read."
 		}
 	},
 	"auth": {
@@ -577,7 +585,6 @@
 			"sectionTitle": "Workspace roles",
 			"sectionSubtitle": "Edit the default roles or add a tailored one. Members keep their assigned role name across edits.",
 			"newRole": "New role",
-			"loading": "Loading…",
 			"loadError": "Failed to load roles.",
 			"emptyTitle": "No roles yet",
 			"emptyDescription": "Default roles will appear here once they're seeded for this workspace.",
@@ -791,7 +798,8 @@
 				"view": "View",
 				"account": "Account",
 				"projects": "Projects",
-				"workspaces": "Workspaces"
+				"workspaces": "Workspaces",
+				"tasks": "Tasks"
 			},
 			"inputPlaceholder": "Search commands, projects and workspaces...",
 			"empty": "No results found.",
@@ -799,7 +807,8 @@
 				"navigate": "Navigate",
 				"open": "Open",
 				"close": "Close"
-			}
+			},
+			"openTicket": "Open {{id}}"
 		},
 		"commands": {
 			"palette": "Open command palette",
@@ -820,7 +829,19 @@
 			"themeLight": "Light theme",
 			"themeDark": "Dark theme",
 			"themeSystem": "System theme",
-			"signOut": "Sign out"
+			"signOut": "Sign out",
+			"createTask": "Create task",
+			"filterTasks": "Filter tasks",
+			"displayOptions": "Display options",
+			"searchTasks": "Search tasks",
+			"nextTask": "Next task",
+			"previousTask": "Previous task",
+			"setTaskColumn": "Change status",
+			"setTaskPriority": "Set priority",
+			"assignTask": "Assign",
+			"assignTaskToMe": "Assign to me",
+			"setTaskDueDate": "Set due date",
+			"deleteTask": "Delete task"
 		},
 		"sidebar": {
 			"home": "Home"
@@ -917,7 +938,6 @@
 			},
 			"activity": {
 				"title": "Recent activity",
-				"loading": "Loading activity...",
 				"loadingMore": "Loading more...",
 				"error": "Couldn't load workspace activity.",
 				"retry": "Try again",
@@ -938,7 +958,11 @@
 					"projectArchived": "{{projectName}} ({{projectKey}}) was archived",
 					"projectUnarchived": "{{projectName}} ({{projectKey}}) was restored from the archive",
 					"projectDeleted": "{{projectName}} ({{projectKey}}) was deleted",
-					"projectKeyChanged": "A project's key changed from {{previousKey}} to {{projectKey}}"
+					"projectKeyChanged": "A project's key changed from {{previousKey}} to {{projectKey}}",
+					"taskCreated": "{{ticketId}} “{{taskTitle}}” was created",
+					"taskCompleted": "{{ticketId}} “{{taskTitle}}” was completed",
+					"taskCanceled": "{{ticketId}} “{{taskTitle}}” was canceled",
+					"taskDeleted": "{{ticketId}} “{{taskTitle}}” was deleted"
 				}
 			}
 		},
@@ -1106,9 +1130,7 @@
 			"notFoundDescription": "It may have been deleted, or its key may have changed.",
 			"backToProjects": "All projects",
 			"archivedNotice": "This project is archived and read-only.",
-			"settings": "Project settings",
-			"emptyLane": "No items yet",
-			"lanesLabel": "Columns of {{name}}"
+			"settings": "Project settings"
 		},
 		"switcher": {
 			"label": "Switch project",
@@ -1169,15 +1191,16 @@
 			},
 			"danger": {
 				"title": "Danger zone",
-				"subtitle": "Deleting is permanent and only possible for archived projects.",
+				"subtitle": "Deleting a project is permanent and deletes its tasks.",
 				"deleteTitle": "Delete project",
-				"deleteDescription": "Permanently delete {{name}} with its columns and background.",
+				"deleteDescription": "Permanently delete {{name}} with its columns, tasks and background.",
 				"deleteButton": "Delete project",
 				"modalTitle": "Delete this project?",
-				"modalDescription": "{{name}} and everything in it will be deleted for good. This can't be undone.",
+				"modalDescription": "{{name}}, its columns and all of its tasks will be deleted for good. This can't be undone.",
 				"modalConfirm": "Delete project",
 				"success": "Project deleted",
-				"error": "Couldn't delete the project."
+				"error": "Couldn't delete the project.",
+				"typeKey": "Type {{key}} to confirm"
 			}
 		},
 		"workflow": {
@@ -1202,6 +1225,243 @@
 			"deleteConfirm": "Delete column",
 			"deleteSuccess": "Column deleted",
 			"deleteError": "Couldn't delete the column."
+		},
+		"menu": {
+			"label": "Actions for {{name}}",
+			"view": "View",
+			"copyLink": "Copy link",
+			"linkCopied": "Link copied",
+			"copyFailed": "Couldn't copy the link",
+			"settings": "Settings",
+			"archive": "Archive",
+			"unarchive": "Restore",
+			"delete": "Delete…"
+		}
+	},
+	"tasks": {
+		"pageTitle": "Tasks",
+		"priority": {
+			"none": "No priority",
+			"low": "Low",
+			"medium": "Medium",
+			"high": "High",
+			"urgent": "Urgent"
+		},
+		"fields": {
+			"project": "Project",
+			"column": "Status",
+			"priority": "Priority",
+			"assignee": "Assignee",
+			"dueDate": "Due date",
+			"noDueDate": "No due date",
+			"createdBy": "Created by"
+		},
+		"assignee": {
+			"unassigned": "Unassigned",
+			"me": "{{name}} (me)"
+		},
+		"due": {
+			"today": "Today",
+			"tomorrow": "Tomorrow",
+			"weekend": "This weekend",
+			"nextWeek": "Next week",
+			"pick": "Pick a date…",
+			"pickTitle": "Due date",
+			"set": "Set date",
+			"clear": "Clear",
+			"overdueDays_one": "{{count}}d overdue",
+			"overdueDays_other": "{{count}}d overdue",
+			"overdueWeeks_one": "{{count}}w overdue",
+			"overdueWeeks_other": "{{count}}w overdue",
+			"inDays_one": "In {{count}} day",
+			"inDays_other": "In {{count}} days"
+		},
+		"board": {
+			"lanesLabel": "Columns of {{name}}",
+			"laneTasks": "Tasks in {{name}}",
+			"empty": "No tasks yet",
+			"emptyFiltered": "No tasks match"
+		},
+		"lane": {
+			"create": "Create a task in {{name}}",
+			"createTooltip": "New task"
+		},
+		"card": {
+			"label": "{{id}}: {{title}}",
+			"checklist": "Checklist progress"
+		},
+		"list": {
+			"collapse": "Collapse {{name}}",
+			"expand": "Expand {{name}}",
+			"archived": "Archived",
+			"archivedEmpty": "No archived tasks"
+		},
+		"menu": {
+			"copyLink": "Copy link",
+			"duplicate": "Duplicate",
+			"archive": "Archive",
+			"unarchive": "Unarchive",
+			"delete": "Delete…"
+		},
+		"archiveCompleted": {
+			"button": "Archive all tasks in {{name}}",
+			"tooltip": "Archive all completed tasks",
+			"title_one": "Archive {{count}} completed task?",
+			"title_other": "Archive {{count}} completed tasks?",
+			"description": "They leave the board and list. Open the Archived group of the list to find them, and unarchive any of them.",
+			"confirm": "Archive",
+			"done_one": "{{count}} task archived",
+			"done_other": "{{count}} tasks archived"
+		},
+		"toolbar": {
+			"count_one": "{{count}} task",
+			"count_other": "{{count}} tasks",
+			"countOf": "{{shown}} of {{total}} tasks",
+			"search": "Search tasks",
+			"clearSearch": "Clear search",
+			"filter": "Filter",
+			"display": "Display"
+		},
+		"filter": {
+			"active": "Active filters",
+			"clearAll": "Clear all",
+			"edit": "Edit the {{subject}} filter",
+			"remove": "Remove the {{subject}} filter",
+			"me": "Me",
+			"subject": {
+				"assignee": "Assignee",
+				"priority": "Priority",
+				"dueDate": "Due date",
+				"column": "Status"
+			},
+			"operator": {
+				"is": "is",
+				"isNot": "is not",
+				"isAnyOf": "is any of",
+				"isNoneOf": "is none of"
+			},
+			"due": {
+				"overdue": "Overdue",
+				"thisWeek": "This week",
+				"nextWeek": "Next week",
+				"none": "No due date"
+			}
+		},
+		"display": {
+			"layout": "Layout",
+			"board": "Board",
+			"list": "List",
+			"sort": "Sort",
+			"sortField": {
+				"manual": "Manual",
+				"created": "Created",
+				"priority": "Priority",
+				"dueDate": "Due date",
+				"title": "Title",
+				"number": "Task number"
+			},
+			"ascending": "Ascending",
+			"descending": "Descending",
+			"showOnCards": "Show on cards",
+			"showOnRows": "Show on rows",
+			"field": {
+				"numbers": "Task numbers",
+				"assignees": "Assignees",
+				"dueDates": "Due dates",
+				"priority": "Priority",
+				"checklist": "Checklist progress"
+			},
+			"background": "Project background",
+			"reset": "Reset"
+		},
+		"create": {
+			"title": "New task",
+			"titleLabel": "Title",
+			"titlePlaceholder": "Task title",
+			"descriptionLabel": "Description",
+			"descriptionPlaceholder": "Add a description…",
+			"noProject": "No project",
+			"more": "Create more",
+			"submit": "Create task",
+			"creating": "Creating…",
+			"error": "Couldn't create the task.",
+			"discardTitle": "Discard task?",
+			"discardDescription": "What you typed will be lost.",
+			"discard": "Discard"
+		},
+		"toast": {
+			"created": "{{id}} created",
+			"open": "Open"
+		},
+		"sheet": {
+			"label": "Task",
+			"description": "Task details",
+			"properties": "Properties",
+			"titleLabel": "Title",
+			"descriptionLabel": "Description",
+			"descriptionPlaceholder": "Add a description…",
+			"notFound": "{{key}}-{{number}} doesn't exist. It may have been deleted, or its key may have changed.",
+			"archivedBanner": "This task is archived.",
+			"copyId": "Copy ID",
+			"copyIdLabel": "Copy {{id}}",
+			"copyIdItem": "Copy ID",
+			"copyTitle": "Copy title",
+			"copyMarkdown": "Copy as Markdown",
+			"more": "More actions",
+			"unknownUser": "Former member"
+		},
+		"copy": {
+			"done": "Copied",
+			"failed": "Couldn't copy"
+		},
+		"delete": {
+			"title": "Delete {{id}}?",
+			"description": "“{{title}}” will be deleted for good. This can't be undone.",
+			"confirm": "Delete task"
+		},
+		"errors": {
+			"generic": "Couldn't save that change. It has been undone."
+		},
+		"settings": {
+			"title": "Tasks"
+		},
+		"export": {
+			"title": "Export tasks",
+			"description": "Download every task of {{key}}, with its columns, as a JSON file.",
+			"button": "Export",
+			"error": "Couldn't export the tasks."
+		},
+		"import": {
+			"title": "Import tasks",
+			"description": "Add tasks from a JSON file exported from Morrow. They get new ticket numbers.",
+			"button": "Import",
+			"dialogTitle": "Import tasks into {{key}}",
+			"drop": "Drop a JSON file here, or choose one",
+			"limits": "Up to 5 MB and {{count}} tasks.",
+			"tooLarge": "That file is over 5 MB.",
+			"tooMany": "That file has more than {{max}} tasks.",
+			"invalid": "That isn't a task export Morrow can read.",
+			"error": "Couldn't import the tasks.",
+			"run": "Import",
+			"close": "Close",
+			"done_one": "{{count}} task imported.",
+			"done_other": "{{count}} tasks imported.",
+			"warnings": "Check these:",
+			"warning": {
+				"columnUnmatched_one": "{{count}} task from “{{column}}” went to “{{usedColumn}}”, which has no column of that name.",
+				"columnUnmatched_other": "{{count}} tasks from “{{column}}” went to “{{usedColumn}}”, which has no column of that name.",
+				"assigneeUnknown_one": "{{count}} task was left unassigned: {{email}} isn't a member of this workspace.",
+				"assigneeUnknown_other": "{{count}} tasks were left unassigned: {{email}} isn't a member of this workspace.",
+				"assigneeDropped_one": "{{count}} assignee was dropped: you can't assign tasks to other people.",
+				"assigneeDropped_other": "{{count}} assignees were dropped: you can't assign tasks to other people."
+			}
+		},
+		"preferences": {
+			"title": "Task details",
+			"description": "What shows on cards and rows in your boards and lists.",
+			"defaultView": "Default view",
+			"defaultViewDescription": "The layout a project opens in. It follows the one you used last.",
+			"resetTitle": "Show everything again"
 		}
 	}
 }

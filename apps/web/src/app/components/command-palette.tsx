@@ -7,6 +7,7 @@ import {
 import { CommandDialog, CommandDialogPopup } from "@/design-system/ui/command";
 import { InviteTeamMemberModal } from "@/members";
 import { CreateProjectDialog } from "@/projects";
+import { CreateTaskDialog } from "@/tasks";
 import { CreateWorkspaceModal, useActiveWorkspace } from "@/workspace";
 import { PaletteContent } from "./palette-content";
 
@@ -37,6 +38,7 @@ export function CommandPalette() {
         open={createWorkspaceOpen}
         onClose={() => closeOverlay("createWorkspace")}
       />
+      {workspace ? <CreateTaskDialog workspace={workspace} /> : null}
       {workspace ? (
         <CreateProjectDialog
           workspace={workspace}

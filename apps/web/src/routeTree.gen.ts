@@ -37,6 +37,10 @@ import { Route as LayoutAuthenticatedSlugSettingsAccountRouteImport } from './ro
 import { Route as LayoutAuthenticatedSlugSettingsAdminRouteImport } from './routes/_layout/_authenticated/$slug/settings/admin'
 import { Route as LayoutAuthenticatedSlugSettingsProjectsRouteImport } from './routes/_layout/_authenticated/$slug/settings/projects'
 import { Route as LayoutAuthenticatedSlugSettingsWorkspaceRouteImport } from './routes/_layout/_authenticated/$slug/settings/workspace'
+import { Route as LayoutAuthenticatedSlugTasksTicketIdRouteImport } from './routes/_layout/_authenticated/$slug/tasks/$ticketId'
+import { Route as LayoutAuthenticatedSlugProjectsKeyIndexRouteImport } from './routes/_layout/_authenticated/$slug/projects/$key/index'
+import { Route as LayoutAuthenticatedSlugProjectsKeyBoardRouteImport } from './routes/_layout/_authenticated/$slug/projects/$key/board'
+import { Route as LayoutAuthenticatedSlugProjectsKeyListRouteImport } from './routes/_layout/_authenticated/$slug/projects/$key/list'
 import { Route as LayoutAuthenticatedSlugSettingsAccountInformationRouteImport } from './routes/_layout/_authenticated/$slug/settings/account/information'
 import { Route as LayoutAuthenticatedSlugSettingsAccountPreferencesRouteImport } from './routes/_layout/_authenticated/$slug/settings/account/preferences'
 import { Route as LayoutAuthenticatedSlugSettingsAdminUsersRouteImport } from './routes/_layout/_authenticated/$slug/settings/admin/users'
@@ -203,6 +207,30 @@ const LayoutAuthenticatedSlugSettingsWorkspaceRoute =
     path: '/workspace',
     getParentRoute: () => LayoutAuthenticatedSlugSettingsRoute,
   } as any)
+const LayoutAuthenticatedSlugTasksTicketIdRoute =
+  LayoutAuthenticatedSlugTasksTicketIdRouteImport.update({
+    id: '/tasks/$ticketId',
+    path: '/tasks/$ticketId',
+    getParentRoute: () => LayoutAuthenticatedSlugRoute,
+  } as any)
+const LayoutAuthenticatedSlugProjectsKeyIndexRoute =
+  LayoutAuthenticatedSlugProjectsKeyIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => LayoutAuthenticatedSlugProjectsKeyRoute,
+  } as any)
+const LayoutAuthenticatedSlugProjectsKeyBoardRoute =
+  LayoutAuthenticatedSlugProjectsKeyBoardRouteImport.update({
+    id: '/board',
+    path: '/board',
+    getParentRoute: () => LayoutAuthenticatedSlugProjectsKeyRoute,
+  } as any)
+const LayoutAuthenticatedSlugProjectsKeyListRoute =
+  LayoutAuthenticatedSlugProjectsKeyListRouteImport.update({
+    id: '/list',
+    path: '/list',
+    getParentRoute: () => LayoutAuthenticatedSlugProjectsKeyRoute,
+  } as any)
 const LayoutAuthenticatedSlugSettingsAccountInformationRoute =
   LayoutAuthenticatedSlugSettingsAccountInformationRouteImport.update({
     id: '/information',
@@ -291,12 +319,15 @@ export interface FileRoutesByFullPath {
   '/onboarding/you': typeof LayoutAuthenticatedOnboardingYouRoute
   '/$slug/': typeof LayoutAuthenticatedSlugIndexRoute
   '/onboarding/': typeof LayoutAuthenticatedOnboardingIndexRoute
-  '/$slug/projects/$key': typeof LayoutAuthenticatedSlugProjectsKeyRoute
+  '/$slug/projects/$key': typeof LayoutAuthenticatedSlugProjectsKeyRouteWithChildren
   '/$slug/settings/account': typeof LayoutAuthenticatedSlugSettingsAccountRouteWithChildren
   '/$slug/settings/admin': typeof LayoutAuthenticatedSlugSettingsAdminRouteWithChildren
   '/$slug/settings/projects': typeof LayoutAuthenticatedSlugSettingsProjectsRouteWithChildren
   '/$slug/settings/workspace': typeof LayoutAuthenticatedSlugSettingsWorkspaceRouteWithChildren
+  '/$slug/tasks/$ticketId': typeof LayoutAuthenticatedSlugTasksTicketIdRoute
   '/$slug/projects/': typeof LayoutAuthenticatedSlugProjectsIndexRoute
+  '/$slug/projects/$key/board': typeof LayoutAuthenticatedSlugProjectsKeyBoardRoute
+  '/$slug/projects/$key/list': typeof LayoutAuthenticatedSlugProjectsKeyListRoute
   '/$slug/settings/account/information': typeof LayoutAuthenticatedSlugSettingsAccountInformationRoute
   '/$slug/settings/account/preferences': typeof LayoutAuthenticatedSlugSettingsAccountPreferencesRoute
   '/$slug/settings/admin/users': typeof LayoutAuthenticatedSlugSettingsAdminUsersRoute
@@ -304,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/$slug/settings/workspace/general': typeof LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute
   '/$slug/settings/workspace/members': typeof LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute
   '/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
+  '/$slug/projects/$key/': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
   '/$slug/settings/projects/': typeof LayoutAuthenticatedSlugSettingsProjectsIndexRoute
   '/$slug/settings/projects/$key/general': typeof LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute
   '/$slug/settings/projects/$key/workflow': typeof LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute
@@ -328,11 +360,13 @@ export interface FileRoutesByTo {
   '/onboarding/you': typeof LayoutAuthenticatedOnboardingYouRoute
   '/$slug': typeof LayoutAuthenticatedSlugIndexRoute
   '/onboarding': typeof LayoutAuthenticatedOnboardingIndexRoute
-  '/$slug/projects/$key': typeof LayoutAuthenticatedSlugProjectsKeyRoute
   '/$slug/settings/account': typeof LayoutAuthenticatedSlugSettingsAccountRouteWithChildren
   '/$slug/settings/admin': typeof LayoutAuthenticatedSlugSettingsAdminRouteWithChildren
   '/$slug/settings/workspace': typeof LayoutAuthenticatedSlugSettingsWorkspaceRouteWithChildren
+  '/$slug/tasks/$ticketId': typeof LayoutAuthenticatedSlugTasksTicketIdRoute
   '/$slug/projects': typeof LayoutAuthenticatedSlugProjectsIndexRoute
+  '/$slug/projects/$key/board': typeof LayoutAuthenticatedSlugProjectsKeyBoardRoute
+  '/$slug/projects/$key/list': typeof LayoutAuthenticatedSlugProjectsKeyListRoute
   '/$slug/settings/account/information': typeof LayoutAuthenticatedSlugSettingsAccountInformationRoute
   '/$slug/settings/account/preferences': typeof LayoutAuthenticatedSlugSettingsAccountPreferencesRoute
   '/$slug/settings/admin/users': typeof LayoutAuthenticatedSlugSettingsAdminUsersRoute
@@ -340,6 +374,7 @@ export interface FileRoutesByTo {
   '/$slug/settings/workspace/general': typeof LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute
   '/$slug/settings/workspace/members': typeof LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute
   '/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
+  '/$slug/projects/$key': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
   '/$slug/settings/projects': typeof LayoutAuthenticatedSlugSettingsProjectsIndexRoute
   '/$slug/settings/projects/$key/general': typeof LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute
   '/$slug/settings/projects/$key/workflow': typeof LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute
@@ -369,12 +404,15 @@ export interface FileRoutesById {
   '/_layout/_authenticated/onboarding/you': typeof LayoutAuthenticatedOnboardingYouRoute
   '/_layout/_authenticated/$slug/': typeof LayoutAuthenticatedSlugIndexRoute
   '/_layout/_authenticated/onboarding/': typeof LayoutAuthenticatedOnboardingIndexRoute
-  '/_layout/_authenticated/$slug/projects/$key': typeof LayoutAuthenticatedSlugProjectsKeyRoute
+  '/_layout/_authenticated/$slug/projects/$key': typeof LayoutAuthenticatedSlugProjectsKeyRouteWithChildren
   '/_layout/_authenticated/$slug/settings/account': typeof LayoutAuthenticatedSlugSettingsAccountRouteWithChildren
   '/_layout/_authenticated/$slug/settings/admin': typeof LayoutAuthenticatedSlugSettingsAdminRouteWithChildren
   '/_layout/_authenticated/$slug/settings/projects': typeof LayoutAuthenticatedSlugSettingsProjectsRouteWithChildren
   '/_layout/_authenticated/$slug/settings/workspace': typeof LayoutAuthenticatedSlugSettingsWorkspaceRouteWithChildren
+  '/_layout/_authenticated/$slug/tasks/$ticketId': typeof LayoutAuthenticatedSlugTasksTicketIdRoute
   '/_layout/_authenticated/$slug/projects/': typeof LayoutAuthenticatedSlugProjectsIndexRoute
+  '/_layout/_authenticated/$slug/projects/$key/board': typeof LayoutAuthenticatedSlugProjectsKeyBoardRoute
+  '/_layout/_authenticated/$slug/projects/$key/list': typeof LayoutAuthenticatedSlugProjectsKeyListRoute
   '/_layout/_authenticated/$slug/settings/account/information': typeof LayoutAuthenticatedSlugSettingsAccountInformationRoute
   '/_layout/_authenticated/$slug/settings/account/preferences': typeof LayoutAuthenticatedSlugSettingsAccountPreferencesRoute
   '/_layout/_authenticated/$slug/settings/admin/users': typeof LayoutAuthenticatedSlugSettingsAdminUsersRoute
@@ -382,6 +420,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/$slug/settings/workspace/general': typeof LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute
   '/_layout/_authenticated/$slug/settings/workspace/members': typeof LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute
   '/_layout/_authenticated/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
+  '/_layout/_authenticated/$slug/projects/$key/': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
   '/_layout/_authenticated/$slug/settings/projects/': typeof LayoutAuthenticatedSlugSettingsProjectsIndexRoute
   '/_layout/_authenticated/$slug/settings/projects/$key/general': typeof LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute
   '/_layout/_authenticated/$slug/settings/projects/$key/workflow': typeof LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute
@@ -415,7 +454,10 @@ export interface FileRouteTypes {
     | '/$slug/settings/admin'
     | '/$slug/settings/projects'
     | '/$slug/settings/workspace'
+    | '/$slug/tasks/$ticketId'
     | '/$slug/projects/'
+    | '/$slug/projects/$key/board'
+    | '/$slug/projects/$key/list'
     | '/$slug/settings/account/information'
     | '/$slug/settings/account/preferences'
     | '/$slug/settings/admin/users'
@@ -423,6 +465,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/workspace/general'
     | '/$slug/settings/workspace/members'
     | '/$slug/settings/workspace/roles'
+    | '/$slug/projects/$key/'
     | '/$slug/settings/projects/'
     | '/$slug/settings/projects/$key/general'
     | '/$slug/settings/projects/$key/workflow'
@@ -447,11 +490,13 @@ export interface FileRouteTypes {
     | '/onboarding/you'
     | '/$slug'
     | '/onboarding'
-    | '/$slug/projects/$key'
     | '/$slug/settings/account'
     | '/$slug/settings/admin'
     | '/$slug/settings/workspace'
+    | '/$slug/tasks/$ticketId'
     | '/$slug/projects'
+    | '/$slug/projects/$key/board'
+    | '/$slug/projects/$key/list'
     | '/$slug/settings/account/information'
     | '/$slug/settings/account/preferences'
     | '/$slug/settings/admin/users'
@@ -459,6 +504,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/workspace/general'
     | '/$slug/settings/workspace/members'
     | '/$slug/settings/workspace/roles'
+    | '/$slug/projects/$key'
     | '/$slug/settings/projects'
     | '/$slug/settings/projects/$key/general'
     | '/$slug/settings/projects/$key/workflow'
@@ -492,7 +538,10 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/$slug/settings/admin'
     | '/_layout/_authenticated/$slug/settings/projects'
     | '/_layout/_authenticated/$slug/settings/workspace'
+    | '/_layout/_authenticated/$slug/tasks/$ticketId'
     | '/_layout/_authenticated/$slug/projects/'
+    | '/_layout/_authenticated/$slug/projects/$key/board'
+    | '/_layout/_authenticated/$slug/projects/$key/list'
     | '/_layout/_authenticated/$slug/settings/account/information'
     | '/_layout/_authenticated/$slug/settings/account/preferences'
     | '/_layout/_authenticated/$slug/settings/admin/users'
@@ -500,6 +549,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/$slug/settings/workspace/general'
     | '/_layout/_authenticated/$slug/settings/workspace/members'
     | '/_layout/_authenticated/$slug/settings/workspace/roles'
+    | '/_layout/_authenticated/$slug/projects/$key/'
     | '/_layout/_authenticated/$slug/settings/projects/'
     | '/_layout/_authenticated/$slug/settings/projects/$key/general'
     | '/_layout/_authenticated/$slug/settings/projects/$key/workflow'
@@ -714,6 +764,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceRouteImport
       parentRoute: typeof LayoutAuthenticatedSlugSettingsRoute
     }
+    '/_layout/_authenticated/$slug/tasks/$ticketId': {
+      id: '/_layout/_authenticated/$slug/tasks/$ticketId'
+      path: '/tasks/$ticketId'
+      fullPath: '/$slug/tasks/$ticketId'
+      preLoaderRoute: typeof LayoutAuthenticatedSlugTasksTicketIdRouteImport
+      parentRoute: typeof LayoutAuthenticatedSlugRoute
+    }
+    '/_layout/_authenticated/$slug/projects/$key/': {
+      id: '/_layout/_authenticated/$slug/projects/$key/'
+      path: '/'
+      fullPath: '/$slug/projects/$key/'
+      preLoaderRoute: typeof LayoutAuthenticatedSlugProjectsKeyIndexRouteImport
+      parentRoute: typeof LayoutAuthenticatedSlugProjectsKeyRoute
+    }
+    '/_layout/_authenticated/$slug/projects/$key/board': {
+      id: '/_layout/_authenticated/$slug/projects/$key/board'
+      path: '/board'
+      fullPath: '/$slug/projects/$key/board'
+      preLoaderRoute: typeof LayoutAuthenticatedSlugProjectsKeyBoardRouteImport
+      parentRoute: typeof LayoutAuthenticatedSlugProjectsKeyRoute
+    }
+    '/_layout/_authenticated/$slug/projects/$key/list': {
+      id: '/_layout/_authenticated/$slug/projects/$key/list'
+      path: '/list'
+      fullPath: '/$slug/projects/$key/list'
+      preLoaderRoute: typeof LayoutAuthenticatedSlugProjectsKeyListRouteImport
+      parentRoute: typeof LayoutAuthenticatedSlugProjectsKeyRoute
+    }
     '/_layout/_authenticated/$slug/settings/account/information': {
       id: '/_layout/_authenticated/$slug/settings/account/information'
       path: '/information'
@@ -899,11 +977,33 @@ const LayoutAuthenticatedSlugSettingsRouteWithChildren =
     LayoutAuthenticatedSlugSettingsRouteChildren,
   )
 
+interface LayoutAuthenticatedSlugProjectsKeyRouteChildren {
+  LayoutAuthenticatedSlugProjectsKeyBoardRoute: typeof LayoutAuthenticatedSlugProjectsKeyBoardRoute
+  LayoutAuthenticatedSlugProjectsKeyListRoute: typeof LayoutAuthenticatedSlugProjectsKeyListRoute
+  LayoutAuthenticatedSlugProjectsKeyIndexRoute: typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
+}
+
+const LayoutAuthenticatedSlugProjectsKeyRouteChildren: LayoutAuthenticatedSlugProjectsKeyRouteChildren =
+  {
+    LayoutAuthenticatedSlugProjectsKeyBoardRoute:
+      LayoutAuthenticatedSlugProjectsKeyBoardRoute,
+    LayoutAuthenticatedSlugProjectsKeyListRoute:
+      LayoutAuthenticatedSlugProjectsKeyListRoute,
+    LayoutAuthenticatedSlugProjectsKeyIndexRoute:
+      LayoutAuthenticatedSlugProjectsKeyIndexRoute,
+  }
+
+const LayoutAuthenticatedSlugProjectsKeyRouteWithChildren =
+  LayoutAuthenticatedSlugProjectsKeyRoute._addFileChildren(
+    LayoutAuthenticatedSlugProjectsKeyRouteChildren,
+  )
+
 interface LayoutAuthenticatedSlugRouteChildren {
   LayoutAuthenticatedSlugMembersRoute: typeof LayoutAuthenticatedSlugMembersRoute
   LayoutAuthenticatedSlugSettingsRoute: typeof LayoutAuthenticatedSlugSettingsRouteWithChildren
   LayoutAuthenticatedSlugIndexRoute: typeof LayoutAuthenticatedSlugIndexRoute
-  LayoutAuthenticatedSlugProjectsKeyRoute: typeof LayoutAuthenticatedSlugProjectsKeyRoute
+  LayoutAuthenticatedSlugProjectsKeyRoute: typeof LayoutAuthenticatedSlugProjectsKeyRouteWithChildren
+  LayoutAuthenticatedSlugTasksTicketIdRoute: typeof LayoutAuthenticatedSlugTasksTicketIdRoute
   LayoutAuthenticatedSlugProjectsIndexRoute: typeof LayoutAuthenticatedSlugProjectsIndexRoute
 }
 
@@ -914,7 +1014,9 @@ const LayoutAuthenticatedSlugRouteChildren: LayoutAuthenticatedSlugRouteChildren
       LayoutAuthenticatedSlugSettingsRouteWithChildren,
     LayoutAuthenticatedSlugIndexRoute: LayoutAuthenticatedSlugIndexRoute,
     LayoutAuthenticatedSlugProjectsKeyRoute:
-      LayoutAuthenticatedSlugProjectsKeyRoute,
+      LayoutAuthenticatedSlugProjectsKeyRouteWithChildren,
+    LayoutAuthenticatedSlugTasksTicketIdRoute:
+      LayoutAuthenticatedSlugTasksTicketIdRoute,
     LayoutAuthenticatedSlugProjectsIndexRoute:
       LayoutAuthenticatedSlugProjectsIndexRoute,
   }

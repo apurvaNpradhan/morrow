@@ -1,15 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { errorMessage } from "@/app/lib/error-message";
-import { ConfirmDialog } from "@/app/settings/confirm-dialog";
 import { SettingsCard } from "@/app/settings/settings-card";
 import { SettingsRow } from "@/app/settings/settings-row";
 import { SettingsSection } from "@/app/settings/settings-section";
-import { toast } from "@/design-system/toast";
 import { Button } from "@/design-system/ui/button";
 import type { ProjectRow } from "@morrow/sync-schemas";
-import { deleteProject } from "../actions/project-actions";
+import { DeleteProjectDialog } from "../components/delete-project-dialog";
 
 export function ProjectDangerZone({
   workspace,
@@ -21,23 +18,6 @@ export function ProjectDangerZone({
   const { t } = useTranslation("projects");
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  async function remove() {
-    setDeleting(true);
-    try {
-      await deleteProject(project.id);
-      toast.success(t("general.danger.success"));
-      setConfirming(false);
-      await navigate({
-        to: "/$slug/projects",
-        params: { slug: workspace.slug },
-      });
-    } catch (error) {
-      toast.error(errorMessage(t, error, t("general.danger.error")));
-      setDeleting(false);
-    }
-  }
 
   return (
     <SettingsSection
@@ -62,17 +42,16 @@ export function ProjectDangerZone({
           </Button>
         </SettingsRow>
       </SettingsCard>
-      <ConfirmDialog
+      <DeleteProjectDialog
+        project={project}
         open={confirming}
         onOpenChange={setConfirming}
-        title={t("general.danger.modalTitle")}
-        description={t("general.danger.modalDescription", {
-          name: project.name,
-        })}
-        confirmLabel={t("general.danger.modalConfirm")}
-        pendingLabel={t("common:actions.deleting")}
-        pending={deleting}
-        onConfirm={() => void remove()}
+        onDeleted={() =>
+          void navigate({
+            to: "/$slug/projects",
+            params: { slug: workspace.slug },
+          })
+        }
       />
     </SettingsSection>
   );

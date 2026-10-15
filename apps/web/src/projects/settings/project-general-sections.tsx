@@ -4,6 +4,7 @@ import { SettingsCard } from "@/app/settings/settings-card";
 import { SettingsRow } from "@/app/settings/settings-row";
 import { SettingsSection } from "@/app/settings/settings-section";
 import { toast } from "@/design-system/toast";
+import { TasksSettingsSection } from "@/tasks";
 import { useWorkspacePermission } from "@/workspace";
 import type { ProjectRow } from "@morrow/sync-schemas";
 import { updateProject } from "../actions/project-actions";
@@ -87,11 +88,13 @@ export function ProjectGeneralSections({
         </SettingsCard>
       </SettingsSection>
 
+      <TasksSettingsSection project={project} />
+
       {canManageProjects() ? (
         <ProjectArchiveSection project={project} archived={archived} />
       ) : null}
 
-      {archived && canDeleteProjects() ? (
+      {canDeleteProjects() ? (
         <ProjectDangerZone workspace={workspace} project={project} />
       ) : null}
     </>
