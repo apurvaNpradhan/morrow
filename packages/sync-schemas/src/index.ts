@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { COLUMN_CATEGORIES, COLUMN_COLORS } from "./projects";
+import { COLUMN_CATEGORIES, COLUMN_COLORS } from "./projects.js";
 
-export * from "./projects";
+export * from "./projects.js";
 
 /**
  * The columns each shape may send, in camelCase as the browser sees them. The
