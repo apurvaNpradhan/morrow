@@ -156,10 +156,10 @@ input:-webkit-autofill:active {
 }
 
 .dark {
-  --accent: #1a1a1a;
+  --accent: #202020;
   --accent-foreground: #ededed;
   --background: #0a0a0a;
-  --border: #1f1f1f;
+  --border: #2a2a2a;
   --card: #0f0f0f;
   --card-foreground: #ededed;
   --destructive: #e0726a;
