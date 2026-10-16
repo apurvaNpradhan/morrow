@@ -48,6 +48,12 @@ export const taskTable = pgTable(
       onDelete: "set null",
     }),
     dueDate: date("due_date", { mode: "string" }),
+    // Ids of the Workspace's labels. No foreign key, on purpose: one row per
+    // task, read straight off the card. Label delete keeps it consistent.
+    labelIds: text("label_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     position: text("position").notNull(),
     completedAt: timestamp("completed_at", { mode: "date" }),
     archivedAt: timestamp("archived_at", { mode: "date" }),

@@ -12,6 +12,7 @@ import { exportTasks } from "./operations/export-tasks";
 import { importTasks } from "./operations/import-tasks";
 import { listTasks } from "./operations/list-tasks";
 import { moveTask } from "./operations/move-task";
+import { setTaskLabel } from "./operations/set-task-label";
 import { setTaskArchived } from "./operations/set-task-archived";
 import { updateTask } from "./operations/update-task";
 import {
@@ -27,6 +28,7 @@ import {
   columnId,
   description,
   dueDate,
+  labelId,
   newTaskId,
   position,
   priority,
@@ -160,6 +162,34 @@ const updateAssignee = authed
     ),
   );
 
+const addLabel = authed
+  .input(forTask.extend({ labelId }))
+  .use(canUpdate)
+  .output(txidResult)
+  .handler(({ input }) =>
+    setTaskLabel(
+      input.workspaceId,
+      input.projectId,
+      input.taskId,
+      input.labelId,
+      true,
+    ),
+  );
+
+const removeLabel = authed
+  .input(forTask.extend({ labelId }))
+  .use(canUpdate)
+  .output(txidResult)
+  .handler(({ input }) =>
+    setTaskLabel(
+      input.workspaceId,
+      input.projectId,
+      input.taskId,
+      input.labelId,
+      false,
+    ),
+  );
+
 const move = authed
   .input(forTask.extend({ columnId, position }))
   .use(canUpdate)
@@ -244,6 +274,8 @@ export const tasksRouter = {
   updatePriority,
   updateDueDate,
   updateAssignee,
+  addLabel,
+  removeLabel,
   move,
   archive,
   unarchive,
