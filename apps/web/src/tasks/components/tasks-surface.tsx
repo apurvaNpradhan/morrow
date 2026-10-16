@@ -6,13 +6,14 @@ import { focusTask } from "../lib/focus-task";
 import { currentView } from "../lib/view-order-store";
 import { useTaskViewPreferences } from "../lib/use-task-view-preferences";
 import { BoardView } from "./board-view";
+import { BoardSkeleton } from "./board-skeleton";
 import { DeleteTaskDialog } from "./delete-task-dialog";
 import { DueDateDialog } from "./due-date-dialog";
+import { ListSkeleton } from "./list-skeleton";
 import { ListView } from "./list-view";
 import { TaskFieldPicker } from "./task-field-picker";
 import { TaskContextMenu } from "./task-context-menu";
 import { TaskSheet } from "./task-sheet";
-import { TasksSkeleton } from "./tasks-skeleton";
 import { useTaskView } from "./task-view-context";
 import { useTaskHotkeys } from "./use-task-hotkeys";
 import { useToolbarState } from "./use-toolbar-state";
@@ -71,7 +72,9 @@ export function TasksSurface({
             focusTask(next.id);
           }}
         >
-          <Suspense fallback={<TasksSkeleton />}>
+          <Suspense
+            fallback={layout === "board" ? <BoardSkeleton /> : <ListSkeleton />}
+          >
             {layout === "board" ? (
               <BoardView toolbar={toolbar} preferences={preferences} />
             ) : (
