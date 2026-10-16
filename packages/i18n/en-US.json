@@ -1091,7 +1091,9 @@
 			"label": "Project icon",
 			"search": "Search icons",
 			"clear": "Remove",
-			"empty": "No icons match"
+			"empty": "No icons match",
+			"color": "Project color",
+			"noColor": "No color"
 		},
 		"list": {
 			"title": "Projects",

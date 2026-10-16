@@ -83,6 +83,8 @@ export function ProjectGeneralSections({
               disabled={locked}
               fallbackLetter={project.key.charAt(0)}
               onChange={(icon) => void save({ icon })}
+              color={project.color}
+              onColorChange={(color) => void save({ color })}
             />
           </SettingsRow>
         </SettingsCard>

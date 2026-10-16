@@ -91,6 +91,8 @@ input:-webkit-autofill:active {
   --color-code: var(--code);
   --color-border: var(--border);
   --color-background: var(--background);
+  --color-control-hover: var(--control-hover);
+  --color-control: var(--control);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --radius-sm: calc(var(--radius) - 4px);
@@ -150,6 +152,8 @@ input:-webkit-autofill:active {
   --sidebar-accent-foreground: #0a0a0a;
   --sidebar-border: #eaeaea;
   --sidebar-ring: #888888;
+  --control: #fafafa;
+  --control-hover: #f0f0f0;
   --code: var(--color-white);
   --code-foreground: var(--foreground);
   --code-highlight: --alpha(var(--color-black) / 4%);
@@ -194,6 +198,8 @@ input:-webkit-autofill:active {
   --sidebar-accent-foreground: #ededed;
   --sidebar-border: #1f1f1f;
   --sidebar-ring: #777777;
+  --control: #1c1c1c;
+  --control-hover: #262626;
   --code: color-mix(in srgb, var(--background) 98%, var(--color-white));
   --code-foreground: var(--foreground);
   --code-highlight: --alpha(var(--color-white) / 4%);

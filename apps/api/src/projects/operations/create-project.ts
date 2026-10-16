@@ -1,4 +1,8 @@
-import { DEFAULT_COLUMN_COLOR, DEFAULT_COLUMNS } from "@morrow/sync-schemas";
+import {
+  type ColumnColor,
+  DEFAULT_COLUMN_COLOR,
+  DEFAULT_COLUMNS,
+} from "@morrow/sync-schemas";
 import { eq, max, sql } from "drizzle-orm";
 import { generateKeyBetween } from "fractional-indexing";
 import { recordWorkspaceActivity } from "#api/activity/index";
@@ -11,6 +15,7 @@ type NewProject = {
   name: string;
   key: string;
   icon?: string;
+  color?: ColumnColor;
   description?: string;
 };
 
@@ -37,6 +42,7 @@ export async function createProject(input: NewProject) {
           name: input.name,
           key: input.key,
           icon: input.icon ?? null,
+          color: input.color ?? null,
           description: input.description || null,
           position: generateKeyBetween(last?.position ?? null, null),
         })

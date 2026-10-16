@@ -21,6 +21,7 @@ import {
 import {
   position,
   projectDescription,
+  projectColor,
   projectIcon,
   projectId,
   projectKey,
@@ -48,6 +49,7 @@ const create = authed
       name: projectName,
       key: projectKey,
       icon: projectIcon.optional(),
+      color: projectColor.optional(),
       description: projectDescription.optional(),
     }),
   )
@@ -64,12 +66,14 @@ const update = authed
         name: projectName.optional(),
         description: projectDescription.nullable().optional(),
         icon: projectIcon.nullable().optional(),
+        color: projectColor.nullable().optional(),
       })
       .refine(
         (input) =>
           input.name !== undefined ||
           input.description !== undefined ||
-          input.icon !== undefined,
+          input.icon !== undefined ||
+          input.color !== undefined,
       ),
   )
   .use(canUpdate)
@@ -79,6 +83,7 @@ const update = authed
       name: input.name,
       description: input.description,
       icon: input.icon,
+      color: input.color,
     }),
   );
 

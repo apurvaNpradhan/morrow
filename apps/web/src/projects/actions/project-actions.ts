@@ -1,4 +1,4 @@
-import type { ProjectIcon } from "@morrow/sync-schemas";
+import type { ColumnColor, ProjectIcon } from "@morrow/sync-schemas";
 import { rpc } from "@/app/lib/orpc";
 import { projectColumnCollection } from "../collections/project-column-collection";
 import { projectCollection } from "../collections/project-collection";
@@ -8,6 +8,7 @@ type NewProject = {
   name: string;
   key: string;
   icon?: ProjectIcon;
+  color?: ColumnColor;
 };
 
 /**
@@ -21,6 +22,7 @@ export async function createProject(input: NewProject) {
     name: input.name,
     key: input.key,
     ...(input.icon && { icon: input.icon }),
+    ...(input.color && { color: input.color }),
   });
   await Promise.all([
     projectCollection.utils.awaitTxId(txid),
@@ -33,6 +35,7 @@ type ProjectPatch = {
   name?: string;
   description?: string | null;
   icon?: ProjectIcon | null;
+  color?: ColumnColor | null;
   key?: string;
   position?: string;
   archivedAt?: Date | null;

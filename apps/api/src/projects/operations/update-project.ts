@@ -1,3 +1,4 @@
+import type { ColumnColor } from "@morrow/sync-schemas";
 import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { lockProject } from "#api/projects/lib/lock-project";
@@ -7,9 +8,10 @@ type ProjectChanges = {
   name?: string;
   description?: string | null;
   icon?: string | null;
+  color?: ColumnColor | null;
 };
 
-/** Changes a project's name, description or icon. An empty description clears it. */
+/** Changes a project's name, description, icon or colour. An empty description clears it. */
 export async function updateProject(
   workspaceId: string,
   projectId: string,
@@ -25,6 +27,7 @@ export async function updateProject(
           description: changes.description || null,
         }),
         ...(changes.icon !== undefined && { icon: changes.icon }),
+        ...(changes.color !== undefined && { color: changes.color }),
       })
       .where(eq(projectTable.id, projectId));
   });

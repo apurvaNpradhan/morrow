@@ -31,6 +31,7 @@ export const projectTable = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
+    color: text("color", { enum: COLUMN_COLORS }),
     backgroundUrl: text("background_url"),
     archivedAt: timestamp("archived_at", { mode: "date" }),
     lastTaskNumber: integer("last_task_number").notNull().default(0),

@@ -1,4 +1,8 @@
-import { PROJECT_KEY_PATTERN, type ProjectIcon } from "@morrow/sync-schemas";
+import {
+  type ColumnColor,
+  PROJECT_KEY_PATTERN,
+  type ProjectIcon,
+} from "@morrow/sync-schemas";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -42,6 +46,7 @@ export function CreateProjectDialog({
   const [name, setName] = useState("");
   const [typedKey, setTypedKey] = useState<string | null>(null);
   const [icon, setIcon] = useState<ProjectIcon | null>(DEFAULT_ICON);
+  const [color, setColor] = useState<ColumnColor | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // The key follows the name until the user types their own.
@@ -54,6 +59,7 @@ export function CreateProjectDialog({
     setName("");
     setTypedKey(null);
     setIcon(DEFAULT_ICON);
+    setColor(null);
     setSubmitting(false);
   }
 
@@ -67,6 +73,7 @@ export function CreateProjectDialog({
         name: name.trim(),
         key,
         icon: icon ?? undefined,
+        color: color ?? undefined,
       });
       toast.success(t("create.success"));
       onOpenChange(false);
@@ -103,6 +110,8 @@ export function CreateProjectDialog({
                 <ProjectIconPicker
                   value={icon}
                   onChange={setIcon}
+                  color={color}
+                  onColorChange={setColor}
                   fallbackLetter={key.charAt(0)}
                 />
                 <Input

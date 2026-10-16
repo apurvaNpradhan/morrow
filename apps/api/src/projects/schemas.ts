@@ -22,6 +22,8 @@ export const projectKey = z
 export const projectName = z.string().trim().min(1).max(100);
 export const projectDescription = z.string().trim().max(2000);
 export const projectIcon = z.enum(PROJECT_ICONS);
+/** A project's colour is one of the column colour tokens. */
+export const projectColor = z.enum(COLUMN_COLORS);
 
 /** A fractional-index key; its format is checked by the operation. */
 export const position = z.string().min(1).max(64);
