@@ -1,4 +1,8 @@
-import { useAppHotkeys, useHotkeys } from "@tanstack/react-hotkeys";
+import {
+  isHotkeySequence,
+  useAppHotkeys,
+  useHotkeys,
+} from "@tanstack/react-hotkeys";
 import { isOverlayOpen, toggleOverlay } from "./overlay-store";
 import type { Command } from "./use-commands";
 
@@ -19,25 +23,59 @@ function unlessModal(run: () => void) {
   };
 }
 
+/** Key presses that completed a sequence; a single key must not also act on them. */
+const sequenceEvents = new WeakSet<KeyboardEvent>();
+
 /** Binds the palette toggle and every available command's hotkey. Renders nothing. */
 export function CommandHotkeys({ commands }: { commands: Command[] }) {
   const hotkeys = useAppHotkeys();
+
+  // "P C" ends on the key "C" binds alone, so both would fire on one press.
+  // The library runs chords before sequences, so such a key waits a microtask
+  // to see whether a sequence claimed the press.
+  const hotkeyOf = (command: Command) =>
+    command.hotkey ? hotkeys[command.hotkey] : null;
+  const sequenceEnds = new Set<unknown>(
+    commands.flatMap((command) => {
+      const hotkey = hotkeyOf(command)?.hotkey;
+      return hotkey && isHotkeySequence(hotkey) ? [hotkey.at(-1)] : [];
+    }),
+  );
+  const bindings = commands.flatMap((command) => {
+    const hotkey = hotkeyOf(command);
+    if (!hotkey) return [];
+    const run = unlessModal(command.run);
+    if (hotkey.hotkey && isHotkeySequence(hotkey.hotkey)) {
+      return [
+        {
+          hotkey,
+          callback: (event: KeyboardEvent) => {
+            sequenceEvents.add(event);
+            run();
+          },
+        },
+      ];
+    }
+    if (!sequenceEnds.has(hotkey.hotkey)) {
+      return [{ hotkey, callback: run }];
+    }
+    return [
+      {
+        hotkey,
+        callback: (event: KeyboardEvent) =>
+          queueMicrotask(() => {
+            if (!sequenceEvents.has(event)) run();
+          }),
+      },
+    ];
+  });
 
   useHotkeys([
     {
       hotkey: hotkeys.palette,
       callback: unlessModal(() => toggleOverlay("palette")),
     },
-    ...commands.flatMap((command) =>
-      command.hotkey
-        ? [
-            {
-              hotkey: hotkeys[command.hotkey],
-              callback: unlessModal(command.run),
-            },
-          ]
-        : [],
-    ),
+    ...bindings,
   ]);
 
   return null;

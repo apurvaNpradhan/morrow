@@ -214,17 +214,23 @@ describe("hotkeys", () => {
     });
   });
 
-  it("opens create task with c, create project with p c and create workspace with w c", () => {
+  it("opens create task with c, create project with p c and create workspace with w c", async () => {
     mount();
     press("c");
+    await Promise.resolve();
     expect(openCreateTask).toHaveBeenCalledTimes(1);
     press("p");
     press("c");
+    await Promise.resolve();
     expect(screen.getByText("create-project-dialog")).toBeInTheDocument();
+    // The "c" that ends "p c" must not also create a task.
+    expect(openCreateTask).toHaveBeenCalledTimes(1);
     press("w");
     press("c");
+    await Promise.resolve();
     expect(screen.getByText("create-workspace-modal")).toBeInTheDocument();
     expect(screen.queryByText("create-project-dialog")).toBeNull();
+    expect(openCreateTask).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing for c and p c when the user cannot create tasks or projects", () => {
