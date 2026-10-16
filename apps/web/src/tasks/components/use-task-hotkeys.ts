@@ -112,6 +112,7 @@ export function useTaskHotkeys({
     { hotkey: hotkeys.setTaskPriority, callback: pick("priority", "priority") },
     { hotkey: hotkeys.assignTask, callback: pick("assignee", "assignee") },
     { hotkey: hotkeys.setTaskDueDate, callback: pick("dueDate", "dueDate") },
+    { hotkey: hotkeys.setTaskLabels, callback: pick("labels", "labels") },
     {
       hotkey: hotkeys.assignTaskToMe,
       callback: guarded(() => {

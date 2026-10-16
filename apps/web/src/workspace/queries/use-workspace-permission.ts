@@ -67,6 +67,9 @@ export function useWorkspacePermission() {
       canEditTasks: () => can.editTasks,
       canDeleteTasks: () => can.deleteTasks,
       canAssignTasks: () => can.assignTasks,
+      canCreateLabels: () => can.createLabels,
+      canEditLabels: () => can.editLabels,
+      canDeleteLabels: () => can.deleteLabels,
     };
   }, [can]);
 

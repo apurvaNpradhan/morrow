@@ -16,6 +16,7 @@ import {
   unarchiveTask,
   updateTask,
 } from "./task-actions";
+import { toggleTaskLabel } from "./toggle-task-label";
 
 /**
  * The edits a task offers wherever it is shown (card, row, context menu,
@@ -45,6 +46,8 @@ export function useTaskActions() {
         attempt(() => updateTask(task.id, { dueDate })),
       setAssignee: (task: TaskRow, assigneeId: string | null) =>
         attempt(() => updateTask(task.id, { assigneeId })),
+      toggleLabel: (task: TaskRow, labelId: string) =>
+        attempt(() => toggleTaskLabel(task.id, labelId)),
       setColumn: (task: TaskRow, columnId: string) => {
         const column = columnById.get(columnId);
         const from = columnById.get(task.columnId);

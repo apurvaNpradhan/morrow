@@ -106,7 +106,7 @@ export function TaskBoard({
   usePublishedView(view);
 
   return (
-    <div className="relative h-full min-h-96 overflow-x-auto">
+    <div className="relative h-full min-h-96">
       {background ? (
         <>
           <div
@@ -116,39 +116,42 @@ export function TaskBoard({
           />
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-background/70"
+            className="absolute inset-0 bg-background/60 dark:bg-background/70"
           />
         </>
       ) : null}
-      <DragDropProvider {...dnd.providerProps}>
-        <div
-          aria-label={t("board.lanesLabel", { name: project.name })}
-          className="relative flex h-full gap-3 p-4"
-        >
-          {columns.map((column) => {
-            const ids = dnd.lanes[column.id] ?? [];
-            return (
-              <BoardLane
-                key={column.id}
-                column={column}
-                tasks={ids.flatMap((id) => tasksById.get(id) ?? [])}
-                expanded={expandedIds.has(column.id)}
-                loading={loadingColumnIds.has(column.id)}
-                onToggle={() => onToggle(column)}
-                activeId={dnd.activeId}
-                registerScroll={registerScroll}
-                empty={filtered ? t("board.emptyFiltered") : t("board.empty")}
-              />
-            );
-          })}
-        </div>
-        <DragOverlay dropAnimation={null}>
-          {(source) => {
-            const task = tasksById.get(String(source.id));
-            return task ? <TaskCard task={task} lifted /> : null;
-          }}
-        </DragOverlay>
-      </DragDropProvider>
+      {/* The photo stays on the outer box; only the lanes scroll over it. */}
+      <div className="relative h-full overflow-x-auto">
+        <DragDropProvider {...dnd.providerProps}>
+          <div
+            aria-label={t("board.lanesLabel", { name: project.name })}
+            className="relative flex h-full gap-3 p-4"
+          >
+            {columns.map((column) => {
+              const ids = dnd.lanes[column.id] ?? [];
+              return (
+                <BoardLane
+                  key={column.id}
+                  column={column}
+                  tasks={ids.flatMap((id) => tasksById.get(id) ?? [])}
+                  expanded={expandedIds.has(column.id)}
+                  loading={loadingColumnIds.has(column.id)}
+                  onToggle={() => onToggle(column)}
+                  activeId={dnd.activeId}
+                  registerScroll={registerScroll}
+                  empty={filtered ? t("board.emptyFiltered") : t("board.empty")}
+                />
+              );
+            })}
+          </div>
+          <DragOverlay dropAnimation={null}>
+            {(source) => {
+              const task = tasksById.get(String(source.id));
+              return task ? <TaskCard task={task} lifted /> : null;
+            }}
+          </DragOverlay>
+        </DragDropProvider>
+      </div>
     </div>
   );
 }

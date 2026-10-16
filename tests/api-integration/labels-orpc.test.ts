@@ -5,7 +5,7 @@ import { addWorkspaceMember } from "./helpers/add-workspace-member";
 import { resetTestDatabase } from "./helpers/database";
 import { labelFactory, labelRows, newLabelId } from "./helpers/labels";
 import { as, rejection } from "./helpers/projects";
-import { positionAt, setupTasks, taskRow } from "./helpers/tasks";
+import { newTaskId, positionAt, setupTasks, taskRow } from "./helpers/tasks";
 
 beforeEach(async () => {
   vi.restoreAllMocks();
@@ -91,7 +91,7 @@ describe("creating a label", () => {
     const empty = await rejection(create({ name: "   " }));
     const offPalette = await rejection(create({ color: "chartreuse" }));
 
-    expect(badId.data?.code).toBe("INVALID_ID");
+    expect(badId.data?.code).toBe("INVALID_LABEL_ID");
     expect(badPosition.data?.code).toBe("INVALID_POSITION");
     expect(taken.data?.code).toBe("POSITION_TAKEN");
     for (const refusal of [tooLong, empty, offPalette]) {
@@ -243,6 +243,25 @@ describe("applying labels to a task", () => {
       columnId: before?.columnId,
       position: before?.position,
     });
+  });
+});
+
+describe("duplicating a labelled task", () => {
+  it("keeps the labels on the copy", async () => {
+    const { client, base, addTask, addLabel, apply } = await setup();
+    const bug = await addLabel("Bug");
+    const { id: sourceId } = await addTask();
+    await apply(sourceId, bug.id);
+    const copyId = newTaskId();
+
+    await client.tasks.duplicate({
+      ...base,
+      taskId: sourceId,
+      id: copyId,
+      position: positionAt(9),
+    });
+
+    expect((await taskRow(copyId))?.labelIds).toEqual([bug.id]);
   });
 });
 

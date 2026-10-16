@@ -7,8 +7,8 @@ import { violatedConstraint } from "#api/projects/index";
  * (`INVALID_POSITION`, `POSITION_TAKEN`).
  */
 const CODES = {
-  INVALID_ID: "BAD_REQUEST",
-  ID_TAKEN: "CONFLICT",
+  INVALID_LABEL_ID: "BAD_REQUEST",
+  LABEL_ID_TAKEN: "CONFLICT",
   LABEL_NAME_TAKEN: "CONFLICT",
   POSITION_TAKEN: "CONFLICT",
   LABEL_LIMIT_REACHED: "CONFLICT",
@@ -26,7 +26,7 @@ export const labelNotFound = () =>
 /** Turns the unique-index violations a label write can hit into their typed refusals. */
 export function rethrowLabelViolation(error: unknown): never {
   const violated = violatedConstraint(error);
-  if (violated === "label_pkey") throw labelError("ID_TAKEN");
+  if (violated === "label_pkey") throw labelError("LABEL_ID_TAKEN");
   if (violated === "label_workspace_name_uidx") {
     throw labelError("LABEL_NAME_TAKEN");
   }

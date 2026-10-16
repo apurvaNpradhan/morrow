@@ -29,7 +29,12 @@ type FilterContext = {
 function matchesValue(
   task: Pick<
     TaskRow,
-    "assigneeId" | "priority" | "dueDate" | "columnId" | "completedAt"
+    | "assigneeId"
+    | "priority"
+    | "dueDate"
+    | "columnId"
+    | "completedAt"
+    | "labelIds"
   >,
   subject: FilterSubject,
   value: string,
@@ -43,6 +48,8 @@ function matchesValue(
       return task.priority === value;
     case "column":
       return task.columnId === value;
+    case "label":
+      return task.labelIds.includes(value);
     case "dueDate": {
       if (value === "none") return task.dueDate === null;
       if (task.dueDate === null) return false;

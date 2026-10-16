@@ -17,6 +17,7 @@ import {
   useProjectByKey,
   useProjectColumns,
 } from "@/projects";
+import { useLabels } from "@/labels";
 import { useWorkspacePermission } from "@/workspace";
 import { useTaskViewPreferences } from "../lib/use-task-view-preferences";
 import { useToday } from "../queries/use-today";
@@ -65,6 +66,7 @@ function LoadedProjectTasks({
   const permission = useWorkspacePermission();
   const columns = useProjectColumns(project.id);
   const { people, byId, meId } = useWorkspacePeople(workspace.id);
+  const { labels, labelById } = useLabels(workspace.id);
   const today = useToday();
   const preferences = useTaskViewPreferences(project.id);
   // The layout last used is the one a Project opens in next time.
@@ -138,6 +140,8 @@ function LoadedProjectTasks({
             columns,
             columnById: new Map(columns.map((column) => [column.id, column])),
             statusFractions: statusFractions(columns),
+            labels,
+            labelById,
             people,
             personById: byId,
             meId,
@@ -148,6 +152,7 @@ function LoadedProjectTasks({
               edit: permission.canEditTasks(),
               delete: permission.canDeleteTasks(),
               assign: permission.canAssignTasks(),
+              createLabel: permission.canCreateLabels(),
             },
             frozen: project.archivedAt !== null,
             openTask: navigation.openTask,

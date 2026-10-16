@@ -1,7 +1,13 @@
-import { CalendarDays, UserRound } from "lucide-react";
+import { CalendarDays, Tag, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
 import { formatDate, formatDateTime } from "@/design-system/format";
+import {
+  Popover,
+  PopoverPopup,
+  PopoverTrigger,
+} from "@/design-system/ui/popover";
+import { LabelChips, labelsOfTask } from "@/labels";
 import { useTaskActions } from "../actions/use-task-actions";
 import { openDatePicker } from "../lib/date-picker-store";
 import { parseDay } from "../lib/calendar-day";
@@ -14,6 +20,7 @@ import {
   DueDateItems,
   PriorityItems,
 } from "./task-field-items";
+import { TaskLabelPicker } from "./task-label-picker";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { useTaskView } from "./task-view-context";
 
@@ -23,14 +30,24 @@ import { useTaskView } from "./task-view-context";
  */
 export function TaskProperties({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
-  const { columns, columnById, people, personById, meId, today, can, frozen } =
-    useTaskView();
+  const {
+    columns,
+    columnById,
+    labelById,
+    people,
+    personById,
+    meId,
+    today,
+    can,
+    frozen,
+  } = useTaskView();
   const actions = useTaskActions();
   const editable = can.edit && !frozen;
   const column = columnById.get(task.columnId);
   const assignee = task.assigneeId
     ? personById.get(task.assigneeId)
     : undefined;
+  const labels = labelsOfTask(task.labelIds, labelById);
   const creator = task.createdBy ? personById.get(task.createdBy) : undefined;
 
   return (
@@ -112,6 +129,28 @@ export function TaskProperties({ task }: { task: TaskRow }) {
             onPickDate={() => openDatePicker(task.id)}
           />
         </FieldChipMenu>
+      </Field>
+      <Field label={t("fields.labels")}>
+        <Popover>
+          <PopoverTrigger
+            disabled={!editable}
+            aria-label={t("fields.labels")}
+            data-sheet-field="labels"
+            className="inline-flex min-h-7 max-w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border bg-control px-2 py-1 text-xs outline-none hover:bg-control-hover focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-64"
+          >
+            {labels.length > 0 ? (
+              <LabelChips labels={labels} max={6} />
+            ) : (
+              <>
+                <Tag aria-hidden="true" className="size-3.5" />
+                {t("labels.none")}
+              </>
+            )}
+          </PopoverTrigger>
+          <PopoverPopup>
+            <TaskLabelPicker taskId={task.id} />
+          </PopoverPopup>
+        </Popover>
       </Field>
       <Field label={t("fields.createdBy")}>
         <span className="inline-flex h-7 items-center gap-1.5 text-xs">

@@ -47,6 +47,22 @@ export async function writeTaskChanges({ original, changes }: TaskMutation) {
       rpc.tasks.updateAssignee({ ...target, assigneeId: changes.assigneeId }),
     );
   }
+  if (changes.labelIds !== undefined) {
+    // Adding and removing are separate writes, so two people labelling one
+    // task at once both land.
+    const now = new Set(changes.labelIds);
+    const before = new Set(original.labelIds);
+    for (const labelId of changes.labelIds) {
+      if (!before.has(labelId)) {
+        await keep(rpc.tasks.addLabel({ ...target, labelId }));
+      }
+    }
+    for (const labelId of original.labelIds) {
+      if (!now.has(labelId)) {
+        await keep(rpc.tasks.removeLabel({ ...target, labelId }));
+      }
+    }
+  }
   if (changes.columnId !== undefined || changes.position !== undefined) {
     await keep(
       rpc.tasks.move({

@@ -107,7 +107,11 @@
 			"taskAssigneeNotMember": "Only members of this workspace can be assigned.",
 			"taskForbiddenAssign": "You can only assign tasks to yourself.",
 			"taskImportTooLarge": "That import is too large. Use a file under 5 MB and 5,000 tasks.",
-			"taskImportInvalid": "That file isn't a task export Morrow can read."
+			"taskImportInvalid": "That file isn't a task export Morrow can read.",
+			"labelInvalidId": "That label id isn't valid. Try again.",
+			"labelIdTaken": "That label already exists. Try again.",
+			"labelNameTaken": "A label with that name already exists.",
+			"labelLimitReached": "A task can have at most 20 labels."
 		}
 	},
 	"auth": {
@@ -841,7 +845,8 @@
 			"assignTask": "Assign",
 			"assignTaskToMe": "Assign to me",
 			"setTaskDueDate": "Set due date",
-			"deleteTask": "Delete task"
+			"deleteTask": "Delete task",
+			"setTaskLabels": "Set labels"
 		},
 		"sidebar": {
 			"home": "Home"
@@ -1258,7 +1263,8 @@
 			"assignee": "Assignee",
 			"dueDate": "Due date",
 			"noDueDate": "No due date",
-			"createdBy": "Created by"
+			"createdBy": "Created by",
+			"labels": "Labels"
 		},
 		"assignee": {
 			"unassigned": "Unassigned",
@@ -1329,14 +1335,19 @@
 		"filter": {
 			"active": "Active filters",
 			"clearAll": "Clear all",
-			"edit": "Edit the {{subject}} filter",
+			"editOperator": "Change how the {{subject}} filter matches",
+			"editValue": "Edit the {{subject}} filter values",
+			"field": "Filter by",
+			"search": "Search…",
+			"noMatches": "No matches",
 			"remove": "Remove the {{subject}} filter",
 			"me": "Me",
 			"subject": {
 				"assignee": "Assignee",
 				"priority": "Priority",
 				"dueDate": "Due date",
-				"column": "Status"
+				"column": "Status",
+				"label": "Label"
 			},
 			"operator": {
 				"is": "is",
@@ -1466,6 +1477,47 @@
 			"defaultView": "Default view",
 			"defaultViewDescription": "The layout a project opens in. It follows the one you used last.",
 			"resetTitle": "Show everything again"
+		},
+		"labels": {
+			"none": "No labels",
+			"create": "Create label “{{name}}”",
+			"createError": "Couldn't create the label."
+		}
+	},
+	"labels": {
+		"colors": {
+			"gray": "Gray",
+			"slate": "Slate",
+			"red": "Red",
+			"orange": "Orange",
+			"amber": "Amber",
+			"green": "Green",
+			"teal": "Teal",
+			"blue": "Blue",
+			"violet": "Violet",
+			"pink": "Pink"
+		},
+		"settings": {
+			"pageTitle": "Labels",
+			"title": "Labels",
+			"subtitle": "The labels everyone in this workspace can put on tasks, in the order the picker shows them. Drag a label to reorder it.",
+			"empty": "No labels yet.",
+			"addPlaceholder": "Add a label",
+			"add": "Add label",
+			"addError": "Couldn't add the label.",
+			"updateError": "Couldn't update the label.",
+			"reorderError": "Couldn't reorder the labels. Try again.",
+			"reorderHandle": "Reorder {{name}}. Drag, or press the up and down arrow keys.",
+			"nameLabel": "Name of the label",
+			"colorLabel": "Colour of {{name}}",
+			"delete": "Delete {{name}}",
+			"deleteTitle": "Delete “{{name}}”?",
+			"deleteCounting": "Counting the tasks that use this label…",
+			"deleteDescription_one": "This label is on {{count}} task. Deleting it removes it from that task.",
+			"deleteDescription_other": "This label is on {{count}} tasks. Deleting it removes it from all of them.",
+			"deleteConfirm": "Delete label",
+			"deleteSuccess": "Label deleted",
+			"deleteError": "Couldn't delete the label."
 		}
 	}
 }

@@ -16,8 +16,11 @@ function PopoverPopup({
   sideOffset = 4,
   align = "start",
   side = "bottom",
+  anchor,
   ...props
 }: PopoverPrimitive.Popup.Props & {
+  /** Hangs the popup from this element instead of its trigger. */
+  anchor?: PopoverPrimitive.Positioner.Props["anchor"];
   align?: PopoverPrimitive.Positioner.Props["align"];
   sideOffset?: PopoverPrimitive.Positioner.Props["sideOffset"];
   side?: PopoverPrimitive.Positioner.Props["side"];
@@ -26,6 +29,7 @@ function PopoverPopup({
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Positioner
         align={align}
+        anchor={anchor}
         className="z-50"
         data-slot="popover-positioner"
         side={side}
