@@ -16,9 +16,6 @@ import {
 
 describe("@morrow/permissions statement surface", () => {
   it("exposes Morrow's resource statements alongside better-auth defaults", () => {
-    for (const removedResource of ["label"]) {
-      expect(statement).not.toHaveProperty(removedResource);
-    }
     expect(statement.workspace).toEqual([
       "read",
       "update",
@@ -27,6 +24,7 @@ describe("@morrow/permissions statement surface", () => {
     ]);
     expect(statement.project).toEqual(["create", "update", "delete"]);
     expect(statement.task).toEqual(["create", "update", "delete", "assign"]);
+    expect(statement.label).toEqual(["create", "update", "delete"]);
     // The organization plugin's defaults must still be present so we can
     // reuse them in member/admin/owner roles without breaking better-auth
     // checks like organization:update.
@@ -44,7 +42,8 @@ describe("@morrow/permissions statement surface", () => {
       Object.keys(statement).sort(),
     );
     for (const resource of Object.keys(permissionResources)) {
-      if (["workspace", "project", "task"].includes(resource)) continue;
+      if (["workspace", "project", "task", "label"].includes(resource))
+        continue;
       expect(defaultRolePayloads.viewer[resource]).toEqual([]);
       expect(defaultRolePayloads.admin[resource]).toEqual([]);
     }
@@ -75,6 +74,15 @@ describe("project permissions", () => {
     expect(member.statements.project).toEqual(["create", "update"]);
     expect(admin.statements.project).toEqual(["create", "update", "delete"]);
     expect(owner.statements.project).toEqual(["create", "update", "delete"]);
+  });
+});
+
+describe("label permissions", () => {
+  it("gives viewers none, members create, admins and owners all", () => {
+    expect(viewer.statements.label).toEqual([]);
+    expect(member.statements.label).toEqual(["create"]);
+    expect(admin.statements.label).toEqual(["create", "update", "delete"]);
+    expect(owner.statements.label).toEqual(["create", "update", "delete"]);
   });
 });
 

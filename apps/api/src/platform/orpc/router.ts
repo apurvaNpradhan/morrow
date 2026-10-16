@@ -2,6 +2,7 @@ import { accountRouter } from "#api/account/index";
 import { activityRouter } from "#api/activity/index";
 import { adminRouter } from "#api/admin/index";
 import { authRouter } from "#api/auth/index";
+import { labelsRouter } from "#api/labels/index";
 import { membersRouter } from "#api/members/index";
 import { workspaceRouter } from "#api/workspace/index";
 import { onboardingRouter } from "#api/onboarding/index";
@@ -14,6 +15,7 @@ export const appRouter = {
   admin: adminRouter,
   auth: authRouter,
   activity: activityRouter,
+  labels: labelsRouter,
   members: membersRouter,
   onboarding: onboardingRouter,
   projects: projectsRouter,

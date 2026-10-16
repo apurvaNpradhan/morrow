@@ -18,6 +18,7 @@ export {
   workspaceUserTable,
 } from "#api/members/tables";
 export { activityTable } from "#api/activity/tables";
+export { labelTable } from "#api/labels/tables";
 export { projectColumnTable, projectTable } from "#api/projects/tables";
 export { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 export { assetTable } from "#api/storage/tables";

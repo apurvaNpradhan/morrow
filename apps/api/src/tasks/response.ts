@@ -57,6 +57,7 @@ export const taskListItem = z.object({
   assigneeId: z.string().nullable(),
   assigneeName: z.string().nullable(),
   dueDate: z.string().nullable(),
+  labelIds: z.array(z.string()),
   position: z.string(),
   completedAt: z.date().nullable(),
   archivedAt: z.date().nullable(),

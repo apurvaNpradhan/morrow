@@ -2,6 +2,7 @@ import { z } from "zod";
 import { COLUMN_CATEGORIES, COLUMN_COLORS } from "./projects.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
+export * from "./labels.js";
 export * from "./projects.js";
 export * from "./tasks.js";
 
@@ -132,6 +133,7 @@ export const tasksShape = shape(
     priority: z.enum(TASK_PRIORITIES),
     assigneeId: z.string().nullable(),
     dueDate: z.string().nullable(),
+    labelIds: z.array(z.string()),
     position: z.string(),
     completedAt: z.date().nullable(),
     archivedAt: z.date().nullable(),
@@ -158,3 +160,19 @@ export const taskDescriptionsShape = shape(
 );
 
 export type TaskDescriptionRow = z.infer<typeof taskDescriptionsShape.schema>;
+
+/** The Labels of every Workspace the user belongs to. */
+export const labelsShape = shape(
+  "labels",
+  z.object({
+    id: z.string(),
+    workspaceId: z.string(),
+    name: z.string(),
+    color: z.enum(COLUMN_COLORS),
+    position: z.string(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
+export type LabelRow = z.infer<typeof labelsShape.schema>;
