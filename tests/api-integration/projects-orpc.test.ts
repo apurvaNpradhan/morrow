@@ -89,6 +89,7 @@ describe("creating a project", () => {
       name: "Morrow",
       key: "MOR",
       icon: "Rocket",
+      color: "blue",
       description: "The personal workspace platform",
     });
 
@@ -99,6 +100,7 @@ describe("creating a project", () => {
     expect(row).toMatchObject({
       name: "Morrow",
       icon: "Rocket",
+      color: "blue",
       description: "The personal workspace platform",
       lastTaskNumber: 0,
       archivedAt: null,

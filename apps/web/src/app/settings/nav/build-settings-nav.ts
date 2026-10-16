@@ -18,6 +18,7 @@ export type SettingsNavProject = {
   key: string;
   name: string;
   icon: LucideIcon;
+  iconClassName?: string;
 };
 
 type BuildSettingsNavInput = {
@@ -97,6 +98,7 @@ export function buildSettingsNav({
                 `/settings/projects/${project.key}`,
               ),
               icon: project.icon,
+              iconClassName: project.iconClassName,
             })),
           }
         : null,

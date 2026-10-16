@@ -1,6 +1,10 @@
-import type { ProjectIcon as ProjectIconName } from "@morrow/sync-schemas";
+import type {
+  ColumnColor,
+  ProjectIcon as ProjectIconName,
+} from "@morrow/sync-schemas";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/design-system/cn";
 import { Button } from "@/design-system/ui/button";
 import { Input } from "@/design-system/ui/input";
 import {
@@ -10,10 +14,14 @@ import {
 } from "@/design-system/ui/popover";
 import { filterProjectIcons } from "../lib/filter-project-icons";
 import { PROJECT_ICON_COMPONENTS } from "../lib/project-icons";
+import { projectColorClass } from "./project-icon";
+import { ProjectColorSwatches } from "./project-color-swatches";
 
 type ProjectIconPickerProps = {
   value: string | null;
   onChange: (icon: ProjectIconName | null) => void;
+  color: string | null;
+  onColorChange: (color: ColumnColor | null) => void;
   disabled?: boolean;
   /** Shown on the trigger when there is no icon: the first letter of the key. */
   fallbackLetter: string;
@@ -47,6 +55,8 @@ function moveFocus(event: React.KeyboardEvent<HTMLDivElement>) {
 export function ProjectIconPicker({
   value,
   onChange,
+  color,
+  onColorChange,
   disabled,
   fallbackLetter,
 }: ProjectIconPickerProps) {
@@ -75,7 +85,10 @@ export function ProjectIconPicker({
       <PopoverTrigger
         disabled={disabled}
         aria-label={t("icon.label")}
-        className="grid size-8.5 shrink-0 place-items-center rounded-lg border bg-background text-sm font-semibold text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60"
+        className={cn(
+          "grid size-8.5 shrink-0 place-items-center rounded-lg border bg-control text-sm font-semibold text-foreground outline-none transition-colors hover:bg-control-hover focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60",
+          projectColorClass(color),
+        )}
       >
         {Selected ? (
           <Selected aria-hidden="true" className="size-4" />
@@ -136,6 +149,7 @@ export function ProjectIconPicker({
             })}
           </div>
         )}
+        <ProjectColorSwatches value={color} onChange={onColorChange} />
       </PopoverPopup>
     </Popover>
   );

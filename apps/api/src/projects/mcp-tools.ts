@@ -14,6 +14,7 @@ export const projectsMcpTools = [
         name: project.name,
         description: project.description,
         icon: project.icon,
+        color: project.color,
         archivedAt: project.archivedAt,
         columns: project.columns.map(({ id, name, category, color }) => ({
           id,

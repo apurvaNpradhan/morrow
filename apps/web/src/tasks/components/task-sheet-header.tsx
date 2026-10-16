@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/design-system/ui/button";
+import { ProjectIcon } from "@/projects";
 import {
   Menu,
   MenuItem,
@@ -40,6 +41,10 @@ export function TaskSheetHeader({ task }: { task: TaskRow }) {
   return (
     <div className="flex items-center gap-1 border-b px-4 py-2 pe-14">
       <SheetTitle className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-normal">
+        <ProjectIcon
+          project={project}
+          className="size-3.5 shrink-0 text-muted-foreground"
+        />
         <span className="truncate text-muted-foreground">{project.name}</span>
         <span aria-hidden="true" className="text-muted-foreground">
           ›

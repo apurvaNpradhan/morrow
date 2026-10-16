@@ -107,7 +107,7 @@ describe("shape proxy", () => {
 
     expect(upstream.searchParams.get("table")).toBe("project");
     expect(upstream.searchParams.get("columns")).toBe(
-      "id,workspace_id,key,name,description,icon,background_url,archived_at,last_task_number,position,created_at,updated_at",
+      "id,workspace_id,key,name,description,icon,color,background_url,archived_at,last_task_number,position,created_at,updated_at",
     );
     expect(upstream.searchParams.get("where")).toBe(
       "workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",

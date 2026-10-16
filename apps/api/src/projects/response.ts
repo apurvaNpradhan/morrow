@@ -38,6 +38,7 @@ export const projectWithColumnsSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   icon: z.string().nullable(),
+  color: z.enum(COLUMN_COLORS).nullable(),
   backgroundUrl: z.string().nullable(),
   archivedAt: z.date().nullable(),
   lastTaskNumber: z.number(),
