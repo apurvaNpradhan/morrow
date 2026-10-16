@@ -26,7 +26,7 @@ export function FieldChipMenu({
         disabled={disabled}
         aria-label={label}
         data-sheet-field={sheetField}
-        className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border bg-background px-2 text-xs outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-64"
+        className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border bg-accent/60 px-2 text-xs outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-64"
       >
         {icon}
         <span className="max-w-40 truncate">{value}</span>
