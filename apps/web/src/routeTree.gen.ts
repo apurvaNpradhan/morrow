@@ -47,6 +47,7 @@ import { Route as LayoutAuthenticatedSlugSettingsAdminUsersRouteImport } from '.
 import { Route as LayoutAuthenticatedSlugSettingsAdminWorkspacesRouteImport } from './routes/_layout/_authenticated/$slug/settings/admin/workspaces'
 import { Route as LayoutAuthenticatedSlugSettingsProjectsIndexRouteImport } from './routes/_layout/_authenticated/$slug/settings/projects/index'
 import { Route as LayoutAuthenticatedSlugSettingsWorkspaceGeneralRouteImport } from './routes/_layout/_authenticated/$slug/settings/workspace/general'
+import { Route as LayoutAuthenticatedSlugSettingsWorkspaceLabelsRouteImport } from './routes/_layout/_authenticated/$slug/settings/workspace/labels'
 import { Route as LayoutAuthenticatedSlugSettingsWorkspaceMembersRouteImport } from './routes/_layout/_authenticated/$slug/settings/workspace/members'
 import { Route as LayoutAuthenticatedSlugSettingsWorkspaceRolesRouteImport } from './routes/_layout/_authenticated/$slug/settings/workspace/roles'
 import { Route as LayoutAuthenticatedSlugSettingsProjectsKeyIndexRouteImport } from './routes/_layout/_authenticated/$slug/settings/projects/$key/index'
@@ -267,6 +268,12 @@ const LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute =
     path: '/general',
     getParentRoute: () => LayoutAuthenticatedSlugSettingsWorkspaceRoute,
   } as any)
+const LayoutAuthenticatedSlugSettingsWorkspaceLabelsRoute =
+  LayoutAuthenticatedSlugSettingsWorkspaceLabelsRouteImport.update({
+    id: '/labels',
+    path: '/labels',
+    getParentRoute: () => LayoutAuthenticatedSlugSettingsWorkspaceRoute,
+  } as any)
 const LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute =
   LayoutAuthenticatedSlugSettingsWorkspaceMembersRouteImport.update({
     id: '/members',
@@ -333,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/$slug/settings/admin/users': typeof LayoutAuthenticatedSlugSettingsAdminUsersRoute
   '/$slug/settings/admin/workspaces': typeof LayoutAuthenticatedSlugSettingsAdminWorkspacesRoute
   '/$slug/settings/workspace/general': typeof LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute
+  '/$slug/settings/workspace/labels': typeof LayoutAuthenticatedSlugSettingsWorkspaceLabelsRoute
   '/$slug/settings/workspace/members': typeof LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute
   '/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
   '/$slug/projects/$key/': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
@@ -372,6 +380,7 @@ export interface FileRoutesByTo {
   '/$slug/settings/admin/users': typeof LayoutAuthenticatedSlugSettingsAdminUsersRoute
   '/$slug/settings/admin/workspaces': typeof LayoutAuthenticatedSlugSettingsAdminWorkspacesRoute
   '/$slug/settings/workspace/general': typeof LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute
+  '/$slug/settings/workspace/labels': typeof LayoutAuthenticatedSlugSettingsWorkspaceLabelsRoute
   '/$slug/settings/workspace/members': typeof LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute
   '/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
   '/$slug/projects/$key': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
@@ -418,6 +427,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/$slug/settings/admin/users': typeof LayoutAuthenticatedSlugSettingsAdminUsersRoute
   '/_layout/_authenticated/$slug/settings/admin/workspaces': typeof LayoutAuthenticatedSlugSettingsAdminWorkspacesRoute
   '/_layout/_authenticated/$slug/settings/workspace/general': typeof LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute
+  '/_layout/_authenticated/$slug/settings/workspace/labels': typeof LayoutAuthenticatedSlugSettingsWorkspaceLabelsRoute
   '/_layout/_authenticated/$slug/settings/workspace/members': typeof LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute
   '/_layout/_authenticated/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
   '/_layout/_authenticated/$slug/projects/$key/': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
@@ -463,6 +473,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/admin/users'
     | '/$slug/settings/admin/workspaces'
     | '/$slug/settings/workspace/general'
+    | '/$slug/settings/workspace/labels'
     | '/$slug/settings/workspace/members'
     | '/$slug/settings/workspace/roles'
     | '/$slug/projects/$key/'
@@ -502,6 +513,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/admin/users'
     | '/$slug/settings/admin/workspaces'
     | '/$slug/settings/workspace/general'
+    | '/$slug/settings/workspace/labels'
     | '/$slug/settings/workspace/members'
     | '/$slug/settings/workspace/roles'
     | '/$slug/projects/$key'
@@ -547,6 +559,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/$slug/settings/admin/users'
     | '/_layout/_authenticated/$slug/settings/admin/workspaces'
     | '/_layout/_authenticated/$slug/settings/workspace/general'
+    | '/_layout/_authenticated/$slug/settings/workspace/labels'
     | '/_layout/_authenticated/$slug/settings/workspace/members'
     | '/_layout/_authenticated/$slug/settings/workspace/roles'
     | '/_layout/_authenticated/$slug/projects/$key/'
@@ -834,6 +847,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceGeneralRouteImport
       parentRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceRoute
     }
+    '/_layout/_authenticated/$slug/settings/workspace/labels': {
+      id: '/_layout/_authenticated/$slug/settings/workspace/labels'
+      path: '/labels'
+      fullPath: '/$slug/settings/workspace/labels'
+      preLoaderRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceLabelsRouteImport
+      parentRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceRoute
+    }
     '/_layout/_authenticated/$slug/settings/workspace/members': {
       id: '/_layout/_authenticated/$slug/settings/workspace/members'
       path: '/members'
@@ -934,6 +954,7 @@ const LayoutAuthenticatedSlugSettingsProjectsRouteWithChildren =
 
 interface LayoutAuthenticatedSlugSettingsWorkspaceRouteChildren {
   LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute
+  LayoutAuthenticatedSlugSettingsWorkspaceLabelsRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceLabelsRoute
   LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute
   LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute: typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
 }
@@ -942,6 +963,8 @@ const LayoutAuthenticatedSlugSettingsWorkspaceRouteChildren: LayoutAuthenticated
   {
     LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute:
       LayoutAuthenticatedSlugSettingsWorkspaceGeneralRoute,
+    LayoutAuthenticatedSlugSettingsWorkspaceLabelsRoute:
+      LayoutAuthenticatedSlugSettingsWorkspaceLabelsRoute,
     LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute:
       LayoutAuthenticatedSlugSettingsWorkspaceMembersRoute,
     LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute:

@@ -1,6 +1,11 @@
 import { useSyncExternalStore } from "react";
 
-export type PickerField = "column" | "priority" | "assignee" | "dueDate";
+export type PickerField =
+  | "column"
+  | "priority"
+  | "assignee"
+  | "dueDate"
+  | "labels";
 
 /** The field picker that is open: which task, which field, and what it hangs from. */
 type OpenPicker = { taskId: string; field: PickerField; anchor: Element };

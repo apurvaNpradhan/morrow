@@ -1,5 +1,6 @@
 import { isClosedCategory, type TaskRow } from "@morrow/sync-schemas";
 import { CalendarDays } from "lucide-react";
+import { LabelChips, labelsOfTask } from "@/labels";
 import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
@@ -36,6 +37,7 @@ export function TaskListRow({
   const {
     project,
     columnById,
+    labelById,
     statusFractions,
     personById,
     display,
@@ -43,6 +45,7 @@ export function TaskListRow({
     frozen,
     today,
   } = view;
+  const labels = labelsOfTask(task.labelIds, labelById);
   const column = columnById.get(task.columnId);
   const closed = column ? isClosedCategory(column.category) : false;
   const assignee = task.assigneeId
@@ -109,6 +112,11 @@ export function TaskListRow({
           </span>
         ) : null}
       </span>
+      {labels.length > 0 ? (
+        <span className="hidden shrink-0 items-center gap-1 sm:flex">
+          <LabelChips labels={labels} max={2} />
+        </span>
+      ) : null}
       {display.dueDates && task.dueDate && !closed ? (
         <TaskChip
           label={t("fields.dueDate")}

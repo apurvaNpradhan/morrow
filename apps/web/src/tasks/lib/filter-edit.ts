@@ -61,3 +61,10 @@ export function removeFilter(
 ): TaskFilter[] {
   return filters.filter((filter) => filter.subject !== subject);
 }
+
+/** The two operators that fit a filter's value count: include or exclude. */
+export function operatorChoices(
+  valueCount: number,
+): [FilterOperator, FilterOperator] {
+  return [operatorFor(false, valueCount), operatorFor(true, valueCount)];
+}

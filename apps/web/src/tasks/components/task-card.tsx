@@ -1,5 +1,6 @@
 import { isClosedCategory, type TaskRow } from "@morrow/sync-schemas";
 import { CalendarDays, ListChecks } from "lucide-react";
+import { LabelChips, labelsOfTask } from "@/labels";
 import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
@@ -32,7 +33,17 @@ export function TaskCard({
 }) {
   const { t } = useTranslation("tasks");
   const view = useTaskView();
-  const { project, columnById, personById, display, can, frozen, today } = view;
+  const {
+    project,
+    columnById,
+    labelById,
+    personById,
+    display,
+    can,
+    frozen,
+    today,
+  } = view;
+  const labels = labelsOfTask(task.labelIds, labelById);
   const column = columnById.get(task.columnId);
   const closed = column ? isClosedCategory(column.category) : false;
   const assignee = task.assigneeId
@@ -90,6 +101,11 @@ export function TaskCard({
         </div>
       ) : null}
       <p className="line-clamp-3 break-words text-sm">{task.title}</p>
+      {labels.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1">
+          <LabelChips labels={labels} max={3} />
+        </div>
+      ) : null}
       {showChips ? (
         <div className="flex flex-wrap items-center gap-1.5">
           {showPriority ? (

@@ -1,4 +1,5 @@
 import type {
+  LabelRow,
   ProjectColumnRow,
   ProjectRow,
   TaskRow,
@@ -21,6 +22,8 @@ export type TaskPermissions = {
   edit: boolean;
   delete: boolean;
   assign: boolean;
+  /** Create a Workspace label from the picker. */
+  createLabel: boolean;
 };
 
 /**
@@ -34,6 +37,9 @@ export type TaskViewValue = {
   columnById: Map<string, ProjectColumnRow>;
   /** How full each `started` Column's status icon is. */
   statusFractions: ReadonlyMap<string, number>;
+  /** The Workspace's labels in order, and by id. */
+  labels: LabelRow[];
+  labelById: Map<string, LabelRow>;
   people: Person[];
   personById: Map<string, Person>;
   meId: string;

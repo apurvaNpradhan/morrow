@@ -86,3 +86,12 @@ export function useTaskDescription(taskId: string) {
   });
   return data[0]?.description;
 }
+
+/** One task by id, live; undefined while it loads or when there is none. */
+export function useTask(taskId: string) {
+  const { data } = useLiveQuery({
+    query: (q) =>
+      q.from({ task: taskCollection }).where(({ task }) => eq(task.id, taskId)),
+  });
+  return data?.[0];
+}

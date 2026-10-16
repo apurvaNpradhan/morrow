@@ -9,6 +9,7 @@ export const FILTER_SUBJECTS = [
   "priority",
   "dueDate",
   "column",
+  "label",
 ] as const;
 export type FilterSubject = (typeof FILTER_SUBJECTS)[number];
 

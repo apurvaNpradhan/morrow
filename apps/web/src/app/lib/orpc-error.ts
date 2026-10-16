@@ -43,6 +43,10 @@ const DOMAIN_KEYS = new Map(
     FORBIDDEN_ASSIGN: "common:errors.taskForbiddenAssign",
     IMPORT_TOO_LARGE: "common:errors.taskImportTooLarge",
     IMPORT_INVALID: "common:errors.taskImportInvalid",
+    INVALID_LABEL_ID: "common:errors.labelInvalidId",
+    LABEL_ID_TAKEN: "common:errors.labelIdTaken",
+    LABEL_NAME_TAKEN: "common:errors.labelNameTaken",
+    LABEL_LIMIT_REACHED: "common:errors.labelLimitReached",
   } satisfies Record<string, string>),
 );
 

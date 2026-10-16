@@ -5,6 +5,7 @@ import {
   Settings,
   Shield,
   SlidersHorizontal,
+  Tag,
   User,
   Users,
 } from "lucide-react";
@@ -78,6 +79,12 @@ export function buildSettingsNav({
           label: t("settings:workspaceRoles.title"),
           to: workspaceUrl(slug, "/settings/workspace/roles"),
           icon: Shield,
+        },
+        {
+          id: "workspace-labels",
+          label: t("labels:settings.title"),
+          to: workspaceUrl(slug, "/settings/workspace/labels"),
+          icon: Tag,
         },
       ],
     },

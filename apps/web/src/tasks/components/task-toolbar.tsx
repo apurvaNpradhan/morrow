@@ -6,8 +6,9 @@ import { Input } from "@/design-system/ui/input";
 import type { TaskFilter } from "../lib/filters";
 import type { useTaskViewPreferences } from "../lib/use-task-view-preferences";
 import { DisplayMenu } from "./display-menu";
-import { FilterChips } from "./filter-chips";
-import { FilterMenu } from "./filter-menu";
+import { FilterAddPopover } from "./filter-add-popover";
+import { FilterBar } from "./filter-bar";
+import { useFilterBar } from "./use-filter-bar";
 
 type Preferences = ReturnType<typeof useTaskViewPreferences>;
 
@@ -45,6 +46,10 @@ export function TaskToolbar({
   hasBackground: boolean;
 }) {
   const { t } = useTranslation("tasks");
+  const bar = useFilterBar({
+    filters,
+    onChange: onFiltersChange,
+  });
   return (
     <div className="border-b">
       <div className="flex flex-wrap items-center gap-2 px-4 py-2">
@@ -90,11 +95,11 @@ export function TaskToolbar({
             </Button>
           ) : null}
         </div>
-        <FilterMenu
-          filters={filters}
-          onChange={onFiltersChange}
+        <FilterAddPopover
           open={filterOpen}
           onOpenChange={onFilterOpenChange}
+          filters={filters}
+          onToggleValue={bar.toggleValue}
           includeColumn={preferences.layout === "list"}
         />
         <DisplayMenu
@@ -104,7 +109,7 @@ export function TaskToolbar({
           onOpenChange={onDisplayOpenChange}
         />
       </div>
-      <FilterChips filters={filters} onChange={onFiltersChange} />
+      <FilterBar onChange={onFiltersChange} bar={bar} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { Menu, MenuPopup } from "@/design-system/ui/menu";
+import { Popover, PopoverPopup } from "@/design-system/ui/popover";
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
 import { openDatePicker } from "../lib/date-picker-store";
@@ -12,6 +13,7 @@ import {
   DueDateItems,
   PriorityItems,
 } from "./task-field-items";
+import { TaskLabelPicker } from "./task-label-picker";
 import { useTaskView } from "./task-view-context";
 
 /**
@@ -32,6 +34,29 @@ export function TaskFieldPicker() {
     requestAnimationFrame(() => {
       if (anchor instanceof HTMLElement && anchor.isConnected) anchor.focus();
     });
+  }
+
+  if (picker?.field === "labels" && task) {
+    return (
+      <Popover
+        open
+        onOpenChange={(open) => {
+          if (!open) {
+            const anchor = picker.anchor;
+            closeFieldPicker();
+            requestAnimationFrame(() => {
+              if (anchor instanceof HTMLElement && anchor.isConnected) {
+                anchor.focus();
+              }
+            });
+          }
+        }}
+      >
+        <PopoverPopup anchor={picker.anchor}>
+          <TaskLabelPicker taskId={task.id} />
+        </PopoverPopup>
+      </Popover>
+    );
   }
 
   return (

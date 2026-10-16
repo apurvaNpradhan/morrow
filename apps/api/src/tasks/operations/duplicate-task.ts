@@ -23,7 +23,7 @@ const COPY_SUFFIX = " (copy)";
 
 /**
  * Copies a task into the same column under a new id, at a position the client
- * chose. The copy keeps the description, priority and due date. It keeps the
+ * chose. The copy keeps the description, priority, due date and labels. It keeps the
  * assignee only when the actor could assign them; otherwise it is unassigned
  * rather than refused.
  */
@@ -67,6 +67,7 @@ export async function duplicateTask(
           priority: source.priority,
           assigneeId,
           dueDate: source.dueDate,
+          labelIds: source.labelIds,
           position: await freePosition(tx, source.columnId, copy.position),
           completedAt: isClosedCategory(column.category) ? new Date() : null,
           createdBy: actor.userId,

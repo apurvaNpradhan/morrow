@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
+  operatorChoices,
   removeFilter,
   setFilterNegated,
   toggleFilterValue,
@@ -60,5 +61,13 @@ describe("toggleFilterValue", () => {
     expect(removeFilter(filters, "priority")).toEqual([
       { subject: "assignee", operator: "is", values: ["me"] },
     ]);
+  });
+});
+
+describe("operatorChoices", () => {
+  it("offers the single-value pair for one value or none and the set pair for several", () => {
+    expect(operatorChoices(0)).toEqual(["is", "isNot"]);
+    expect(operatorChoices(1)).toEqual(["is", "isNot"]);
+    expect(operatorChoices(3)).toEqual(["isAnyOf", "isNoneOf"]);
   });
 });

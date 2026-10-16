@@ -11,6 +11,7 @@ function task(overrides: Partial<Parameters<typeof matchesFilters>[0]> = {}) {
     dueDate: null,
     columnId: "todo",
     completedAt: null,
+    labelIds: [] as string[],
     ...overrides,
   };
 }
@@ -125,5 +126,64 @@ describe("matchesFilters", () => {
     expect(
       matchesFilters(task(), [filter("column", "isNot", "todo")], context),
     ).toBe(false);
+  });
+});
+
+describe("label filters", () => {
+  const bug = task({ labelIds: ["bug", "design"] });
+  const plain = task();
+
+  it("has any of the chosen labels for is and is any of", () => {
+    expect(matchesFilters(bug, [filter("label", "is", "bug")], context)).toBe(
+      true,
+    );
+    expect(
+      matchesFilters(
+        bug,
+        [filter("label", "isAnyOf", "ops", "design")],
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      matchesFilters(bug, [filter("label", "isAnyOf", "ops", "docs")], context),
+    ).toBe(false);
+    expect(matchesFilters(plain, [filter("label", "is", "bug")], context)).toBe(
+      false,
+    );
+  });
+
+  it("has none of the chosen labels for is not and is none of", () => {
+    expect(
+      matchesFilters(bug, [filter("label", "isNot", "bug")], context),
+    ).toBe(false);
+    expect(
+      matchesFilters(
+        bug,
+        [filter("label", "isNoneOf", "ops", "design")],
+        context,
+      ),
+    ).toBe(false);
+    expect(
+      matchesFilters(
+        bug,
+        [filter("label", "isNoneOf", "ops", "docs")],
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      matchesFilters(plain, [filter("label", "isNot", "bug")], context),
+    ).toBe(true);
+  });
+
+  it("combines with other subjects", () => {
+    const urgentBug = task({ labelIds: ["bug"], priority: "urgent" });
+    const filters = [
+      filter("label", "is", "bug"),
+      filter("priority", "is", "urgent"),
+    ];
+    expect(matchesFilters(urgentBug, filters, context)).toBe(true);
+    expect(matchesFilters(task({ labelIds: ["bug"] }), filters, context)).toBe(
+      false,
+    );
   });
 });

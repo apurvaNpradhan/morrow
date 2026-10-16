@@ -17,6 +17,9 @@ Morrow is a personal workspace platform run as a single instance (the owner's Do
 - **Priority** — `none`, `low`, `medium`, `high` or `urgent`.
 - **Completed task** — a Task in a `done` or `canceled` Column, stamped with when it got there (`completedAt`); leaving the Column clears it.
 - **Archived task** — a Task taken off the board and list but kept in its Column and position, so unarchiving puts it back. Still editable.
+- **Label** — a name and a colour that belongs to a Workspace, ordered by a fractional-index position, and put on any number of its Tasks (at most 20 per Task). Renaming or recolouring it changes every Task at once; deleting it removes it from all of them. Names are unique per Workspace ignoring case.
+- **Comment** — a markdown message on a Task, up to 10,000 characters. Every Member may write one, Viewers included. Only its author edits it; its author or an Admin deletes it. Stays, as "Deleted user", when its author's account goes.
+- **Task history** — the record of user-made changes to a Task: created, title, Column move, Priority, Assignee, due date, labels, archive and description edits. Repeated edits by one person within 10 minutes fold into one entry; an edit undone within that window leaves none. Changes the system makes (a Column deleted, a label deleted, a member removed) are not recorded.
 - **Admin** — a user whose verified session email is in `ADMIN_EMAILS`. Not stored in the database. Admins are exempt from the workspace limit and reach other workspaces through the administration pages, not the workspace URL.
 - **Registration** — sign-up by email OTP, Google or GitHub. Closed by `REGISTRATION_OPEN=false`.
 - **Vertical** — a folder named by what its code does, with the same name in API and web (`workspace`, `members`, …). It has one public `index.ts`; other verticals import only that.

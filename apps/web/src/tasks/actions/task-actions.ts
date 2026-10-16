@@ -64,6 +64,7 @@ export async function createTask(input: NewTask): Promise<TaskRow> {
       priority: input.priority ?? "none",
       assigneeId: input.assigneeId ?? null,
       dueDate: input.dueDate ?? null,
+      labelIds: [],
       position: await endOfColumn(input.column.id),
       completedAt: isClosedCategory(input.column.category) ? now : null,
       archivedAt: null,
@@ -86,6 +87,7 @@ type TaskPatch = Partial<
     | "priority"
     | "assigneeId"
     | "dueDate"
+    | "labelIds"
     | "columnId"
     | "position"
     | "completedAt"

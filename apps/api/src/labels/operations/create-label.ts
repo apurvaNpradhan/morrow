@@ -16,7 +16,7 @@ export type NewLabel = {
  * the browser so the label can appear before the server answers.
  */
 export async function createLabel(workspaceId: string, input: NewLabel) {
-  if (!LABEL_ID_PATTERN.test(input.id)) throw labelError("INVALID_ID");
+  if (!LABEL_ID_PATTERN.test(input.id)) throw labelError("INVALID_LABEL_ID");
   assertValidPosition(input.position);
   try {
     const { txid } = await withTxid(async (tx) => {

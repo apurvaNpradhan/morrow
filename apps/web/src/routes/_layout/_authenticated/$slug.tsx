@@ -10,6 +10,7 @@ import {
   workspaceInvitationCollection,
   workspaceMemberUserCollection,
 } from "@/members";
+import { labelCollection } from "@/labels";
 import { projectCollection, projectColumnCollection } from "@/projects";
 import { PageTitle } from "@/design-system/page-title";
 import { useCanonicalWorkspaceUrl } from "@/workspace";
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
     }
     return { workspace };
   },
-  // Members, invitations and projects sync before the page renders, so pages
+  // Members, invitations, projects and labels sync before the page renders, so pages
   // read them without waiting. Hovering a link preloads this too, which starts the sync
   // early. (Workspaces and my own members come from the layout above.)
   loader: async () => {
@@ -57,6 +58,7 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
       workspaceInvitationCollection.preload(),
       projectCollection.preload(),
       projectColumnCollection.preload(),
+      labelCollection.preload(),
     ]);
   },
   component: WorkspaceLayout,
