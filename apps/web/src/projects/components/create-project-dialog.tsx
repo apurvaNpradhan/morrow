@@ -21,6 +21,8 @@ import { suggestProjectKey } from "../lib/suggest-project-key";
 import { useProjectsWithoutSuspense } from "../queries/use-projects";
 import { ProjectIconPicker } from "./project-icon-picker";
 
+const DEFAULT_ICON: ProjectIcon = "Folder";
+
 type CreateProjectDialogProps = {
   workspace: { id: string; slug: string };
   open: boolean;
@@ -39,7 +41,7 @@ export function CreateProjectDialog({
   );
   const [name, setName] = useState("");
   const [typedKey, setTypedKey] = useState<string | null>(null);
-  const [icon, setIcon] = useState<ProjectIcon | null>(null);
+  const [icon, setIcon] = useState<ProjectIcon | null>(DEFAULT_ICON);
   const [submitting, setSubmitting] = useState(false);
 
   // The key follows the name until the user types their own.
@@ -51,7 +53,7 @@ export function CreateProjectDialog({
   function reset() {
     setName("");
     setTypedKey(null);
-    setIcon(null);
+    setIcon(DEFAULT_ICON);
     setSubmitting(false);
   }
 
@@ -97,14 +99,21 @@ export function CreateProjectDialog({
           <DialogPanel className="space-y-5">
             <div className="space-y-1.5">
               <Label htmlFor="project-name">{t("create.nameLabel")}</Label>
-              <Input
-                id="project-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder={t("create.namePlaceholder")}
-                maxLength={100}
-                autoFocus
-              />
+              <div className="flex items-center gap-2">
+                <ProjectIconPicker
+                  value={icon}
+                  onChange={setIcon}
+                  fallbackLetter={key.charAt(0)}
+                />
+                <Input
+                  id="project-name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder={t("create.namePlaceholder")}
+                  maxLength={100}
+                  autoFocus
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="project-key">{t("create.keyLabel")}</Label>
@@ -132,14 +141,6 @@ export function CreateProjectDialog({
                     ? t("create.keyTaken")
                     : t("create.keyHint", { key: key || "KEY" })}
               </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t("icon.label")}</Label>
-              <ProjectIconPicker
-                value={icon}
-                onChange={setIcon}
-                fallbackLetter={key.charAt(0)}
-              />
             </div>
           </DialogPanel>
           <DialogFooter>
