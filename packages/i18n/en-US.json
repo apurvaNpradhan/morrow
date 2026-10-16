@@ -1089,7 +1089,9 @@
 		},
 		"icon": {
 			"label": "Project icon",
-			"none": "Use the first letter of the key"
+			"search": "Search icons",
+			"clear": "Remove",
+			"empty": "No icons match"
 		},
 		"list": {
 			"title": "Projects",
