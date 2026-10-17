@@ -18,6 +18,14 @@ describe("recordLocation", () => {
     expect(getReturnLocation()).toEqual(board);
   });
 
+  it("leaves an open sheet out of the place", () => {
+    recordLocation({
+      pathname: "/acme/projects/MOR/board",
+      search: "?task=12&view=x",
+    });
+    expect(getReturnLocation()?.search).toBe("?view=x");
+  });
+
   it("skips a full-page task", () => {
     recordLocation(board);
     recordLocation({ pathname: "/acme/tasks/MOR-12", search: "" });

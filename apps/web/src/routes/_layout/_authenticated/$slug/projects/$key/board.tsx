@@ -26,7 +26,6 @@ function RouteComponent() {
       workspace={workspace}
       projectKey={key}
       layout="board"
-      route="board"
       ticketNumber={task ?? null}
     />
   );

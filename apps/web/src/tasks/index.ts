@@ -5,3 +5,4 @@ export { CreateTaskDialog } from "./components/create-task-dialog";
 export { useTicketLookup } from "./queries/use-ticket-lookup";
 export { openCreateTask } from "./lib/create-task-store";
 export { preloadProjectTasks } from "./lib/preload-project-tasks";
+export { preloadTicketTask } from "./lib/preload-ticket-task";

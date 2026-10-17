@@ -57,3 +57,16 @@ export function columnTasks(columnId: string) {
     ),
   );
 }
+
+/** One Project's task by ticket number: the full page's whole read. */
+export function ticketTask(projectId: string, number: number) {
+  return once(`ticket:${projectId}:${number}`, () =>
+    createLiveQueryCollection((q) =>
+      q
+        .from({ task: taskCollection })
+        .where(({ task }) =>
+          and(eq(task.projectId, projectId), eq(task.number, number)),
+        ),
+    ),
+  );
+}

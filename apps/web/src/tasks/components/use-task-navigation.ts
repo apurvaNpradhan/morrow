@@ -1,24 +1,18 @@
 import { ticketId, type TaskRow } from "@morrow/sync-schemas";
 import { useNavigate } from "@tanstack/react-router";
 
-/** Which route is showing the page: it decides how opening and closing a task navigate. */
-export type TasksRoute = "board" | "list" | "task";
-
 /**
  * Opening a task keeps the page where it is and shows the task's own link in
  * the address bar (route masking); closing goes back to the layout without it.
- * On the task's own route, opening another task only changes the ticket.
  */
 export function useTaskNavigation({
   workspaceSlug,
   projectKey,
   layout,
-  route,
 }: {
   workspaceSlug: string;
   projectKey: string;
   layout: "board" | "list";
-  route: TasksRoute;
 }) {
   const navigate = useNavigate();
   const view = {
@@ -37,10 +31,6 @@ export function useTaskNavigation({
     openTask(task: TaskRow) {
       // A task the server has not numbered yet has no address.
       if (task.number === 0) return;
-      if (route === "task") {
-        void navigate({ ...taskRoute(task.number), replace: true });
-        return;
-      }
       void navigate({
         ...view,
         search: { task: task.number },
