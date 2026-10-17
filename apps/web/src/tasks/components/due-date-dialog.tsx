@@ -13,6 +13,10 @@ import {
 import { Input } from "@/design-system/ui/input";
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
+import { formatDate } from "@/design-system/format";
+import { parseDay } from "../lib/calendar-day";
+import { parseDateQuery } from "../lib/parse-date-query";
+import { useToday } from "../queries/use-today";
 import { closeDatePicker, useDatePickerTask } from "../lib/date-picker-store";
 
 /** A calendar field for "Pick a date", opened from any due-date menu. */
@@ -42,12 +46,15 @@ function DueDateForm({ taskId, initial }: { taskId: string; initial: string }) {
   const { t } = useTranslation("tasks");
   const actions = useTaskActions();
   const [value, setValue] = useState(initial);
+  const [query, setQuery] = useState("");
+  const today = useToday();
+  const typed = parseDateQuery(query, today);
   const valid = isCalendarDate(value);
 
-  async function save() {
+  async function save(day: string) {
     const task = taskCollection.get(taskId);
     closeDatePicker();
-    if (task) await actions.setDueDate(task, value);
+    if (task) await actions.setDueDate(task, day);
   }
 
   return (
@@ -58,14 +65,34 @@ function DueDateForm({ taskId, initial }: { taskId: string; initial: string }) {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (valid) void save();
+          if (typed) void save(typed);
+          else if (valid && !query.trim()) void save(value);
         }}
         className="contents"
       >
         <DialogPanel>
           <Input
-            type="date"
             autoFocus
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("due.typeHint")}
+            aria-label={t("due.typeHint")}
+          />
+          {typed ? (
+            <p className="mt-1.5 text-muted-foreground text-xs">
+              {t("due.typeResult", {
+                date: formatDate(parseDay(typed), {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+              })}
+            </p>
+          ) : null}
+          <Input
+            className="mt-3"
+            type="date"
             value={value}
             onChange={(event) => setValue(event.target.value)}
             aria-label={t("fields.dueDate")}
@@ -80,7 +107,11 @@ function DueDateForm({ taskId, initial }: { taskId: string; initial: string }) {
           >
             {t("common:actions.cancel")}
           </Button>
-          <Button type="submit" size="sm" disabled={!valid}>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={query.trim() ? !typed : !valid}
+          >
             {t("due.set")}
           </Button>
         </DialogFooter>
