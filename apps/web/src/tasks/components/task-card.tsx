@@ -1,7 +1,7 @@
 import { isClosedCategory, type TaskRow } from "@morrow/sync-schemas";
 import { CalendarDays, ListChecks, MessageSquare } from "lucide-react";
 import { LabelChips, labelsOfTask } from "@/labels";
-import type { Ref } from "react";
+import { type Ref, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
 import { isOverdue } from "../lib/due-date";
@@ -32,6 +32,7 @@ export function TaskCard({
   lifted?: boolean;
 }) {
   const { t } = useTranslation("tasks");
+  const [pressed, setPressed] = useState(false);
   const view = useTaskView();
   const {
     project,
@@ -72,14 +73,19 @@ export function TaskCard({
       role="button"
       tabIndex={0}
       data-task-id={task.id}
+      data-pressed={pressed && !dragging && !lifted ? "" : undefined}
       aria-label={t("card.label", { id: ticket, title: task.title })}
       className={cn(
-        "flex cursor-pointer flex-col gap-2 rounded-lg border bg-card p-2.5 text-left shadow-xs outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring",
+        "flex cursor-pointer flex-col gap-2 rounded-lg border bg-card p-2.5 text-left shadow-xs outline-none transition-colors hover:bg-accent/40 motion-safe:data-pressed:scale-[0.98] motion-safe:data-pressed:transition-transform motion-safe:data-pressed:duration-100 motion-safe:data-pressed:ease-out focus-visible:ring-2 focus-visible:ring-ring",
         closed && "opacity-60",
         dragging && "opacity-40",
         lifted && "shadow-lg ring-1 ring-ring",
       )}
       onClick={() => view.openTask(task)}
+      onPointerDown={() => setPressed(true)}
+      onPointerUp={() => setPressed(false)}
+      onPointerCancel={() => setPressed(false)}
+      onPointerLeave={() => setPressed(false)}
       onKeyDown={(event) => {
         if (event.key === "Enter" && event.target === event.currentTarget) {
           event.preventDefault();
