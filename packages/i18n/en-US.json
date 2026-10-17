@@ -1257,6 +1257,7 @@
 		"pageTitle": "Tasks",
 		"priority": {
 			"none": "No priority",
+			"set": "Set priority",
 			"low": "Low",
 			"medium": "Medium",
 			"high": "High",
@@ -1274,6 +1275,7 @@
 		},
 		"assignee": {
 			"unassigned": "Unassigned",
+			"assign": "Assign",
 			"me": "{{name}} (me)"
 		},
 		"due": {
@@ -1283,7 +1285,8 @@
 			"nextWeek": "Next week",
 			"pick": "Pick a date…",
 			"pickTitle": "Due date",
-			"typeHint": "Type a date: fri, in 3 days, nov 3",
+			"typeHint": "Try: fri, 7 days, nov 3",
+			"typeLabel": "Type a due date",
 			"typeResult": "→ {{date}}",
 			"set": "Set date",
 			"clear": "Clear",
@@ -1423,6 +1426,8 @@
 			"label": "Task",
 			"description": "Task details",
 			"properties": "Properties",
+			"details": "Details",
+			"createdBy": "Created by {{name}}",
 			"titleLabel": "Title",
 			"descriptionLabel": "Description",
 			"descriptionPlaceholder": "Add a description…",
@@ -1448,6 +1453,11 @@
 			"titlePlaceholder": "Title (optional)",
 			"invalid": "Enter an http or https address.",
 			"error": "Couldn't change the link"
+		},
+		"pager": {
+			"next": "Next task",
+			"previous": "Previous task",
+			"position": "Task {{position}} of {{total}}"
 		},
 		"link": {
 			"toolbar": "Link",
@@ -1528,6 +1538,7 @@
 		},
 		"labels": {
 			"none": "No labels",
+			"add": "Add label",
 			"create": "Create label “{{name}}”",
 			"createError": "Couldn't create the label."
 		},

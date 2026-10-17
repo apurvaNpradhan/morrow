@@ -21,8 +21,25 @@ export function publishView(next: PublishedView) {
   view = next;
 }
 
+/** The order the last board or list showed, kept for the full page that opens from it. */
+let remembered: readonly TaskRow[] = [];
+
 export function clearView() {
+  if (view.tasks.length > 0) remembered = view.tasks;
   view = NOTHING;
+}
+
+/** Where a task stands in the view on screen, or in the one just left. */
+export function placeInOrder(taskId: string) {
+  const tasks = view.tasks.length > 0 ? view.tasks : remembered;
+  const index = tasks.findIndex((task) => task.id === taskId);
+  if (index === -1) return null;
+  return {
+    position: index + 1,
+    total: tasks.length,
+    previous: tasks[index - 1],
+    next: tasks[index + 1],
+  };
 }
 
 export function currentView() {
