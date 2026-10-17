@@ -1,13 +1,10 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useCallback } from "react";
-import {
-  getReturnLocation,
-  usableReturnLocation,
-} from "@/app/navigation/return-location";
-import { projectCollection } from "@/projects";
+import { useGoBack } from "@/app/navigation/use-go-back";
 import { useActiveWorkspace } from "@/workspace";
 
-// Goes back to the page before Settings, or Home. Returns undefined until there is a workspace to go back to.
+// Goes back to the page before Settings, or Home. Returns undefined until
+// there is a workspace to go back to.
 export function useLeaveSettings() {
   const navigate = useNavigate();
   const slug = useParams({
@@ -15,18 +12,11 @@ export function useLeaveSettings() {
     select: (p) => p.slug,
   });
   const { data: workspace } = useActiveWorkspace();
-  const canLeave = Boolean(workspace);
+  const goBack = useGoBack({ id: workspace?.id ?? "", slug });
 
   const leave = useCallback(() => {
-    const projectKeys = new Set(
-      projectCollection.toArray
-        .filter((project) => project.workspaceId === workspace?.id)
-        .map((project) => project.key),
-    );
-    const target = usableReturnLocation(getReturnLocation(), slug, projectKeys);
-    if (target) navigate({ href: target.pathname + target.search });
-    else navigate({ to: "/$slug", params: { slug } });
-  }, [navigate, slug, workspace?.id]);
+    goBack(() => void navigate({ to: "/$slug", params: { slug } }));
+  }, [goBack, navigate, slug]);
 
-  return canLeave ? leave : undefined;
+  return workspace ? leave : undefined;
 }

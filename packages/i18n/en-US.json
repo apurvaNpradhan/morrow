@@ -804,6 +804,7 @@
 				"create": "Create",
 				"view": "View",
 				"account": "Account",
+				"task": "Task",
 				"projects": "Projects",
 				"workspaces": "Workspaces",
 				"tasks": "Tasks"
@@ -849,7 +850,8 @@
 			"assignTaskToMe": "Assign to me",
 			"setTaskDueDate": "Set due date",
 			"deleteTask": "Delete task",
-			"setTaskLabels": "Set labels"
+			"setTaskLabels": "Set labels",
+			"copyTaskBranch": "Copy branch name"
 		},
 		"sidebar": {
 			"home": "Home"
@@ -1316,6 +1318,7 @@
 		},
 		"menu": {
 			"copyLink": "Copy link",
+			"openFullPage": "Open in full page",
 			"duplicate": "Duplicate",
 			"archive": "Archive",
 			"unarchive": "Unarchive",
@@ -1435,7 +1438,18 @@
 		},
 		"copy": {
 			"done": "Copied",
-			"failed": "Couldn't copy"
+			"failed": "Couldn't copy",
+			"group": "Copy",
+			"branch": "Copy branch name",
+			"id": "Copy ID",
+			"title": "Copy title",
+			"link": "Copy link",
+			"markdown": "Copy as Markdown",
+			"branchDone": "Branch name copied",
+			"idDone": "ID copied",
+			"titleDone": "Title copied",
+			"linkDone": "Link copied",
+			"markdownDone": "Markdown copied"
 		},
 		"delete": {
 			"title": "Delete {{id}}?",

@@ -21,9 +21,15 @@ export function isReturnable(pathname: string) {
 
 /** Records each resolved location that is a place to come back to. */
 export function recordLocation(location: ReturnLocation) {
-  if (isReturnable(location.pathname)) {
-    setReturnLocation({ pathname: location.pathname, search: location.search });
-  }
+  if (!isReturnable(location.pathname)) return;
+  // An open sheet is not part of the place: leaving brings back the page alone.
+  const search = new URLSearchParams(location.search);
+  search.delete("task");
+  const rest = search.toString();
+  setReturnLocation({
+    pathname: location.pathname,
+    search: rest ? `?${rest}` : "",
+  });
 }
 
 /**

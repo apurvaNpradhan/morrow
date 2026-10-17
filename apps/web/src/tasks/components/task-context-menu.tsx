@@ -4,7 +4,6 @@ import {
   ArchiveRestore,
   CalendarDays,
   Copy,
-  Link2,
   Trash2,
   UserRound,
 } from "lucide-react";
@@ -25,7 +24,6 @@ import {
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
 import { openDatePicker } from "../lib/date-picker-store";
-import { taskUrl } from "../lib/task-links";
 import { requestDeleteTask } from "./delete-task-dialog";
 import { ColumnMarker } from "./column-marker";
 import {
@@ -34,11 +32,12 @@ import {
   DueDateItems,
   PriorityItems,
 } from "./task-field-items";
+import { TaskCopyItems } from "./task-copy-items";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { useTaskView } from "./task-view-context";
 
 /**
- * Right-click on a card or row: copy its link, change any field, duplicate,
+ * Right-click on a card or row: copy it, change any field, duplicate,
  * archive or delete. One menu serves the whole board or list: it opens for
  * whichever task was clicked, so no card or row carries a menu of its own, and
  * it stays open when its task scrolls out of view. Items follow what the user
@@ -75,31 +74,23 @@ export function TaskContextMenu({ children }: { children: ReactNode }) {
 
 function TaskMenuItems({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
-  const {
-    workspace,
-    project,
-    columns,
-    columnById,
-    people,
-    meId,
-    today,
-    can,
-    frozen,
-  } = useTaskView();
+  const { columns, columnById, people, meId, today, can, frozen } =
+    useTaskView();
   const actions = useTaskActions();
   const column = columnById.get(task.columnId);
   const editable = can.edit && !frozen;
 
   return (
     <>
-      <MenuItem
-        onClick={() =>
-          void actions.copy(taskUrl(workspace.slug, project.key, task.number))
-        }
-      >
-        <Link2 aria-hidden="true" />
-        {t("menu.copyLink")}
-      </MenuItem>
+      <MenuSub>
+        <MenuSubTrigger>
+          <Copy aria-hidden="true" />
+          {t("copy.group")}
+        </MenuSubTrigger>
+        <MenuSubPopup>
+          <TaskCopyItems task={task} />
+        </MenuSubPopup>
+      </MenuSub>
       {editable ? (
         <>
           <MenuSeparator />

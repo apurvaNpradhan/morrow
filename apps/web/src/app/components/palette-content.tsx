@@ -36,7 +36,13 @@ type PaletteItem = {
 
 type PaletteGroup = { value: string; label: string; items: PaletteItem[] };
 
-const COMMAND_GROUPS = ["navigate", "create", "view", "account"] as const;
+const COMMAND_GROUPS = [
+  "task",
+  "navigate",
+  "create",
+  "view",
+  "account",
+] as const;
 
 /** The palette's search box and list. Mounted only while the palette is open. */
 export function PaletteContent({ commands }: { commands: AppCommand[] }) {

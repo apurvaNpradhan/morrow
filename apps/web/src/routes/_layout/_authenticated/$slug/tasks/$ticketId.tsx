@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { parseTicketId } from "@morrow/sync-schemas";
-import { preloadProjectTasks, TaskTicketPage } from "@/tasks";
+import { preloadTicketTask, TaskTicketPage } from "@/tasks";
 
 export const Route = createFileRoute(
   "/_layout/_authenticated/$slug/tasks/$ticketId",
@@ -9,9 +9,11 @@ export const Route = createFileRoute(
     const ticket = parseTicketId(params.ticketId);
     if (!ticket) return;
     // Not awaited: the page renders its frame and a skeleton while the tasks load.
-    void preloadProjectTasks(context.workspace.id, ticket.key).catch(
-      () => undefined,
-    );
+    void preloadTicketTask(
+      context.workspace.id,
+      ticket.key,
+      ticket.number,
+    ).catch(() => undefined);
   },
   component: RouteComponent,
 });

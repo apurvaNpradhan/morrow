@@ -27,8 +27,11 @@ function unlessModal(run: () => void) {
 const sequenceEvents = new WeakSet<KeyboardEvent>();
 
 /** Binds the palette toggle and every available command's hotkey. Renders nothing. */
-export function CommandHotkeys({ commands }: { commands: Command[] }) {
+export function CommandHotkeys({ commands: all }: { commands: Command[] }) {
   const hotkeys = useAppHotkeys();
+  // Task commands show their key but are bound by the task page, which also
+  // acts while a task's sheet is open.
+  const commands = all.filter((command) => command.group !== "task");
 
   // "P C" ends on the key "C" binds alone, so both would fire on one press.
   // The library runs chords before sequences, so such a key waits a microtask

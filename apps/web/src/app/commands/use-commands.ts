@@ -6,11 +6,12 @@ import { openCreateTask } from "@/tasks";
 import { setTheme } from "@/app/preferences/set-theme";
 import { useSignOut } from "@/auth";
 import { useActiveWorkspace, useWorkspacePermission } from "@/workspace";
+import { useContributedCommands } from "./contributed-commands";
 import type { HotkeyId } from "./hotkeys";
 import { openOverlay, useHasOverlayHost } from "./overlay-store";
 import { useSidebarToggle } from "./sidebar-toggle";
 
-export type CommandGroup = "navigate" | "create" | "view" | "account";
+export type CommandGroup = "navigate" | "create" | "view" | "account" | "task";
 
 export type Command = {
   id: string;
@@ -31,6 +32,7 @@ export function useCommands(): Command[] {
   const { mutate: signOut } = useSignOut();
   const toggleSidebar = useSidebarToggle();
   const hasSwitcher = useHasOverlayHost("workspaceSwitcher");
+  const contributed = useContributedCommands();
 
   const slug = workspace?.slug;
   const canCreateProjects = permission.canCreateProjects();
@@ -158,10 +160,13 @@ export function useCommands(): Command[] {
       { id: "signOut", group: "account", run: () => signOut() },
     );
 
-    return entries.map((entry) => ({
-      ...entry,
-      label: t(`navigation:commands.${entry.id}`),
-    }));
+    return [
+      ...entries.map((entry) => ({
+        ...entry,
+        label: t(`navigation:commands.${entry.id}`),
+      })),
+      ...contributed,
+    ];
   }, [
     slug,
     navigate,
@@ -173,6 +178,7 @@ export function useCommands(): Command[] {
     toggleSidebar,
     hasSwitcher,
     signOut,
+    contributed,
     t,
   ]);
 }

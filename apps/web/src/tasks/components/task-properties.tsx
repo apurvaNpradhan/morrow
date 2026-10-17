@@ -51,7 +51,7 @@ export function TaskProperties({ task }: { task: TaskRow }) {
   const creator = task.createdBy ? personById.get(task.createdBy) : undefined;
 
   return (
-    <dl className="flex flex-wrap gap-2 lg:flex-col lg:gap-4">
+    <dl className="flex flex-wrap gap-2 @min-[720px]:flex-col @min-[720px]:gap-4">
       <Field label={t("fields.column")}>
         <FieldChipMenu
           label={t("fields.column")}

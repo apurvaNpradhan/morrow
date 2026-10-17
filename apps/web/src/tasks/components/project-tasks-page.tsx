@@ -11,28 +11,18 @@ import {
   BreadcrumbLink,
   BreadcrumbSeparator,
 } from "@/design-system/ui/breadcrumb";
-import {
-  ProjectNotFound,
-  ProjectSwitcher,
-  useProjectByKey,
-  useProjectColumns,
-} from "@/projects";
-import { useLabels } from "@/labels";
+import { ProjectNotFound, ProjectSwitcher, useProjectByKey } from "@/projects";
 import { useWorkspacePermission } from "@/workspace";
 import { useTaskViewPreferences } from "../lib/use-task-view-preferences";
-import { useToday } from "../queries/use-today";
-import { useWorkspacePeople } from "../queries/use-workspace-people";
-import { statusFractions } from "../lib/status-fraction";
-import { TaskViewProvider } from "./task-view-context";
+import { ProjectTaskViewProvider } from "./project-task-view-provider";
 import { TasksSurface } from "./tasks-surface";
-import { type TasksRoute, useTaskNavigation } from "./use-task-navigation";
+import { useTaskNavigation } from "./use-task-navigation";
 import type { ProjectRow } from "@morrow/sync-schemas";
 
 type ProjectTasksPageProps = {
   workspace: { id: string; slug: string };
   projectKey: string;
   layout: "board" | "list";
-  route: TasksRoute;
   /** The ticket number open in the sheet, from the address. */
   ticketNumber: number | null;
 };
@@ -59,15 +49,10 @@ function LoadedProjectTasks({
   workspace,
   project,
   layout,
-  route,
   ticketNumber,
 }: ProjectTasksPageProps & { project: ProjectRow }) {
   const { t } = useTranslation("projects");
   const permission = useWorkspacePermission();
-  const columns = useProjectColumns(project.id);
-  const { people, byId, meId } = useWorkspacePeople(workspace.id);
-  const { labels, labelById } = useLabels(workspace.id);
-  const today = useToday();
   const preferences = useTaskViewPreferences(project.id);
   // The layout last used is the one a Project opens in next time.
   useEffect(() => {
@@ -77,7 +62,6 @@ function LoadedProjectTasks({
     workspaceSlug: workspace.slug,
     projectKey: project.key,
     layout,
-    route,
   });
 
   return (
@@ -133,33 +117,11 @@ function LoadedProjectTasks({
           </>
         }
       >
-        <TaskViewProvider
-          value={{
-            workspace,
-            project,
-            columns,
-            columnById: new Map(columns.map((column) => [column.id, column])),
-            statusFractions: statusFractions(columns),
-            labels,
-            labelById,
-            people,
-            personById: byId,
-            meId,
-            today,
-            display: preferences.display,
-            can: {
-              create: permission.canCreateTasks(),
-              edit: permission.canEditTasks(),
-              delete: permission.canDeleteTasks(),
-              assign: permission.canAssignTasks(),
-              createLabel: permission.canCreateLabels(),
-              comment: permission.canCreateComments(),
-              moderateComments: permission.canDeleteComments(),
-            },
-            frozen: project.archivedAt !== null,
-            openTask: navigation.openTask,
-            switchLayout: navigation.switchLayout,
-          }}
+        <ProjectTaskViewProvider
+          workspace={workspace}
+          project={project}
+          openTask={navigation.openTask}
+          switchLayout={navigation.switchLayout}
         >
           <div className="flex h-full min-h-0 flex-col">
             {project.archivedAt ? (
@@ -176,7 +138,7 @@ function LoadedProjectTasks({
               />
             </div>
           </div>
-        </TaskViewProvider>
+        </ProjectTaskViewProvider>
       </WorkspaceLayout>
     </>
   );
