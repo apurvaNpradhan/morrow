@@ -21,6 +21,7 @@ import {
   MenuSubPopup,
   MenuSubTrigger,
 } from "@/design-system/ui/menu";
+import { MenuHint } from "@/design-system/tooltip-label";
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
 import { openDatePicker } from "../lib/date-picker-store";
@@ -98,6 +99,7 @@ function TaskMenuItems({ task }: { task: TaskRow }) {
             <MenuSubTrigger>
               <TaskPriorityIcon priority={task.priority} />
               {t("fields.priority")}
+              <MenuHint hotkeyId="setTaskPriority" />
             </MenuSubTrigger>
             <MenuSubPopup>
               <PriorityItems
@@ -112,6 +114,7 @@ function TaskMenuItems({ task }: { task: TaskRow }) {
             <MenuSubTrigger>
               {column ? <ColumnMarker column={column} /> : null}
               {t("fields.column")}
+              <MenuHint hotkeyId="setTaskColumn" />
             </MenuSubTrigger>
             <MenuSubPopup>
               <ColumnItems
@@ -125,6 +128,7 @@ function TaskMenuItems({ task }: { task: TaskRow }) {
             <MenuSubTrigger>
               <CalendarDays aria-hidden="true" />
               {t("fields.dueDate")}
+              <MenuHint hotkeyId="setTaskDueDate" />
             </MenuSubTrigger>
             <MenuSubPopup>
               <DueDateItems
@@ -139,6 +143,7 @@ function TaskMenuItems({ task }: { task: TaskRow }) {
             <MenuSubTrigger>
               <UserRound aria-hidden="true" />
               {t("fields.assignee")}
+              <MenuHint hotkeyId="assignTask" />
             </MenuSubTrigger>
             <MenuSubPopup>
               <AssigneeItems
@@ -176,6 +181,7 @@ function TaskMenuItems({ task }: { task: TaskRow }) {
         <MenuItem variant="destructive" onClick={() => requestDeleteTask(task)}>
           <Trash2 aria-hidden="true" />
           {t("menu.delete")}
+          <MenuHint hotkeyId="deleteTask" />
         </MenuItem>
       ) : null}
     </>

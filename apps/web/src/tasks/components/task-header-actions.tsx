@@ -9,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { MenuHint } from "@/design-system/tooltip-label";
 import { Button } from "@/design-system/ui/button";
 import {
   Menu,
@@ -101,6 +102,7 @@ export function TaskHeaderActions({
             >
               <Trash2 aria-hidden="true" />
               {t("menu.delete")}
+              <MenuHint hotkeyId="deleteTask" />
             </MenuItem>
           ) : null}
         </MenuPopup>

@@ -6,6 +6,12 @@ import {
   type FilterSubject,
 } from "@/app/preferences/task-view-options";
 import { Button } from "@/design-system/ui/button";
+import { TooltipLabel } from "@/design-system/tooltip-label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/design-system/ui/tooltip";
 import {
   Popover,
   PopoverPopup,
@@ -52,13 +58,22 @@ export function FilterAddPopover({
         if (!next) setSubject(null);
       }}
     >
-      <PopoverTrigger
-        render={<Button variant="outline" size="xs" />}
-        aria-label={t("toolbar.filter")}
-      >
-        <ListFilter aria-hidden="true" />
-        {t("toolbar.filter")}
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <PopoverTrigger
+              render={<Button variant="outline" size="xs" />}
+              aria-label={t("toolbar.filter")}
+            />
+          }
+        >
+          <ListFilter aria-hidden="true" />
+          {t("toolbar.filter")}
+        </TooltipTrigger>
+        <TooltipContent>
+          <TooltipLabel label={t("toolbar.filter")} hotkeyId="filterTasks" />
+        </TooltipContent>
+      </Tooltip>
       <PopoverPopup>
         <div className="flex flex-col">
           {subject ? (
