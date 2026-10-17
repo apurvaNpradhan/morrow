@@ -15,6 +15,7 @@ export const permissionResources = {
   project: ["create", "update", "delete"],
   task: ["create", "update", "delete", "assign"],
   label: ["create", "update", "delete"],
+  comment: ["create", "delete"],
 } as const;
 
 /** Better Auth defaults plus Morrow's resources. */
@@ -49,6 +50,7 @@ export function withEmptyGrants<
 export const viewer = ac.newRole({
   ...withEmptyGrants(memberAc.statements, permissionResources),
   workspace: ["read"],
+  comment: ["create"],
 });
 
 /** Default workspace role with Better Auth's member defaults. */
@@ -58,6 +60,7 @@ export const member = ac.newRole({
   project: ["create", "update"],
   task: ["create", "update"],
   label: ["create"],
+  comment: ["create"],
 });
 
 /** Workspace administrator role with settings management, but no deletion. */
@@ -67,6 +70,7 @@ export const admin = ac.newRole({
   project: ["create", "update", "delete"],
   task: ["create", "update", "delete", "assign"],
   label: ["create", "update", "delete"],
+  comment: ["create", "delete"],
 });
 
 /** Static workspace owner role with every workspace action. */
@@ -76,6 +80,7 @@ export const owner = ac.newRole({
   project: ["create", "update", "delete"],
   task: ["create", "update", "delete", "assign"],
   label: ["create", "update", "delete"],
+  comment: ["create", "delete"],
 });
 
 /** Built-in Better Auth roles available to workspace authorization. */

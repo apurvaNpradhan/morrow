@@ -70,6 +70,8 @@ export function useWorkspacePermission() {
       canCreateLabels: () => can.createLabels,
       canEditLabels: () => can.editLabels,
       canDeleteLabels: () => can.deleteLabels,
+      canCreateComments: () => can.createComments,
+      canDeleteComments: () => can.deleteComments,
     };
   }, [can]);
 

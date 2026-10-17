@@ -6,6 +6,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -41,6 +42,9 @@ export const taskTable = pgTable(
     // progress without the description (see `taskDescriptionTable`).
     checklistDone: integer("checklist_done").notNull().default(0),
     checklistTotal: integer("checklist_total").notNull().default(0),
+    // Kept by the Procedures that create and delete comments, so a card shows
+    // a badge without the comments themselves.
+    commentCount: integer("comment_count").notNull().default(0),
     priority: text("priority", { enum: TASK_PRIORITIES })
       .notNull()
       .default("none"),
@@ -99,4 +103,75 @@ export const taskDescriptionTable = pgTable(
     description: text("description").notNull().default(""),
   },
   (table) => [index("task_description_projectId_idx").on(table.projectId)],
+);
+
+/*
+ * A markdown message on a task. `project_id` repeats the task's so the shape
+ * can be scoped by membership without a join. The author is set null when the
+ * account goes; the comment stays and reads "Deleted user".
+ */
+export const taskCommentTable = pgTable(
+  "task_comment",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    taskId: text("task_id")
+      .notNull()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projectTable.id, { onDelete: "cascade" }),
+    authorId: text("author_id").references(() => userTable.id, {
+      onDelete: "set null",
+    }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" })
+      .default(utcNow)
+      .notNull(),
+    editedAt: timestamp("edited_at", { mode: "date" }),
+    updatedAt: timestamp("updated_at", { mode: "date" })
+      .default(utcNow)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("task_comment_task_created_idx").on(table.taskId, table.createdAt),
+    index("task_comment_projectId_idx").on(table.projectId),
+  ],
+);
+
+/*
+ * What happened to a task, written by the Procedures that change it (see
+ * `recordTaskEvent`). `data` is the payload of `type`, shaped by
+ * `taskEventSchema`. `project_id` repeats the task's for shape scoping.
+ */
+export const taskEventTable = pgTable(
+  "task_event",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    taskId: text("task_id")
+      .notNull()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projectTable.id, { onDelete: "cascade" }),
+    actorId: text("actor_id").references(() => userTable.id, {
+      onDelete: "set null",
+    }),
+    type: text("type").notNull(),
+    data: jsonb("data").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" })
+      .default(utcNow)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
+      .default(utcNow)
+      .notNull(),
+  },
+  (table) => [
+    index("task_event_task_created_idx").on(table.taskId, table.createdAt),
+    index("task_event_projectId_idx").on(table.projectId),
+  ],
 );

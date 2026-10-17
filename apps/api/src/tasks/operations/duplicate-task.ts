@@ -2,6 +2,7 @@ import {
   isClosedCategory,
   TASK_ID_PATTERN,
   TASK_TITLE_MAX,
+  ticketId,
 } from "@morrow/sync-schemas";
 import { eq, sql } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
@@ -16,6 +17,7 @@ import type { TaskActor } from "#api/tasks/lib/assignee";
 import { saveDescription } from "#api/tasks/lib/description";
 import { findTask } from "#api/tasks/lib/find-task";
 import { freePosition } from "#api/tasks/lib/free-position";
+import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 
@@ -89,6 +91,10 @@ export async function duplicateTask(
         sourceDescription?.description ?? "",
       );
       await recordTaskActivity(tx, "task.created", workspaceId, project, task);
+      await recordTaskEvent(tx, projectId, task.id, {
+        type: "duplicated",
+        data: { sourceTicketId: ticketId(project.key, source.number) },
+      });
       return task;
     });
     return { id: result.id, number: result.number, txid };

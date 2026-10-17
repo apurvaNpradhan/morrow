@@ -31,6 +31,7 @@ import { useCurrentProjectKey } from "../lib/use-current-project-key";
 import { useToday } from "../queries/use-today";
 import { useWorkspacePeople } from "../queries/use-workspace-people";
 import { ColumnMarker } from "./column-marker";
+import { DraftLabelField } from "./draft-label-field";
 import type { TaskDraft } from "./create-task-draft";
 import { FieldChipMenu } from "./field-chip-menu";
 import { PersonAvatar } from "./person-avatar";
@@ -112,6 +113,7 @@ export function CreateTaskForm({
         priority: draft.priority,
         assigneeId: draft.assigneeId,
         dueDate: draft.dueDate,
+        labelIds: draft.labelIds,
         userId: meId,
       });
       showCreated(project.key, created.number);
@@ -126,6 +128,7 @@ export function CreateTaskForm({
           priority: "none",
           assigneeId: null,
           dueDate: null,
+          labelIds: [],
         });
         setPickingDate(false);
         titleRef.current?.focus();
@@ -280,6 +283,11 @@ export function CreateTaskForm({
               onPickDate={() => setPickingDate(true)}
             />
           </FieldChipMenu>
+          <DraftLabelField
+            workspaceId={workspace.id}
+            labelIds={draft.labelIds}
+            onChange={(labelIds) => update({ labelIds })}
+          />
           {pickingDate ? (
             <Input
               type="date"

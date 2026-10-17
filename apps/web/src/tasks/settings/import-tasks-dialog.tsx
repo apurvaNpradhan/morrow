@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ProjectRow } from "@morrow/sync-schemas";
@@ -110,23 +111,10 @@ export function ImportTasksDialog({
                 <div>
                   <p className="mb-1 font-medium">{t("import.warnings")}</p>
                   <ul className="list-disc space-y-1 ps-5 text-muted-foreground">
-                    {result.warnings.map((warning) => (
-                      <li
-                        key={
-                          warning.kind === "column_unmatched"
-                            ? `c:${warning.column}`
-                            : warning.kind === "assignee_unknown"
-                              ? `a:${warning.email}`
-                              : "dropped"
-                        }
-                      >
-                        {warning.kind === "column_unmatched"
-                          ? t("import.warning.columnUnmatched", warning)
-                          : warning.kind === "assignee_unknown"
-                            ? t("import.warning.assigneeUnknown", warning)
-                            : t("import.warning.assigneeDropped", warning)}
-                      </li>
-                    ))}
+                    {result.warnings.map((warning) => {
+                      const { key, text } = describeWarning(t, warning);
+                      return <li key={key}>{text}</li>;
+                    })}
                   </ul>
                 </div>
               ) : null}
@@ -184,4 +172,37 @@ export function ImportTasksDialog({
       </DialogPopup>
     </Dialog>
   );
+}
+
+type Warning = Result["warnings"][number];
+
+/** A warning's list key and its sentence. */
+function describeWarning(t: TFunction, warning: Warning) {
+  switch (warning.kind) {
+    case "column_unmatched":
+      return {
+        key: `c:${warning.column}`,
+        text: t("import.warning.columnUnmatched", warning),
+      };
+    case "assignee_unknown":
+      return {
+        key: `a:${warning.email}`,
+        text: t("import.warning.assigneeUnknown", warning),
+      };
+    case "assignee_dropped":
+      return {
+        key: "dropped",
+        text: t("import.warning.assigneeDropped", warning),
+      };
+    case "label_dropped":
+      return {
+        key: `l:${warning.label}`,
+        text: t("import.warning.labelDropped", warning),
+      };
+    case "comment_author_unknown":
+      return {
+        key: `m:${warning.email}`,
+        text: t("import.warning.commentAuthorUnknown", warning),
+      };
+  }
 }

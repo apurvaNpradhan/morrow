@@ -1,4 +1,5 @@
 import {
+  COMMENT_BODY_MAX,
   isCalendarDate,
   TASK_DESCRIPTION_MAX,
   TASK_PRIORITIES,
@@ -21,6 +22,12 @@ export const description = z.string().max(TASK_DESCRIPTION_MAX);
 export const priority = z.enum(TASK_PRIORITIES);
 export const assigneeId = z.string().min(1);
 export const labelId = z.string().min(1);
+export const commentId = z.string().min(1);
+
+/** A client-chosen id; its format is checked by the operation (INVALID_COMMENT_ID). */
+export const newCommentId = z.string().min(1).max(64);
+
+export const commentBody = z.string().trim().min(1).max(COMMENT_BODY_MAX);
 
 /** A calendar day, `YYYY-MM-DD`. */
 export const dueDate = z

@@ -68,6 +68,7 @@ export function projectWorkspaceActivity(
     case "task.completed":
     case "task.canceled":
     case "task.deleted":
+    case "comment.created":
       return {
         resourceType: "task",
         resourceId: event.taskId,
@@ -131,6 +132,7 @@ export function projectStoredWorkspaceActivity(input: {
       "task.completed": ["projectId", "ticketId", "taskTitle"],
       "task.canceled": ["projectId", "ticketId", "taskTitle"],
       "task.deleted": ["projectId", "ticketId", "taskTitle"],
+      "comment.created": ["projectId", "ticketId", "taskTitle"],
     } satisfies Record<string, string[]>),
   );
   const eventData = Object.fromEntries(

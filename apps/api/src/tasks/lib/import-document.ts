@@ -1,5 +1,6 @@
 import {
   COLUMN_CATEGORIES,
+  COMMENT_BODY_MAX,
   isCalendarDate,
   TASK_DESCRIPTION_MAX,
   TASK_PRIORITIES,
@@ -19,6 +20,9 @@ export const importDocument = z.object({
   columns: z
     .array(z.object({ name: z.string(), category: z.enum(COLUMN_CATEGORIES) }))
     .default([]),
+  labels: z
+    .array(z.object({ name: z.string(), color: z.string().optional() }))
+    .default([]),
   tasks: z.array(
     z.object({
       number: z.number().int().default(0),
@@ -32,6 +36,17 @@ export const importDocument = z.object({
       completedAt: isoDate.nullable().default(null),
       archivedAt: isoDate.nullable().default(null),
       createdAt: isoDate.nullable().default(null),
+      labels: z.array(z.string()).default([]),
+      comments: z
+        .array(
+          z.object({
+            authorEmail: z.string().nullable().default(null),
+            body: z.string().max(COMMENT_BODY_MAX),
+            createdAt: isoDate.nullable().default(null),
+            editedAt: isoDate.nullable().default(null),
+          }),
+        )
+        .default([]),
     }),
   ),
 });

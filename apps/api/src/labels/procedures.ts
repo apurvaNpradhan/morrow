@@ -2,6 +2,7 @@ import { z } from "zod";
 import { authed, requireWorkspacePermission } from "#api/platform/orpc/base";
 import { createLabel } from "./operations/create-label";
 import { deleteLabel } from "./operations/delete-label";
+import { listLabels } from "./operations/list-labels";
 import { labelUsage } from "./operations/label-usage";
 import { moveLabel } from "./operations/move-label";
 import { updateLabel } from "./operations/update-label";
@@ -13,7 +14,12 @@ import {
   position,
   workspaceId,
 } from "./schemas";
-import { createdResult, txidResult, usageResult } from "./response";
+import {
+  createdResult,
+  labelListResult,
+  txidResult,
+  usageResult,
+} from "./response";
 
 const canRead = requireWorkspacePermission({ workspace: ["read"] });
 const canCreate = requireWorkspacePermission({ label: ["create"] });
@@ -77,4 +83,17 @@ const usage = authed
   .output(usageResult)
   .handler(({ input }) => labelUsage(input.workspaceId));
 
-export const labelsRouter = { create, update, move, delete: remove, usage };
+const list = authed
+  .input(z.object({ workspaceId }))
+  .use(canRead)
+  .output(labelListResult)
+  .handler(({ input }) => listLabels(input.workspaceId));
+
+export const labelsRouter = {
+  create,
+  update,
+  move,
+  delete: remove,
+  usage,
+  list,
+};

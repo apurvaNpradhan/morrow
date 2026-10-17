@@ -111,7 +111,10 @@
 			"labelInvalidId": "That label id isn't valid. Try again.",
 			"labelIdTaken": "That label already exists. Try again.",
 			"labelNameTaken": "A label with that name already exists.",
-			"labelLimitReached": "A task can have at most 20 labels."
+			"labelLimitReached": "A task can have at most 20 labels.",
+			"commentInvalidId": "That comment id isn't valid. Try again.",
+			"commentIdTaken": "That comment already exists. Try again.",
+			"commentNotYours": "You can only change your own comments."
 		}
 	},
 	"auth": {
@@ -967,7 +970,8 @@
 					"taskCreated": "{{ticketId}} “{{taskTitle}}” was created",
 					"taskCompleted": "{{ticketId}} “{{taskTitle}}” was completed",
 					"taskCanceled": "{{ticketId}} “{{taskTitle}}” was canceled",
-					"taskDeleted": "{{ticketId}} “{{taskTitle}}” was deleted"
+					"taskDeleted": "{{ticketId}} “{{taskTitle}}” was deleted",
+					"commentCreated": "New comment on {{ticketId}} “{{taskTitle}}”"
 				}
 			}
 		},
@@ -1298,7 +1302,9 @@
 		},
 		"card": {
 			"label": "{{id}}: {{title}}",
-			"checklist": "Checklist progress"
+			"checklist": "Checklist progress",
+			"comments_one": "{{count}} comment",
+			"comments_other": "{{count}} comments"
 		},
 		"list": {
 			"collapse": "Collapse {{name}}",
@@ -1468,7 +1474,11 @@
 				"assigneeUnknown_one": "{{count}} task was left unassigned: {{email}} isn't a member of this workspace.",
 				"assigneeUnknown_other": "{{count}} tasks were left unassigned: {{email}} isn't a member of this workspace.",
 				"assigneeDropped_one": "{{count}} assignee was dropped: you can't assign tasks to other people.",
-				"assigneeDropped_other": "{{count}} assignees were dropped: you can't assign tasks to other people."
+				"assigneeDropped_other": "{{count}} assignees were dropped: you can't assign tasks to other people.",
+				"labelDropped_one": "The label “{{label}}” was left off {{count}} task: you can't create labels.",
+				"labelDropped_other": "The label “{{label}}” was left off {{count}} tasks: you can't create labels.",
+				"commentAuthorUnknown_one": "{{count}} comment by {{email}} was kept without an author: they aren't a member of this workspace.",
+				"commentAuthorUnknown_other": "{{count}} comments by {{email}} were kept without an author: they aren't a member of this workspace."
 			}
 		},
 		"preferences": {
@@ -1482,6 +1492,47 @@
 			"none": "No labels",
 			"create": "Create label “{{name}}”",
 			"createError": "Couldn't create the label."
+		},
+		"comments": {
+			"title": "Activity",
+			"timeline": "Comments",
+			"deletedUser": "Deleted user",
+			"edited": "edited",
+			"menu": "Comment actions",
+			"edit": "Edit",
+			"delete": "Delete",
+			"editLabel": "Edit comment",
+			"bodyLabel": "Comment",
+			"composerLabel": "Write a comment",
+			"placeholder": "Leave a comment…",
+			"post": "Comment",
+			"save": "Save",
+			"cancel": "Cancel",
+			"error": "Couldn't save that comment."
+		},
+		"history": {
+			"created": "created the task",
+			"imported": "imported the task",
+			"duplicated": "duplicated this from {{ticket}}",
+			"title": "changed the title from “{{from}}” to “{{to}}”",
+			"column": "moved this from {{from}} to {{to}}",
+			"priority": "changed the priority from {{from}} to {{to}}",
+			"assigned": "assigned this to {{to}}",
+			"unassigned": "unassigned {{from}}",
+			"reassigned": "reassigned this from {{from}} to {{to}}",
+			"dueSet": "set the due date to {{to}}",
+			"dueCleared": "cleared the due date",
+			"dueChanged": "changed the due date from {{from}} to {{to}}",
+			"labelsAdded_one": "added the label {{labels}}",
+			"labelsAdded_other": "added the labels {{labels}}",
+			"labelsRemoved_one": "removed the label {{labels}}",
+			"labelsRemoved_other": "removed the labels {{labels}}",
+			"labelsBoth": "added {{added}} and removed {{removed}}",
+			"archived": "archived the task",
+			"unarchived": "unarchived the task",
+			"description": "edited the description",
+			"more_one": "{{count}} more change",
+			"more_other": "{{count}} more changes"
 		}
 	},
 	"labels": {

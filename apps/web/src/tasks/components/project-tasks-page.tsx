@@ -153,6 +153,8 @@ function LoadedProjectTasks({
               delete: permission.canDeleteTasks(),
               assign: permission.canAssignTasks(),
               createLabel: permission.canCreateLabels(),
+              comment: permission.canCreateComments(),
+              moderateComments: permission.canDeleteComments(),
             },
             frozen: project.archivedAt !== null,
             openTask: navigation.openTask,

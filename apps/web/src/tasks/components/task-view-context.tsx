@@ -24,6 +24,10 @@ export type TaskPermissions = {
   assign: boolean;
   /** Create a Workspace label from the picker. */
   createLabel: boolean;
+  /** Write comments. */
+  comment: boolean;
+  /** Delete anyone's comment, not only one's own. */
+  moderateComments: boolean;
 };
 
 /**

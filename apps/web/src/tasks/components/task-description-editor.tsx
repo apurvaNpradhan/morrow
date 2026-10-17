@@ -1,10 +1,11 @@
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Markdown } from "@tiptap/markdown";
 import Placeholder from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/design-system/cn";
+import { looksLikeMarkdown } from "../lib/looks-like-markdown";
 
 /**
  * The markdown description editor: headings, bold, italic, strike, inline
@@ -36,6 +37,7 @@ export function TaskDescriptionEditor({
   // markdown instead would reset text that merely serializes differently.
   const applied = useRef(value);
   const [focused, setFocused] = useState(false);
+  const editorRef = useRef<Editor | null>(null);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ underline: false }),
@@ -53,6 +55,23 @@ export function TaskDescriptionEditor({
         "aria-label": label,
         role: "textbox",
         "aria-multiline": "true",
+      },
+      // Pasted markdown becomes formatting, not literal characters. Inside a
+      // code block it stays text, and rich content from a web page keeps its
+      // own HTML when the text is not markdown.
+      handlePaste: (_view, event) => {
+        const text = event.clipboardData?.getData("text/plain") ?? "";
+        const current = editorRef.current;
+        if (
+          !current ||
+          !looksLikeMarkdown(text) ||
+          current.isActive("codeBlock")
+        ) {
+          return false;
+        }
+        event.preventDefault();
+        current.commands.insertContent(text, { contentType: "markdown" });
+        return true;
       },
       handleKeyDown: (_view, event) => {
         if (
@@ -75,6 +94,10 @@ export function TaskDescriptionEditor({
     onFocus: () => setFocused(true),
     onBlur: () => setFocused(false),
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
 
   useEffect(() => {
     editor?.setEditable(editable);

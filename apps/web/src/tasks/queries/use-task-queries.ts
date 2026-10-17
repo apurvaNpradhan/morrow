@@ -8,7 +8,11 @@ import {
   useLiveQuery,
   useLiveSuspenseQuery,
 } from "@tanstack/react-db";
+import { useMemo } from "react";
 import { taskCollection } from "../collections/task-collection";
+import { taskCommentCollection } from "../collections/task-comment-collection";
+import { taskEventCollection } from "../collections/task-event-collection";
+import { parseEvents } from "../lib/timeline";
 import { taskDescriptionCollection } from "../collections/task-description-collection";
 import { columnsTasks } from "./task-queries";
 
@@ -94,4 +98,27 @@ export function useTask(taskId: string) {
       q.from({ task: taskCollection }).where(({ task }) => eq(task.id, taskId)),
   });
   return data?.[0];
+}
+
+/** A task's comments, oldest first; loaded when the task is opened. */
+export function useTaskComments(taskId: string) {
+  const { data } = useLiveQuery({
+    query: (q) =>
+      q
+        .from({ comment: taskCommentCollection })
+        .where(({ comment }) => eq(comment.taskId, taskId))
+        .orderBy(({ comment }) => comment.createdAt, "asc"),
+  });
+  return data ?? [];
+}
+
+/** A task's history, oldest first; loaded when the task is opened. */
+export function useTaskEvents(taskId: string) {
+  const { data } = useLiveQuery({
+    query: (q) =>
+      q
+        .from({ event: taskEventCollection })
+        .where(({ event }) => eq(event.taskId, taskId)),
+  });
+  return useMemo(() => parseEvents(data ?? []), [data]);
 }
