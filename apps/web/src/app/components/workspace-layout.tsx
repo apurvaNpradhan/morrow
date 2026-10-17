@@ -14,8 +14,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/design-system/ui/tooltip";
-import { ToggleSidebarKeys } from "@/app/commands";
+import { TooltipLabel } from "@/design-system/tooltip-label";
 import { useActiveWorkspace } from "@/workspace";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
 
 type WorkspaceLayoutProps = {
@@ -35,6 +36,7 @@ export function WorkspaceLayout({
   children,
   className,
 }: WorkspaceLayoutProps) {
+  const { t } = useTranslation();
   const { data: workspace } = useActiveWorkspace();
 
   return (
@@ -48,10 +50,10 @@ export function WorkspaceLayout({
                   <SidebarTrigger className="-ml-1 h-6 w-6" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="flex items-center gap-2 text-[10px]">
-                    Toggle sidebar
-                    <ToggleSidebarKeys />
-                  </p>
+                  <TooltipLabel
+                    label={t("navigation:settingsLayout.toggleSidebar")}
+                    hotkeyId="toggleSidebar"
+                  />
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

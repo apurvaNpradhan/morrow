@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/design-system/ui/tooltip";
 import { useTaskActions } from "../actions/use-task-actions";
+import { TooltipLabel } from "@/design-system/tooltip-label";
 import { openCreateTask } from "../lib/create-task-store";
 import { ColumnMarker } from "./column-marker";
 import { useTaskView } from "./task-view-context";
@@ -95,7 +96,12 @@ export function LaneHeader({
             >
               <Plus aria-hidden="true" />
             </TooltipTrigger>
-            <TooltipContent>{t("lane.createTooltip")}</TooltipContent>
+            <TooltipContent>
+              <TooltipLabel
+                label={t("lane.createTooltip")}
+                hotkeyId="createTask"
+              />
+            </TooltipContent>
           </Tooltip>
         ) : null}
       </div>

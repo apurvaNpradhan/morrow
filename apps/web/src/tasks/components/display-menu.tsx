@@ -2,6 +2,12 @@ import { SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SORT_FIELDS } from "@/app/preferences/task-view-options";
 import { Button } from "@/design-system/ui/button";
+import { TooltipLabel } from "@/design-system/tooltip-label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/design-system/ui/tooltip";
 import {
   Menu,
   MenuCheckboxItem,
@@ -53,13 +59,25 @@ export function DisplayMenu({
 
   return (
     <Menu open={open} onOpenChange={onOpenChange}>
-      <MenuTrigger
-        render={<Button variant="outline" size="xs" />}
-        aria-label={t("toolbar.display")}
-      >
-        <SlidersHorizontal aria-hidden="true" />
-        {t("toolbar.display")}
-      </MenuTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <MenuTrigger
+              render={<Button variant="outline" size="xs" />}
+              aria-label={t("toolbar.display")}
+            />
+          }
+        >
+          <SlidersHorizontal aria-hidden="true" />
+          {t("toolbar.display")}
+        </TooltipTrigger>
+        <TooltipContent>
+          <TooltipLabel
+            label={t("toolbar.display")}
+            hotkeyId="displayOptions"
+          />
+        </TooltipContent>
+      </Tooltip>
       <MenuPopup align="end" className="min-w-56">
         <MenuGroup>
           <MenuGroupLabel>{t("display.layout")}</MenuGroupLabel>
