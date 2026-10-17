@@ -1,6 +1,7 @@
 import "./app/lib/instrument";
 
 import { QueryClientProvider } from "@tanstack/react-query";
+import { recordLocation } from "./app/navigation/return-location";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
@@ -56,6 +57,13 @@ const router = createRouter({
     queryClient,
   },
 });
+
+router.subscribe("onResolved", ({ toLocation }) =>
+  recordLocation({
+    pathname: toLocation.pathname,
+    search: toLocation.searchStr,
+  }),
+);
 
 function App() {
   const { user } = useAuth();
