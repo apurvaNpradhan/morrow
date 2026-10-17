@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { Route } from "./_authenticated";
 
+import { queryClient } from "@/app/query-client";
 import { forgetSession } from "@/auth/lib/session";
 const getSession = vi.fn();
+const handleUnauthorized = vi.hoisted(() => vi.fn());
+vi.mock("@/app/lib/http-error", () => ({ handleUnauthorized }));
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: unknown) => options,
@@ -115,5 +118,40 @@ describe("authenticated layout guard", () => {
     await expect(
       beforeLoad({ location: { href: "/acme", pathname: "/acme" } }),
     ).resolves.toMatchObject({ session: finished });
+  });
+
+  describe("with a cached session", () => {
+    const location = { href: "/acme", pathname: "/acme" };
+    const cacheStale = (session: unknown) =>
+      queryClient.setQueryData(["session"], session, {
+        updatedAt: Date.now() - 60_000,
+      });
+
+    it("navigates without waiting on a refresh of a stale session", async () => {
+      cacheStale(finished);
+      getSession.mockReturnValue(new Promise(() => {}));
+      await expect(beforeLoad({ location })).resolves.toMatchObject({
+        session: finished,
+      });
+      expect(getSession).toHaveBeenCalledTimes(1);
+    });
+
+    it("waits when there is nothing cached", async () => {
+      let answer: (value: unknown) => void = () => {};
+      getSession.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+      let settled = false;
+      const pending = beforeLoad({ location }).then(() => (settled = true));
+      await Promise.resolve();
+      expect(settled).toBe(false);
+      answer({ data: finished });
+      await pending;
+    });
+
+    it("signs out when the background refresh finds no session", async () => {
+      cacheStale(finished);
+      getSession.mockResolvedValue({ data: null });
+      await beforeLoad({ location });
+      await vi.waitFor(() => expect(handleUnauthorized).toHaveBeenCalled());
+    });
   });
 });
