@@ -142,6 +142,42 @@ export const taskCommentTable = pgTable(
 );
 
 /*
+ * A URL attached to a task. `project_id` repeats the task's so the shape can be
+ * scoped by membership without a join. A task has a URL once; the server never
+ * fetches the page.
+ */
+export const taskLinkTable = pgTable(
+  "task_link",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    taskId: text("task_id")
+      .notNull()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projectTable.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    title: text("title"),
+    createdBy: text("created_by").references(() => userTable.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { mode: "date" })
+      .default(utcNow)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
+      .default(utcNow)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("task_link_task_url_uidx").on(table.taskId, table.url),
+    index("task_link_projectId_idx").on(table.projectId),
+  ],
+);
+
+/*
  * What happened to a task, written by the Procedures that change it (see
  * `recordTaskEvent`). `data` is the payload of `type`, shaped by
  * `taskEventSchema`. `project_id` repeats the task's for shape scoping.

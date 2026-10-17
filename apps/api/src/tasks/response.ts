@@ -121,6 +121,9 @@ export const taskDetail = z.object({
   archivedAt: z.date().nullable(),
   createdAt: z.date(),
   labels: z.array(z.object({ name: z.string(), color: z.string() })),
+  links: z.array(
+    z.object({ id: z.string(), url: z.string(), title: z.string().nullable() }),
+  ),
   comments: z.array(
     z.object({
       id: z.string(),

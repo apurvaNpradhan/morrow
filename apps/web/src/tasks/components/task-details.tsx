@@ -12,6 +12,7 @@ import { PageTitle } from "@/design-system/page-title";
 import { toast } from "@/design-system/toast";
 import { Textarea } from "@/design-system/ui/textarea";
 import { TaskDescriptionEditor } from "./task-description-editor";
+import { TaskLinks } from "./task-links";
 import { TaskProperties } from "./task-properties";
 import { TaskTimeline } from "./task-timeline";
 import { displayTicketId } from "../lib/task-links";
@@ -110,6 +111,7 @@ export function TaskDetails({ task }: { task: TaskRow }) {
                 className="min-h-40"
               />
             )}
+            <TaskLinks task={task} />
             <TaskTimeline task={task} />
           </div>
           <aside

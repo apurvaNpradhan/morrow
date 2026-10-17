@@ -1436,6 +1436,19 @@
 			"more": "More actions",
 			"unknownUser": "Former member"
 		},
+		"links": {
+			"title": "Links",
+			"add": "Add link",
+			"save": "Save",
+			"edit": "Edit link",
+			"remove": "Remove link",
+			"url": "Link address",
+			"urlPlaceholder": "https://…",
+			"titleLabel": "Link title",
+			"titlePlaceholder": "Title (optional)",
+			"invalid": "Enter an http or https address.",
+			"error": "Couldn't change the link"
+		},
 		"link": {
 			"toolbar": "Link",
 			"add": "Add link",
