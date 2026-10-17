@@ -100,6 +100,17 @@ input:-webkit-autofill:active {
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
+  @keyframes toast-shake {
+    20%,
+    60% {
+      translate: -4px 0;
+    }
+    40%,
+    80% {
+      translate: 4px 0;
+    }
+  }
+
   @keyframes skeleton {
     to {
       background-position: -200% 0;

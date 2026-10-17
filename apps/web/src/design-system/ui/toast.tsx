@@ -72,6 +72,8 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
             ? TOAST_ICONS[toast.type as keyof typeof TOAST_ICONS]
             : null;
 
+          const shakes = (toast.data as { shake?: number } | undefined)?.shake;
+
           return (
             <Toast.Root
               className={cn(
@@ -126,7 +128,11 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
               }
               toast={toast}
             >
-              <Toast.Content className="pointer-events-auto flex items-center justify-between gap-1.5 overflow-hidden px-3.5 py-3 text-sm transition-opacity duration-250 data-behind:not-data-expanded:pointer-events-none data-behind:opacity-0 data-expanded:opacity-100">
+              <Toast.Content
+                data-shake={shakes ? "" : undefined}
+                key={shakes ?? 0}
+                className="pointer-events-auto flex items-center justify-between gap-1.5 overflow-hidden px-3.5 py-3 text-sm transition-opacity duration-250 data-behind:not-data-expanded:pointer-events-none data-behind:opacity-0 data-expanded:opacity-100 motion-safe:data-shake:animate-[toast-shake_300ms_ease-out]"
+              >
                 <div className="flex gap-2">
                   {Icon && (
                     <div
