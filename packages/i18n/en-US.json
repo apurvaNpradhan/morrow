@@ -1436,6 +1436,15 @@
 			"more": "More actions",
 			"unknownUser": "Former member"
 		},
+		"link": {
+			"toolbar": "Link",
+			"add": "Add link",
+			"edit": "Edit link",
+			"remove": "Remove link",
+			"url": "Link address",
+			"placeholder": "Paste or type a link",
+			"invalid": "Enter a web or email address."
+		},
 		"copy": {
 			"done": "Copied",
 			"failed": "Couldn't copy",

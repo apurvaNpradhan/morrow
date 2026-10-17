@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/design-system/cn";
 import { looksLikeMarkdown } from "../lib/looks-like-markdown";
+import { BubbleLinkEditor } from "./bubble-link-editor";
 
 /**
  * The markdown description editor: headings, bold, italic, strike, inline
@@ -40,7 +41,16 @@ export function TaskDescriptionEditor({
   const editorRef = useRef<Editor | null>(null);
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ underline: false }),
+      StarterKit.configure({
+        underline: false,
+        link: {
+          openOnClick: "whenNotEditable",
+          autolink: true,
+          // Only what the link field itself accepts; no `javascript:` from a paste.
+          isAllowedUri: (url) => /^(https?:\/\/|mailto:)/i.test(url),
+          HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
+        },
+      }),
       TaskList,
       TaskItem.configure({ nested: true }),
       Markdown,
@@ -115,12 +125,15 @@ export function TaskDescriptionEditor({
   }, [editor, focused, value]);
 
   return (
-    <EditorContent
-      editor={editor}
-      className={cn(
-        "morrow-tiptap-content text-sm [&_.ProseMirror]:min-h-16 [&_.ProseMirror]:outline-none",
-        className,
-      )}
-    />
+    <>
+      <EditorContent
+        editor={editor}
+        className={cn(
+          "morrow-tiptap-content text-sm [&_.ProseMirror]:min-h-16 [&_.ProseMirror]:outline-none",
+          className,
+        )}
+      />
+      {editor ? <BubbleLinkEditor editor={editor} /> : null}
+    </>
   );
 }
