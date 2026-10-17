@@ -1,5 +1,7 @@
 import { toastManager } from "./ui/toast";
 
+const DEFAULT_TIMEOUT = 5000;
+
 type ToastVariant = "success" | "error" | "info" | "warning";
 
 type ToastAction = {
@@ -13,6 +15,8 @@ type ToastOptions = {
   cancel?: ToastAction;
 };
 
+const openToasts = new Map<string, { id: string; shakes: number }>();
+
 function addToast(
   title: string,
   variant?: ToastVariant,
@@ -21,11 +25,22 @@ function addToast(
   let id = "";
 
   const action = options?.action ?? options?.cancel;
+  const key = JSON.stringify([variant, title, options?.description]);
+  const open = openToasts.get(key);
+  if (open) {
+    open.shakes += 1;
+    toastManager.update(open.id, {
+      timeout: DEFAULT_TIMEOUT,
+      data: { shake: open.shakes },
+    });
+    return open.id;
+  }
 
   id = toastManager.add({
     title,
     description: options?.description,
     type: variant,
+    onClose: () => openToasts.delete(key),
     actionProps: action
       ? {
           children: action.label,
@@ -37,6 +52,7 @@ function addToast(
       : undefined,
   });
 
+  openToasts.set(key, { id, shakes: 0 });
   return id;
 }
 
