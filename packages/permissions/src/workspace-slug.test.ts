@@ -27,12 +27,18 @@ describe("workspaceSlugSchema", () => {
     expect(getSlugIssue(slug)).toBe("invalid");
   });
 
-  it.each(["new", "settings", "admin", "auth", "api", "invitation"])(
-    "flags %s as reserved",
-    (slug) => {
-      expect(getSlugIssue(slug)).toBe("reserved");
-    },
-  );
+  it.each([
+    "new",
+    "settings",
+    "admin",
+    "auth",
+    "api",
+    "invitation",
+    "inbox",
+    "search",
+  ])("flags %s as reserved", (slug) => {
+    expect(getSlugIssue(slug)).toBe("reserved");
+  });
 
   it("returns null for a usable slug", () => {
     expect(getSlugIssue("my-team")).toBeNull();
