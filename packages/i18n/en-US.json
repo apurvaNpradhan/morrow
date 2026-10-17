@@ -1281,6 +1281,8 @@
 			"nextWeek": "Next week",
 			"pick": "Pick a date…",
 			"pickTitle": "Due date",
+			"typeHint": "Type a date: fri, in 3 days, nov 3",
+			"typeResult": "→ {{date}}",
 			"set": "Set date",
 			"clear": "Clear",
 			"overdueDays_one": "{{count}}d overdue",
