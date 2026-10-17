@@ -1,3 +1,4 @@
+import { MAX_TASK_LABELS } from "@morrow/sync-schemas";
 import { z } from "zod";
 import {
   authed,
@@ -9,6 +10,7 @@ import { createTask } from "./operations/create-task";
 import { deleteTask } from "./operations/delete-task";
 import { duplicateTask } from "./operations/duplicate-task";
 import { exportTasks } from "./operations/export-tasks";
+import { getTask } from "./operations/get-task";
 import { importTasks } from "./operations/import-tasks";
 import { listTasks } from "./operations/list-tasks";
 import { moveTask } from "./operations/move-task";
@@ -20,6 +22,7 @@ import {
   createdResult,
   exportDocument,
   importResult,
+  taskDetail,
   taskListItem,
   txidResult,
 } from "./response";
@@ -67,6 +70,14 @@ const list = authed
   .output(z.array(taskListItem))
   .handler(({ input }) => listTasks(input.workspaceId, input.projectId));
 
+const get = authed
+  .input(forProject.extend({ ticketId: z.string().trim().min(1) }))
+  .use(canRead)
+  .output(taskDetail)
+  .handler(({ input }) =>
+    getTask(input.workspaceId, input.projectId, input.ticketId),
+  );
+
 const create = authed
   .input(
     forProject.extend({
@@ -78,6 +89,7 @@ const create = authed
       priority: priority.optional(),
       assigneeId: assigneeId.nullable().optional(),
       dueDate: dueDate.nullable().optional(),
+      labelIds: z.array(labelId).max(MAX_TASK_LABELS).optional(),
     }),
   )
   .use(canCreate)
@@ -261,13 +273,19 @@ const importProject = authed
     importTasks(
       input.workspaceId,
       input.projectId,
-      await actorOf(context, input.workspaceId),
+      {
+        ...(await actorOf(context, input.workspaceId)),
+        canCreateLabels: await userCan(context.user, input.workspaceId, {
+          label: ["create"],
+        }),
+      },
       input.document,
     ),
   );
 
 export const tasksRouter = {
   list,
+  get,
   create,
   updateTitle,
   updateDescription,

@@ -47,6 +47,9 @@ const DOMAIN_KEYS = new Map(
     LABEL_ID_TAKEN: "common:errors.labelIdTaken",
     LABEL_NAME_TAKEN: "common:errors.labelNameTaken",
     LABEL_LIMIT_REACHED: "common:errors.labelLimitReached",
+    INVALID_COMMENT_ID: "common:errors.commentInvalidId",
+    COMMENT_ID_TAKEN: "common:errors.commentIdTaken",
+    COMMENT_NOT_YOURS: "common:errors.commentNotYours",
   } satisfies Record<string, string>),
 );
 

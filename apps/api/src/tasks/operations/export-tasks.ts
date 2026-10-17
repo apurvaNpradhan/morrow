@@ -1,16 +1,23 @@
 import { compareColumns, comparePosition } from "@morrow/sync-schemas";
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
+import { labelTable } from "#api/labels/index";
 import { db, schema } from "#api/platform/database/index";
 import {
   projectColumnTable,
   projectNotFound,
   projectTable,
 } from "#api/projects/index";
-import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
+import {
+  taskCommentTable,
+  taskDescriptionTable,
+  taskTable,
+} from "#api/tasks/tables";
 
 /**
  * A project's tasks as a portable document: columns by name and category,
- * tasks in board order, assignees by email (ids mean nothing elsewhere).
+ * tasks in board order, assignees and comment authors by email (ids mean
+ * nothing elsewhere), labels by name with the colours of those in use, and
+ * comments. History is not exported.
  */
 export async function exportTasks(workspaceId: string, projectId: string) {
   const [project] = await db
@@ -42,6 +49,33 @@ export async function exportTasks(workspaceId: string, projectId: string) {
     )
     .where(eq(taskTable.projectId, projectId));
 
+  const workspaceLabels = await db
+    .select()
+    .from(labelTable)
+    .where(eq(labelTable.workspaceId, workspaceId))
+    .orderBy(asc(labelTable.position));
+  const labelById = new Map(workspaceLabels.map((label) => [label.id, label]));
+  const usedLabelIds = new Set(rows.flatMap(({ task }) => task.labelIds));
+
+  const commentRows = await db
+    .select({
+      comment: taskCommentTable,
+      authorEmail: schema.userTable.email,
+    })
+    .from(taskCommentTable)
+    .leftJoin(
+      schema.userTable,
+      eq(schema.userTable.id, taskCommentTable.authorId),
+    )
+    .where(eq(taskCommentTable.projectId, projectId))
+    .orderBy(asc(taskCommentTable.createdAt), asc(taskCommentTable.id));
+  const commentsByTask = new Map<string, typeof commentRows>();
+  for (const row of commentRows) {
+    const forTask = commentsByTask.get(row.comment.taskId) ?? [];
+    forTask.push(row);
+    commentsByTask.set(row.comment.taskId, forTask);
+  }
+
   rows.sort(
     (a, b) =>
       (order.get(a.task.columnId) ?? 0) - (order.get(b.task.columnId) ?? 0) ||
@@ -50,6 +84,9 @@ export async function exportTasks(workspaceId: string, projectId: string) {
 
   return {
     project: { key: project.key, name: project.name },
+    labels: workspaceLabels
+      .filter((label) => usedLabelIds.has(label.id))
+      .map(({ name, color }) => ({ name, color })),
     columns: columns.map(({ name, category }) => ({ name, category })),
     tasks: rows.map(({ task, assigneeEmail, description }) => {
       const column = columnById.get(task.columnId);
@@ -65,6 +102,18 @@ export async function exportTasks(workspaceId: string, projectId: string) {
         completedAt: task.completedAt?.toISOString() ?? null,
         archivedAt: task.archivedAt?.toISOString() ?? null,
         createdAt: task.createdAt.toISOString(),
+        labels: task.labelIds.flatMap((id) => {
+          const label = labelById.get(id);
+          return label ? [label.name] : [];
+        }),
+        comments: (commentsByTask.get(task.id) ?? []).map(
+          ({ comment, authorEmail }) => ({
+            authorEmail,
+            body: comment.body,
+            createdAt: comment.createdAt.toISOString(),
+            editedAt: comment.editedAt?.toISOString() ?? null,
+          }),
+        ),
       };
     }),
   };

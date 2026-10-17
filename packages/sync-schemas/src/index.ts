@@ -2,6 +2,8 @@ import { z } from "zod";
 import { COLUMN_CATEGORIES, COLUMN_COLORS } from "./projects.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
+export * from "./comments.js";
+export * from "./task-events.js";
 export * from "./labels.js";
 export * from "./projects.js";
 export * from "./tasks.js";
@@ -134,6 +136,7 @@ export const tasksShape = shape(
     assigneeId: z.string().nullable(),
     dueDate: z.string().nullable(),
     labelIds: z.array(z.string()),
+    commentCount: z.number(),
     position: z.string(),
     completedAt: z.date().nullable(),
     archivedAt: z.date().nullable(),
@@ -176,3 +179,44 @@ export const labelsShape = shape(
 );
 
 export type LabelRow = z.infer<typeof labelsShape.schema>;
+
+/**
+ * A Comment on a Task. Read on demand, one Task at a time, when the Task is
+ * opened. `authorId` is null once the author's account is gone.
+ */
+export const taskCommentsShape = shape(
+  "task-comments",
+  z.object({
+    id: z.string(),
+    taskId: z.string(),
+    projectId: z.string(),
+    authorId: z.string().nullable(),
+    body: z.string(),
+    createdAt: z.date(),
+    editedAt: z.date().nullable(),
+    updatedAt: z.date(),
+  }),
+);
+
+export type TaskCommentRow = z.infer<typeof taskCommentsShape.schema>;
+
+/**
+ * The history of a Task, read on demand one Task at a time when it is opened.
+ * Read-only: only the API writes it. `data` is the event's payload, shaped by
+ * `taskEventSchema`.
+ */
+export const taskEventsShape = shape(
+  "task-events",
+  z.object({
+    id: z.string(),
+    taskId: z.string(),
+    projectId: z.string(),
+    actorId: z.string().nullable(),
+    type: z.string(),
+    data: z.unknown(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
+export type TaskEventRow = z.infer<typeof taskEventsShape.schema>;

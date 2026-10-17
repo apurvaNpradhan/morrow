@@ -20,7 +20,12 @@ export {
 export { activityTable } from "#api/activity/tables";
 export { labelTable } from "#api/labels/tables";
 export { projectColumnTable, projectTable } from "#api/projects/tables";
-export { taskDescriptionTable, taskTable } from "#api/tasks/tables";
+export {
+  taskCommentTable,
+  taskDescriptionTable,
+  taskEventTable,
+  taskTable,
+} from "#api/tasks/tables";
 export { assetTable } from "#api/storage/tables";
 export {
   oauthAccessTokenTable,

@@ -28,6 +28,7 @@ const ACTIVITY_KEYS = new Map(
     "task.completed": "taskCompleted",
     "task.canceled": "taskCanceled",
     "task.deleted": "taskDeleted",
+    "comment.created": "commentCreated",
   } satisfies Record<string, string>),
 );
 

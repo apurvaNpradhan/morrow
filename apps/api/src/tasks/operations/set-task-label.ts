@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { findLabel, labelError } from "#api/labels/index";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { lockProject } from "#api/projects/index";
+import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { findTask } from "#api/tasks/lib/find-task";
 import { taskTable } from "#api/tasks/tables";
 
@@ -24,14 +25,17 @@ export async function setTaskLabel(
   const { txid } = await withTxid(async (tx) => {
     await lockProject(tx, workspaceId, projectId);
     const task = await findTask(tx, projectId, taskId);
-    if (applied) {
-      await findLabel(tx, workspaceId, labelId, "share");
-      if (
-        !task.labelIds.includes(labelId) &&
-        task.labelIds.length >= MAX_TASK_LABELS
-      ) {
-        throw labelError("LABEL_LIMIT_REACHED");
-      }
+    // Taking off a label that is already gone (or never was this Workspace's)
+    // is not an error; it only leaves nothing to name in the history.
+    const label = applied
+      ? await findLabel(tx, workspaceId, labelId, "share")
+      : await findLabel(tx, workspaceId, labelId).catch(() => undefined);
+    if (
+      applied &&
+      !task.labelIds.includes(labelId) &&
+      task.labelIds.length >= MAX_TASK_LABELS
+    ) {
+      throw labelError("LABEL_LIMIT_REACHED");
     }
     await tx
       .update(taskTable)
@@ -41,6 +45,15 @@ export async function setTaskLabel(
           : sql`array_remove(${taskTable.labelIds}, ${labelId})`,
       })
       .where(eq(taskTable.id, taskId));
+    if (label && task.labelIds.includes(labelId) !== applied) {
+      const ref = { id: label.id, name: label.name, color: label.color };
+      await recordTaskEvent(tx, projectId, taskId, {
+        type: "labels",
+        data: applied
+          ? { added: [ref], removed: [] }
+          : { added: [], removed: [ref] },
+      });
+    }
   });
   return { txid };
 }

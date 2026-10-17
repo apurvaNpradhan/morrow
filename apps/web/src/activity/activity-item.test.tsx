@@ -62,6 +62,11 @@ describe("workspace activity item", () => {
       "MOR-12 “Write docs” was created",
     ],
     [
+      "comment.created",
+      { ticketId: "MOR-12", taskTitle: "Write docs" },
+      "New comment on MOR-12 “Write docs”",
+    ],
+    [
       "task.completed",
       { ticketId: "MOR-12", taskTitle: "Write docs" },
       "MOR-12 “Write docs” was completed",

@@ -1,5 +1,5 @@
 import { isClosedCategory, type TaskRow } from "@morrow/sync-schemas";
-import { CalendarDays, ListChecks } from "lucide-react";
+import { CalendarDays, ListChecks, MessageSquare } from "lucide-react";
 import { LabelChips, labelsOfTask } from "@/labels";
 import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
@@ -62,7 +62,8 @@ export function TaskCard({
   const showPriority = display.priority;
   const showDue = display.dueDates && task.dueDate !== null && !closed;
   const showProgress = display.checklist && progress !== null;
-  const showChips = showPriority || showDue || showProgress;
+  const showComments = task.commentCount > 0;
+  const showChips = showPriority || showDue || showProgress || showComments;
   const ticket = displayTicketId(project.key, task.number);
 
   return (
@@ -124,6 +125,12 @@ export function TaskCard({
             >
               <CalendarDays aria-hidden="true" className="size-3" />
               <DueDateText dueDate={task.dueDate} today={today} />
+            </TaskChip>
+          ) : null}
+          {showComments ? (
+            <TaskChip label={t("card.comments", { count: task.commentCount })}>
+              <MessageSquare aria-hidden="true" className="size-3" />
+              {task.commentCount}
             </TaskChip>
           ) : null}
           {showProgress && progress ? (

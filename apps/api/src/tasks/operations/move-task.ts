@@ -9,6 +9,7 @@ import {
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import { findTask } from "#api/tasks/lib/find-task";
 import { freePosition } from "#api/tasks/lib/free-position";
+import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
 
@@ -47,6 +48,18 @@ export async function moveTask(
           ),
         })
         .where(eq(taskTable.id, taskId));
+      // A reorder within a Column is not part of the task's story.
+      if (from.id !== to.id) {
+        const ref = ({ id, name, category }: typeof to) => ({
+          id,
+          name,
+          category,
+        });
+        await recordTaskEvent(tx, projectId, taskId, {
+          type: "column",
+          data: { from: ref(from), to: ref(to) },
+        });
+      }
       if (from.category !== to.category) {
         if (to.category === "done" || to.category === "canceled") {
           await recordTaskActivity(

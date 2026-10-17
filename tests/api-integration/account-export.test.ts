@@ -1,3 +1,5 @@
+import { addWorkspaceMember } from "./helpers/add-workspace-member";
+import { newCommentId } from "./helpers/comments";
 import { as } from "./helpers/projects";
 import { newTaskId, positionAt } from "./helpers/tasks";
 import type { ORPCError } from "@orpc/client";
@@ -122,6 +124,41 @@ describe("account.export", () => {
       assignedToYou: true,
     });
     expect(mine.number).toBe(1);
+  });
+
+  it("includes the comments the caller wrote, not other people's", async () => {
+    const { user, workspace } = await createWorkspaceMember({ role: "owner" });
+    const colleague = await addWorkspaceMember(workspace.id, "member");
+    const task = await setupTasksIn(user, workspace.id, "MOR", "Plan");
+    const [project] = await db.select().from(schema.projectTable);
+    const target = {
+      workspaceId: workspace.id,
+      projectId: project!.id,
+      taskId: task.id,
+    };
+    await as(user).comments.create({
+      ...target,
+      id: newCommentId(),
+      body: "My own words",
+    });
+    await as(colleague).comments.create({
+      ...target,
+      id: newCommentId(),
+      body: "Someone else's words",
+    });
+    mockAuthenticatedSession(user);
+
+    const data = await createTestClient(app).account.export();
+
+    expect(data.comments).toHaveLength(1);
+    expect(data.comments[0]).toMatchObject({
+      workspaceId: workspace.id,
+      ticketId: "MOR-1",
+      taskTitle: "Plan",
+      body: "My own words",
+      editedAt: null,
+    });
+    expect(JSON.stringify(data)).not.toContain("Someone else's words");
   });
 });
 

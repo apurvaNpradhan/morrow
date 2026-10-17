@@ -1,7 +1,16 @@
 import { createId } from "@paralleldrive/cuid2";
-import { compareColumns, isClosedCategory } from "@morrow/sync-schemas";
+import {
+  COLUMN_COLORS,
+  type ColumnColor,
+  compareColumns,
+  isClosedCategory,
+  LABEL_NAME_MAX,
+  MAX_TASK_LABELS,
+  normalizeLabelName,
+} from "@morrow/sync-schemas";
 import { eq, max, sql } from "drizzle-orm";
 import { generateNKeysBetween } from "fractional-indexing";
+import { labelTable } from "#api/labels/index";
 import { schema } from "#api/platform/database/index";
 import { withTxid } from "#api/platform/sync/with-txid";
 import {
@@ -19,21 +28,29 @@ import {
 } from "#api/tasks/lib/import-document";
 import { matchColumn } from "#api/tasks/lib/match-column";
 import type { ImportWarning } from "#api/tasks/response";
-import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
+import {
+  taskCommentTable,
+  taskDescriptionTable,
+  taskEventTable,
+  taskTable,
+} from "#api/tasks/tables";
 
-/** Rows per insert: a task has 15 bound columns and Postgres allows 65,535 parameters. */
+/** Rows per insert: a task has 17 bound columns and Postgres allows 65,535 parameters. */
 const INSERT_CHUNK = 1000;
 
 /**
  * Imports tasks from an export document into a project, all or nothing. Tasks
  * get new numbers (in the file's numbering order) and land at the end of their
- * column in file order. Columns match by name, then category; assignees match
- * Members by email. Whatever could not be matched is reported, not refused.
+ * column in file order. Columns match by name, then category; assignees and
+ * comment authors match Members by email; labels match by name ignoring case,
+ * and are created when the actor may create labels, else dropped. Comments keep
+ * their times. Every task gets one `imported` history entry. Whatever could not
+ * be matched is reported, not refused.
  */
 export async function importTasks(
   workspaceId: string,
   projectId: string,
-  actor: TaskActor,
+  actor: TaskActor & { canCreateLabels: boolean },
   rawDocument: unknown,
 ) {
   if (Buffer.byteLength(JSON.stringify(rawDocument) ?? "") > MAX_IMPORT_BYTES) {
@@ -86,6 +103,93 @@ export async function importTasks(
       return id;
     };
 
+    // Labels: the Workspace's, by name ignoring case. Names it lacks are
+    // created when the actor may create labels, in the file's colour.
+    const existingLabels = await tx
+      .select()
+      .from(labelTable)
+      .where(eq(labelTable.workspaceId, workspaceId));
+    const labelIdByName = new Map(
+      existingLabels.map((label) => [normalizeLabelName(label.name), label.id]),
+    );
+    const colorByName = new Map(
+      document.labels.map((label) => [
+        normalizeLabelName(label.name),
+        label.color,
+      ]),
+    );
+    const missing = new Map<string, string>();
+    for (const task of document.tasks) {
+      for (const raw of task.labels) {
+        const name = raw.trim();
+        const key = normalizeLabelName(name);
+        if (key !== "" && name.length <= LABEL_NAME_MAX) {
+          if (!labelIdByName.has(key) && !missing.has(key))
+            missing.set(key, name);
+        }
+      }
+    }
+    const droppedLabels = new Map<string, number>();
+    if (actor.canCreateLabels && missing.size > 0) {
+      const [last] = await tx
+        .select({ position: max(labelTable.position) })
+        .from(labelTable)
+        .where(eq(labelTable.workspaceId, workspaceId));
+      const positions = generateNKeysBetween(
+        last?.position ?? null,
+        null,
+        missing.size,
+      );
+      const created = [...missing].map(([key, name], at) => {
+        const wanted = colorByName.get(key);
+        return {
+          id: createId(),
+          workspaceId,
+          name,
+          color: (COLUMN_COLORS as readonly string[]).includes(wanted ?? "")
+            ? (wanted as ColumnColor)
+            : COLUMN_COLORS[
+                (existingLabels.length + at) % COLUMN_COLORS.length
+              ]!,
+          position: positions[at]!,
+        };
+      });
+      await tx.insert(labelTable).values(created);
+      for (const label of created) {
+        labelIdByName.set(normalizeLabelName(label.name), label.id);
+      }
+    }
+    const labelIdsFor = (names: string[]) => {
+      const ids = new Set<string>();
+      for (const raw of names) {
+        const name = raw.trim();
+        const id = labelIdByName.get(normalizeLabelName(name));
+        if (id) ids.add(id);
+        else if (name !== "") {
+          droppedLabels.set(name, (droppedLabels.get(name) ?? 0) + 1);
+        }
+      }
+      return [...ids].slice(0, MAX_TASK_LABELS);
+    };
+
+    // Comment authors: Members by email; anyone else is "Deleted user".
+    const unknownAuthors = new Map<string, number>();
+    const commentsFor = (task: (typeof document.tasks)[number]) =>
+      task.comments.flatMap((comment) => {
+        const body = comment.body.trim();
+        if (body === "") return [];
+        const authorId = comment.authorEmail
+          ? (memberByEmail.get(comment.authorEmail.toLowerCase()) ?? null)
+          : null;
+        if (comment.authorEmail && authorId === null) {
+          unknownAuthors.set(
+            comment.authorEmail,
+            (unknownAuthors.get(comment.authorEmail) ?? 0) + 1,
+          );
+        }
+        return [{ ...comment, body, authorId }];
+      });
+
     const unmatched = new Map<string, { usedColumn: string; count: number }>();
     const placed = document.tasks.map((task, index) => {
       const { column, exact } = matchColumn(
@@ -105,6 +209,8 @@ export async function importTasks(
         column,
         index,
         assigneeId: assigneeFor(task.assigneeEmail),
+        labelIds: labelIdsFor(task.labels),
+        comments: commentsFor(task),
       };
     });
 
@@ -145,24 +251,28 @@ export async function importTasks(
     );
 
     const now = new Date();
-    const rows = placed.map(({ task, column, index, assigneeId }) => ({
-      id: createId(),
-      projectId,
-      columnId: column.id,
-      number: numberOf.get(index)!,
-      title: task.title,
-      ...checklistColumns(task.description),
-      priority: task.priority,
-      assigneeId,
-      dueDate: task.dueDate,
-      position: positionOf.get(index)!,
-      completedAt: isClosedCategory(column.category)
-        ? (task.completedAt ?? now)
-        : null,
-      archivedAt: task.archivedAt,
-      createdBy: actor.userId,
-      createdAt: task.createdAt ?? now,
-    }));
+    const rows = placed.map(
+      ({ task, column, index, assigneeId, labelIds, comments }) => ({
+        id: createId(),
+        projectId,
+        columnId: column.id,
+        number: numberOf.get(index)!,
+        title: task.title,
+        ...checklistColumns(task.description),
+        priority: task.priority,
+        assigneeId,
+        dueDate: task.dueDate,
+        labelIds,
+        commentCount: comments.length,
+        position: positionOf.get(index)!,
+        completedAt: isClosedCategory(column.category)
+          ? (task.completedAt ?? now)
+          : null,
+        archivedAt: task.archivedAt,
+        createdBy: actor.userId,
+        createdAt: task.createdAt ?? now,
+      }),
+    );
     for (let at = 0; at < rows.length; at += INSERT_CHUNK) {
       await tx.insert(taskTable).values(rows.slice(at, at + INSERT_CHUNK));
     }
@@ -177,6 +287,38 @@ export async function importTasks(
         .values(descriptions.slice(at, at + INSERT_CHUNK));
     }
 
+    const commentRows = rows.flatMap((row, at) =>
+      placed[at]!.comments.map((comment) => ({
+        id: createId(),
+        taskId: row.id,
+        projectId,
+        authorId: comment.authorId,
+        body: comment.body,
+        createdAt: comment.createdAt ?? now,
+        editedAt: comment.editedAt,
+        updatedAt: comment.editedAt ?? comment.createdAt ?? now,
+      })),
+    );
+    for (let at = 0; at < commentRows.length; at += INSERT_CHUNK) {
+      await tx
+        .insert(taskCommentTable)
+        .values(commentRows.slice(at, at + INSERT_CHUNK));
+    }
+    const events = rows.map((row) => ({
+      taskId: row.id,
+      projectId,
+      actorId: actor.userId,
+      type: "imported",
+      data: {},
+      createdAt: now,
+      updatedAt: now,
+    }));
+    for (let at = 0; at < events.length; at += INSERT_CHUNK) {
+      await tx
+        .insert(taskEventTable)
+        .values(events.slice(at, at + INSERT_CHUNK));
+    }
+
     for (const [column, { usedColumn, count }] of unmatched) {
       warnings.push({ kind: "column_unmatched", column, usedColumn, count });
     }
@@ -185,6 +327,12 @@ export async function importTasks(
     }
     if (dropped > 0)
       warnings.push({ kind: "assignee_dropped", count: dropped });
+    for (const [label, count] of droppedLabels) {
+      warnings.push({ kind: "label_dropped", label, count });
+    }
+    for (const [email, count] of unknownAuthors) {
+      warnings.push({ kind: "comment_author_unknown", email, count });
+    }
     return { created: rows.length, warnings };
   });
   return { ...result, txid };

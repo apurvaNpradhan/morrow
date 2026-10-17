@@ -246,6 +246,36 @@ describe("applying labels to a task", () => {
   });
 });
 
+describe("creating a task with labels", () => {
+  it("stores the labels the client chose, once each", async () => {
+    const { addTask, addLabel } = await setup();
+    const bug = await addLabel("Bug");
+    const design = await addLabel("Design");
+
+    const { id } = await addTask("To Do", {
+      labelIds: [bug.id, design.id, bug.id],
+    });
+
+    expect((await taskRow(id))?.labelIds).toEqual([bug.id, design.id]);
+  });
+
+  it("refuses a label of another workspace and more than 20", async () => {
+    const { addTask, addLabel } = await setup();
+    const other = await setup();
+    const foreign = await other.addLabel("Foreign");
+    const mine: string[] = [];
+    for (let n = 0; n < 21; n++) mine.push((await addLabel(`L${n}`)).id);
+
+    const unknown = await rejection(
+      addTask("To Do", { labelIds: [foreign.id] }),
+    );
+    const tooMany = await rejection(addTask("To Do", { labelIds: mine }));
+
+    expect(unknown.code).toBe("NOT_FOUND");
+    expect(tooMany.code).toBe("BAD_REQUEST");
+  });
+});
+
 describe("duplicating a labelled task", () => {
   it("keeps the labels on the copy", async () => {
     const { client, base, addTask, addLabel, apply } = await setup();

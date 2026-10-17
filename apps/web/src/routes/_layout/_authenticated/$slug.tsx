@@ -4,7 +4,6 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
 import { WorkspaceError, WorkspaceNotFound } from "@/workspace";
 import {
   workspaceInvitationCollection,
@@ -12,7 +11,6 @@ import {
 } from "@/members";
 import { labelCollection } from "@/labels";
 import { projectCollection, projectColumnCollection } from "@/projects";
-import { PageTitle } from "@/design-system/page-title";
 import { useCanonicalWorkspaceUrl } from "@/workspace";
 import { useRememberLastWorkspace } from "@/workspace";
 import { resolveWorkspaceBySlug, useActiveWorkspace } from "@/workspace";
@@ -67,7 +65,6 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
 });
 
 function WorkspaceLayout() {
-  const { t } = useTranslation();
   const {
     workspace: resolved,
     session,
@@ -78,13 +75,5 @@ function WorkspaceLayout() {
   useCanonicalWorkspaceUrl();
   useRememberLastWorkspace(workspace.id, session, sessionError);
 
-  return (
-    <>
-      <PageTitle
-        title={t("workspace:home.pageTitle")}
-        hideAppName={!workspace.name}
-      />
-      <Outlet />
-    </>
-  );
+  return <Outlet />;
 }

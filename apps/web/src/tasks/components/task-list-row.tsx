@@ -1,5 +1,5 @@
 import { isClosedCategory, type TaskRow } from "@morrow/sync-schemas";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, MessageSquare } from "lucide-react";
 import { LabelChips, labelsOfTask } from "@/labels";
 import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
@@ -116,6 +116,12 @@ export function TaskListRow({
         <span className="hidden shrink-0 items-center gap-1 sm:flex">
           <LabelChips labels={labels} max={2} />
         </span>
+      ) : null}
+      {task.commentCount > 0 ? (
+        <TaskChip label={t("card.comments", { count: task.commentCount })}>
+          <MessageSquare aria-hidden="true" className="size-3" />
+          {task.commentCount}
+        </TaskChip>
       ) : null}
       {display.dueDates && task.dueDate && !closed ? (
         <TaskChip

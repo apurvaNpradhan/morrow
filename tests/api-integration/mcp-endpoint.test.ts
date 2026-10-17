@@ -123,14 +123,27 @@ describe("MCP endpoint", () => {
     expect(first.headers.has("mcp-session-id")).toBe(false);
     const names = (await rpc(first)).result?.tools?.map((t) => t.name).sort();
     expect(names).toEqual([
+      "archive_task",
+      "comment_task",
+      "create_project",
+      "create_task",
+      "delete_project",
+      "delete_task",
+      "get_task",
       "list_activity",
+      "list_labels",
       "list_members",
       "list_projects",
       "list_tasks",
       "list_workspaces",
+      "manage_column",
+      "manage_label",
+      "move_task",
+      "update_project",
+      "update_task",
       "whoami",
     ]);
-    expect((await rpc(second)).result?.tools).toHaveLength(6);
+    expect((await rpc(second)).result?.tools).toHaveLength(19);
   });
 
   it("runs tools as the token's user, concurrently", async () => {
@@ -177,6 +190,106 @@ describe("MCP endpoint", () => {
       workspaceId: workspace.id,
     });
     expect(activity.result?.isError).toBe(false);
+  });
+
+  it("writes projects, columns, labels, tasks and comments by name", async () => {
+    const owner = await signUp("Owner");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Shared", slug: "shared-writes", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const run = async (name: string, args: Record<string, unknown>) => {
+      const response = await call(owner.token, name, {
+        workspaceId: workspace.id,
+        ...args,
+      });
+      expect(response.result?.isError, response.result?.content[0].text).toBe(
+        false,
+      );
+      return JSON.parse(response.result!.content[0].text);
+    };
+
+    const { projectId } = await run("create_project", {
+      name: "Morrow",
+      key: "MOR",
+    });
+    await run("manage_label", { action: "create", name: "Bug", color: "red" });
+    await run("manage_column", {
+      projectId,
+      action: "create",
+      name: "Review",
+      category: "started",
+    });
+    const first = await run("create_task", {
+      projectId,
+      title: "First",
+      labels: ["bug"],
+    });
+    const second = await run("create_task", {
+      projectId,
+      title: "Second",
+      column: "review",
+      assignee: owner.user.email,
+    });
+    expect([first.ticketId, second.ticketId]).toEqual(["MOR-1", "MOR-2"]);
+
+    await run("update_task", {
+      projectId,
+      ticketId: "MOR-1",
+      title: "First, renamed",
+      priority: "high",
+      removeLabels: ["Bug"],
+    });
+    await run("move_task", {
+      projectId,
+      ticketId: "MOR-1",
+      column: "Review",
+      at: "top",
+    });
+    const { commentId } = await run("comment_task", {
+      projectId,
+      ticketId: "MOR-1",
+      action: "add",
+      body: "Looks good",
+    });
+    await run("comment_task", {
+      projectId,
+      ticketId: "MOR-1",
+      action: "edit",
+      commentId,
+      body: "Looks great",
+    });
+
+    const detail = await run("get_task", { projectId, ticketId: "MOR-1" });
+    expect(detail).toMatchObject({
+      title: "First, renamed",
+      priority: "high",
+      column: "Review",
+      labels: [],
+      comments: [{ body: "Looks great" }],
+    });
+    const tasks = await run("list_tasks", { projectId });
+    expect(tasks.map((t: { ticketId: string }) => t.ticketId)).toEqual([
+      "MOR-1",
+      "MOR-2",
+    ]);
+
+    await run("archive_task", { projectId, ticketId: "MOR-2" });
+    await run("delete_task", { projectId, ticketId: "MOR-2" });
+    await run("update_project", { projectId, archived: true });
+    await run("delete_project", { projectId });
+    const missing = await call(owner.token, "get_task", {
+      workspaceId: workspace.id,
+      projectId,
+      ticketId: "MOR-1",
+    });
+    expect(missing.result?.isError).toBe(true);
   });
 
   it("lists a workspace's projects with their columns in board order", async () => {
@@ -332,6 +445,126 @@ describe("MCP endpoint", () => {
     });
     expect(denied.result?.isError).toBe(true);
     expect(denied.result?.content[0].text).not.toContain("Plan");
+  });
+
+  it("returns a task's labels and comments, and lists labels, for a member only", async () => {
+    const owner = await signUp("Owner");
+    const stranger = await signUp("Stranger");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Shared", slug: "shared-detail", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const [project] = await db
+      .insert(schema.projectTable)
+      .values({
+        workspaceId: workspace.id,
+        key: "MOR",
+        name: "Morrow",
+        position: "a0",
+        lastTaskNumber: 1,
+      })
+      .returning();
+    const [todo] = await db
+      .insert(schema.projectColumnTable)
+      .values({
+        projectId: project.id,
+        name: "To Do",
+        category: "unstarted",
+        color: "slate",
+        position: "a0",
+      })
+      .returning();
+    const [bug, design] = await db
+      .insert(schema.labelTable)
+      .values([
+        {
+          workspaceId: workspace.id,
+          name: "Bug",
+          color: "red",
+          position: "a0",
+        },
+        {
+          workspaceId: workspace.id,
+          name: "Design",
+          color: "violet",
+          position: "a1",
+        },
+      ])
+      .returning();
+    const [task] = await db
+      .insert(schema.taskTable)
+      .values({
+        id: "tdetail00000000000000000a",
+        projectId: project.id,
+        columnId: todo.id,
+        number: 1,
+        title: "Look closer",
+        position: "a0",
+        labelIds: [design.id],
+        commentCount: 1,
+      })
+      .returning();
+    await db.insert(schema.taskDescriptionTable).values({
+      taskId: task.id,
+      projectId: project.id,
+      description: "Details here",
+    });
+    await db.insert(schema.taskCommentTable).values({
+      id: "cdetail00000000000000000a",
+      taskId: task.id,
+      projectId: project.id,
+      authorId: owner.user.id,
+      body: "A remark",
+    });
+
+    const labels = await call(owner.token, "list_labels", {
+      workspaceId: workspace.id,
+    });
+    const detail = await call(owner.token, "get_task", {
+      workspaceId: workspace.id,
+      projectId: project.id,
+      ticketId: "mor-1",
+    });
+    const missing = await call(owner.token, "get_task", {
+      workspaceId: workspace.id,
+      projectId: project.id,
+      ticketId: "MOR-9",
+    });
+    const deniedLabels = await call(stranger.token, "list_labels", {
+      workspaceId: workspace.id,
+    });
+    const deniedTask = await call(stranger.token, "get_task", {
+      workspaceId: workspace.id,
+      projectId: project.id,
+      ticketId: "MOR-1",
+    });
+
+    expect(JSON.parse(labels.result!.content[0].text)).toEqual([
+      { name: "Bug", color: "red" },
+      { name: "Design", color: "violet" },
+    ]);
+    expect(bug.name).toBe("Bug");
+    const task_ = JSON.parse(detail.result!.content[0].text);
+    expect(task_).toMatchObject({
+      ticketId: "MOR-1",
+      title: "Look closer",
+      description: "Details here",
+      labels: [{ name: "Design", color: "violet" }],
+      comments: [
+        { author: { id: owner.user.id, name: "Owner" }, body: "A remark" },
+      ],
+    });
+    expect(missing.result?.isError).toBe(true);
+    for (const denied of [deniedLabels, deniedTask]) {
+      expect(denied.result?.isError).toBe(true);
+      expect(denied.result?.content[0].text).not.toContain("A remark");
+    }
   });
 
   it("rejects empty identifiers before running anything", async () => {

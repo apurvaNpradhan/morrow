@@ -15,6 +15,9 @@ const CODES = {
   FORBIDDEN_ASSIGN: "FORBIDDEN",
   IMPORT_TOO_LARGE: "BAD_REQUEST",
   IMPORT_INVALID: "BAD_REQUEST",
+  INVALID_COMMENT_ID: "BAD_REQUEST",
+  COMMENT_ID_TAKEN: "CONFLICT",
+  COMMENT_NOT_YOURS: "FORBIDDEN",
 } as const;
 
 export type TaskErrorCode = keyof typeof CODES;
@@ -26,10 +29,14 @@ export function taskError(code: TaskErrorCode) {
 export const taskNotFound = () =>
   new ORPCError("NOT_FOUND", { message: "Task not found" });
 
+export const commentNotFound = () =>
+  new ORPCError("NOT_FOUND", { message: "Comment not found" });
+
 /** Turns the unique-index violations a task write can hit into their typed refusals. */
 export function rethrowTaskViolation(error: unknown): never {
   const violated = violatedConstraint(error);
   if (violated === "task_pkey") throw taskError("ID_TAKEN");
+  if (violated === "task_comment_pkey") throw taskError("COMMENT_ID_TAKEN");
   if (violated === "task_column_position_uidx") {
     throw projectError("POSITION_TAKEN");
   }

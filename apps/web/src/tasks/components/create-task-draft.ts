@@ -9,6 +9,7 @@ export type TaskDraft = {
   priority: TaskPriority;
   assigneeId: string | null;
   dueDate: string | null;
+  labelIds: string[];
 };
 
 export const EMPTY_DRAFT: TaskDraft = {
@@ -19,6 +20,7 @@ export const EMPTY_DRAFT: TaskDraft = {
   priority: "none",
   assigneeId: null,
   dueDate: null,
+  labelIds: [],
 };
 
 /** Whether closing would throw away something the user typed or chose. */
@@ -28,6 +30,7 @@ export function isDirty(draft: TaskDraft) {
     draft.description.trim() !== "" ||
     draft.priority !== "none" ||
     draft.assigneeId !== null ||
-    draft.dueDate !== null
+    draft.dueDate !== null ||
+    draft.labelIds.length > 0
   );
 }

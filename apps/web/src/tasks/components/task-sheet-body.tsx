@@ -7,11 +7,14 @@ import { useDescriptionAutosave } from "../actions/use-description-autosave";
 import { useTaskDescription } from "../queries/use-task-queries";
 import { updateTask } from "../actions/task-actions";
 import { errorMessage } from "@/app/lib/error-message";
+import { PageTitle } from "@/design-system/page-title";
 import { toast } from "@/design-system/toast";
 import { Textarea } from "@/design-system/ui/textarea";
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TaskProperties } from "./task-properties";
 import { TaskSheetHeader } from "./task-sheet-header";
+import { TaskTimeline } from "./task-timeline";
+import { displayTicketId } from "../lib/task-links";
 import { useTaskView } from "./task-view-context";
 
 /**
@@ -21,7 +24,7 @@ import { useTaskView } from "./task-view-context";
  */
 export function TaskSheetBody({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
-  const { can, frozen } = useTaskView();
+  const { can, frozen, project } = useTaskView();
   const actions = useTaskActions();
   const saveDescription = useDescriptionAutosave(task.id);
   const description = useTaskDescription(task.id);
@@ -44,6 +47,9 @@ export function TaskSheetBody({ task }: { task: TaskRow }) {
 
   return (
     <>
+      <PageTitle
+        title={`${displayTicketId(project.key, task.number)} ${task.title} · ${project.name}`}
+      />
       <TaskSheetHeader task={task} />
       {task.archivedAt ? (
         <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
@@ -97,6 +103,7 @@ export function TaskSheetBody({ task }: { task: TaskRow }) {
               className="min-h-40"
             />
           )}
+          <TaskTimeline task={task} />
         </div>
         <aside
           aria-label={t("sheet.properties")}

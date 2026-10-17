@@ -11,10 +11,12 @@ import {
   lockProject,
   projectTable,
 } from "#api/projects/index";
+import { assertLabelsExist } from "#api/labels/index";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import { freePosition } from "#api/tasks/lib/free-position";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { checklistColumns, saveDescription } from "#api/tasks/lib/description";
+import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
 
@@ -27,6 +29,7 @@ export type NewTask = {
   priority?: TaskPriority;
   assigneeId?: string | null;
   dueDate?: string | null;
+  labelIds?: string[];
 };
 
 /**
@@ -52,6 +55,11 @@ export async function createTask(
         () => {
           throw taskError("COLUMN_NOT_IN_PROJECT");
         },
+      );
+      const labelIds = await assertLabelsExist(
+        tx,
+        workspaceId,
+        input.labelIds ?? [],
       );
       await assertAssignable(
         tx,
@@ -80,6 +88,7 @@ export async function createTask(
           priority: input.priority ?? "none",
           assigneeId: input.assigneeId ?? null,
           dueDate: input.dueDate ?? null,
+          labelIds,
           position: await freePosition(tx, input.columnId, input.position),
           completedAt: isClosedCategory(column.category) ? new Date() : null,
           createdBy: actor.userId,
@@ -92,6 +101,10 @@ export async function createTask(
       if (!task) throw new Error("Task insert returned no row");
       await saveDescription(tx, projectId, task.id, input.description ?? "");
       await recordTaskActivity(tx, "task.created", workspaceId, project, task);
+      await recordTaskEvent(tx, projectId, task.id, {
+        type: "created",
+        data: {},
+      });
       return task;
     });
     return { id: result.id, number: result.number, txid };

@@ -1,9 +1,10 @@
-import { desc, eq } from "drizzle-orm";
+import { ticketId } from "@morrow/sync-schemas";
+import { asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "#api/platform/database/index";
 import { projectStoredWorkspaceActivity } from "#api/activity/index";
 import { listProjects } from "#api/projects/index";
-import { listTasks } from "#api/tasks/index";
+import { listTasks, taskCommentTable, taskTable } from "#api/tasks/index";
 
 /**
  * Everything Morrow holds about one user, as a single JSON-ready document.
@@ -83,6 +84,27 @@ export async function exportAccountData(user: { id: string; email: string }) {
     )
   ).flat();
 
+  // The comments the user wrote, with where they were written.
+  const comments = await db
+    .select({
+      workspaceId: schema.projectTable.workspaceId,
+      projectId: taskCommentTable.projectId,
+      projectKey: schema.projectTable.key,
+      taskNumber: taskTable.number,
+      taskTitle: taskTable.title,
+      body: taskCommentTable.body,
+      createdAt: taskCommentTable.createdAt,
+      editedAt: taskCommentTable.editedAt,
+    })
+    .from(taskCommentTable)
+    .innerJoin(taskTable, eq(taskTable.id, taskCommentTable.taskId))
+    .innerJoin(
+      schema.projectTable,
+      eq(schema.projectTable.id, taskCommentTable.projectId),
+    )
+    .where(eq(taskCommentTable.authorId, user.id))
+    .orderBy(asc(taskCommentTable.createdAt));
+
   const activityRows = await db
     .select({
       id: schema.activityTable.id,
@@ -136,6 +158,10 @@ export async function exportAccountData(user: { id: string; email: string }) {
     memberships,
     projects,
     tasks,
+    comments: comments.map(({ projectKey, taskNumber, ...comment }) => ({
+      ...comment,
+      ticketId: ticketId(projectKey, taskNumber),
+    })),
     activity,
   };
 }

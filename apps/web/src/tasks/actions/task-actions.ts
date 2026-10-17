@@ -42,6 +42,7 @@ export type NewTask = {
   priority?: TaskPriority;
   assigneeId?: string | null;
   dueDate?: string | null;
+  labelIds?: string[];
   /** The signed-in user, recorded as the creator. */
   userId: string;
 };
@@ -64,7 +65,8 @@ export async function createTask(input: NewTask): Promise<TaskRow> {
       priority: input.priority ?? "none",
       assigneeId: input.assigneeId ?? null,
       dueDate: input.dueDate ?? null,
-      labelIds: [],
+      labelIds: input.labelIds ?? [],
+      commentCount: 0,
       position: await endOfColumn(input.column.id),
       completedAt: isClosedCategory(input.column.category) ? now : null,
       archivedAt: null,
@@ -164,6 +166,7 @@ export async function duplicateTask(task: TaskRow, userId: string) {
       id,
       number: 0,
       title: `${task.title} (copy)`,
+      commentCount: 0,
       position: await endOfColumn(task.columnId),
       archivedAt: null,
       createdBy: userId,
