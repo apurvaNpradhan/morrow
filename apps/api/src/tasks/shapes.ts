@@ -2,6 +2,7 @@ import {
   taskCommentsShape,
   taskDescriptionsShape,
   taskEventsShape,
+  taskLinksShape,
   tasksShape,
 } from "@morrow/sync-schemas";
 import { defineShape } from "#api/platform/sync/define-shape";
@@ -9,6 +10,7 @@ import {
   taskCommentTable,
   taskDescriptionTable,
   taskEventTable,
+  taskLinkTable,
   taskTable,
 } from "./tables";
 
@@ -65,4 +67,23 @@ const taskEvents = defineShape({
   }),
 });
 
-export const tasksShapes = [tasks, taskDescriptions, taskComments, taskEvents];
+/**
+ * The external links of those tasks, read one task at a time when it is
+ * opened; scoped the same way.
+ */
+const taskLinks = defineShape({
+  shape: taskLinksShape,
+  table: taskLinkTable,
+  where: ({ userId }) => ({
+    sql: "project_id IN (SELECT id FROM project WHERE workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1))",
+    params: [userId],
+  }),
+});
+
+export const tasksShapes = [
+  tasks,
+  taskDescriptions,
+  taskComments,
+  taskEvents,
+  taskLinks,
+];

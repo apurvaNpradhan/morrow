@@ -11,6 +11,7 @@ import {
 import { useMemo } from "react";
 import { taskCollection } from "../collections/task-collection";
 import { taskCommentCollection } from "../collections/task-comment-collection";
+import { taskLinkCollection } from "../collections/task-link-collection";
 import { taskEventCollection } from "../collections/task-event-collection";
 import { parseEvents } from "../lib/timeline";
 import { taskDescriptionCollection } from "../collections/task-description-collection";
@@ -121,4 +122,16 @@ export function useTaskEvents(taskId: string) {
         .where(({ event }) => eq(event.taskId, taskId)),
   });
   return useMemo(() => parseEvents(data ?? []), [data]);
+}
+
+/** A task's external links, oldest first; loaded when the task is opened. */
+export function useTaskLinks(taskId: string) {
+  const { data } = useLiveQuery({
+    query: (q) =>
+      q
+        .from({ link: taskLinkCollection })
+        .where(({ link }) => eq(link.taskId, taskId))
+        .orderBy(({ link }) => link.createdAt, "asc"),
+  });
+  return data ?? [];
 }

@@ -7,7 +7,11 @@ import { activityMcpTools } from "#api/activity/index";
 import { labelsMcpTools } from "#api/labels/index";
 import { membersMcpTools } from "#api/members/index";
 import { columnsMcpTools, projectsMcpTools } from "#api/projects/index";
-import { commentsMcpTools, tasksMcpTools } from "#api/tasks/index";
+import {
+  commentsMcpTools,
+  linksMcpTools,
+  tasksMcpTools,
+} from "#api/tasks/index";
 import type { McpTool } from "#api/platform/orpc/mcp-tool";
 import { appRouter } from "#api/platform/orpc/router";
 import { workspaceMcpTools } from "#api/workspace/index";
@@ -22,6 +26,7 @@ export const mcpTools: McpTool[] = [
   ...columnsMcpTools,
   ...tasksMcpTools,
   ...commentsMcpTools,
+  ...linksMcpTools,
   ...labelsMcpTools,
   ...activityMcpTools,
 ] as McpTool[];

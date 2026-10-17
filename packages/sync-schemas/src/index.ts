@@ -5,6 +5,7 @@ import { TASK_PRIORITIES } from "./tasks.js";
 export * from "./comments.js";
 export * from "./task-events.js";
 export * from "./labels.js";
+export * from "./links.js";
 export * from "./projects.js";
 export * from "./tasks.js";
 
@@ -199,6 +200,26 @@ export const taskCommentsShape = shape(
 );
 
 export type TaskCommentRow = z.infer<typeof taskCommentsShape.schema>;
+
+/**
+ * An external link on a Task (a pull request, a design, a doc). Read on
+ * demand, one Task at a time, when it is opened. `title` is null when none was
+ * given; the page shows the host instead.
+ */
+export const taskLinksShape = shape(
+  "task-links",
+  z.object({
+    id: z.string(),
+    taskId: z.string(),
+    projectId: z.string(),
+    url: z.string(),
+    title: z.string().nullable(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
+export type TaskLinkRow = z.infer<typeof taskLinksShape.schema>;
 
 /**
  * The history of a Task, read on demand one Task at a time when it is opened.

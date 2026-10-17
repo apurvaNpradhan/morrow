@@ -1,6 +1,9 @@
 import {
   COMMENT_BODY_MAX,
   isCalendarDate,
+  isHttpUrl,
+  LINK_TITLE_MAX,
+  LINK_URL_MAX,
   TASK_DESCRIPTION_MAX,
   TASK_PRIORITIES,
   TASK_TITLE_MAX,
@@ -28,6 +31,25 @@ export const commentId = z.string().min(1);
 export const newCommentId = z.string().min(1).max(64);
 
 export const commentBody = z.string().trim().min(1).max(COMMENT_BODY_MAX);
+
+export const linkId = z.string().min(1);
+
+/** A client-chosen id; its format is checked by the operation (INVALID_LINK_ID). */
+export const newLinkId = z.string().min(1).max(64);
+
+/** An http(s) address; `javascript:`, `data:` and other schemes are refused. */
+export const linkUrl = z
+  .string()
+  .trim()
+  .max(LINK_URL_MAX)
+  .refine(isHttpUrl, "Must be an http or https address");
+
+/** Optional; empty means none. */
+export const linkTitle = z
+  .string()
+  .trim()
+  .max(LINK_TITLE_MAX)
+  .transform((value) => (value === "" ? null : value));
 
 /** A calendar day, `YYYY-MM-DD`. */
 export const dueDate = z

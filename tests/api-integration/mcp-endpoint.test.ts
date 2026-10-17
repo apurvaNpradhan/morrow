@@ -138,12 +138,13 @@ describe("MCP endpoint", () => {
       "list_workspaces",
       "manage_column",
       "manage_label",
+      "manage_link",
       "move_task",
       "update_project",
       "update_task",
       "whoami",
     ]);
-    expect((await rpc(second)).result?.tools).toHaveLength(19);
+    expect((await rpc(second)).result?.tools).toHaveLength(20);
   });
 
   it("runs tools as the token's user, concurrently", async () => {
@@ -265,10 +266,31 @@ describe("MCP endpoint", () => {
       commentId,
       body: "Looks great",
     });
+    const { linkId } = await run("manage_link", {
+      projectId,
+      ticketId: "MOR-1",
+      action: "add",
+      url: "https://github.com/acme/app/pull/7",
+      title: "PR 7",
+    });
+    await run("manage_link", {
+      projectId,
+      ticketId: "MOR-1",
+      action: "edit",
+      linkId,
+      title: "Pull request 7",
+    });
 
     const detail = await run("get_task", { projectId, ticketId: "MOR-1" });
     expect(detail).toMatchObject({
       title: "First, renamed",
+      links: [
+        {
+          id: linkId,
+          url: "https://github.com/acme/app/pull/7",
+          title: "Pull request 7",
+        },
+      ],
       priority: "high",
       column: "Review",
       labels: [],

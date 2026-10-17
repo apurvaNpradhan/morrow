@@ -11,6 +11,7 @@ import { taskNotFound } from "#api/tasks/errors";
 import {
   taskCommentTable,
   taskDescriptionTable,
+  taskLinkTable,
   taskTable,
 } from "#api/tasks/tables";
 
@@ -89,6 +90,16 @@ export async function getTask(
     .where(eq(taskCommentTable.taskId, task.id))
     .orderBy(asc(taskCommentTable.createdAt), asc(taskCommentTable.id));
 
+  const links = await db
+    .select({
+      id: taskLinkTable.id,
+      url: taskLinkTable.url,
+      title: taskLinkTable.title,
+    })
+    .from(taskLinkTable)
+    .where(eq(taskLinkTable.taskId, task.id))
+    .orderBy(asc(taskLinkTable.createdAt), asc(taskLinkTable.id));
+
   return {
     id: task.id,
     ticketId: ticketId(project.key, task.number),
@@ -108,6 +119,7 @@ export async function getTask(
     labels: labels
       .filter((label) => task.labelIds.includes(label.id))
       .map(({ name, color }) => ({ name, color })),
+    links,
     comments: comments.map((comment) => ({
       id: comment.id,
       author:
