@@ -126,7 +126,7 @@ describe("MCP endpoint", () => {
       "archive_task",
       "comment_task",
       "create_project",
-      "create_task",
+      "create_tasks",
       "delete_project",
       "delete_task",
       "get_task",
@@ -141,7 +141,7 @@ describe("MCP endpoint", () => {
       "manage_link",
       "move_task",
       "update_project",
-      "update_task",
+      "update_tasks",
       "whoami",
     ]);
     expect((await rpc(second)).result?.tools).toHaveLength(20);
@@ -227,26 +227,30 @@ describe("MCP endpoint", () => {
       name: "Review",
       category: "started",
     });
-    const first = await run("create_task", {
+    const created = await run("create_tasks", {
       projectId,
-      title: "First",
-      labels: ["bug"],
+      items: [
+        { title: "First", labels: ["bug"] },
+        { title: "Second", column: "review", assignee: owner.user.email },
+      ],
     });
-    const second = await run("create_task", {
-      projectId,
-      title: "Second",
-      column: "review",
-      assignee: owner.user.email,
-    });
-    expect([first.ticketId, second.ticketId]).toEqual(["MOR-1", "MOR-2"]);
+    expect(created).toEqual([{ ticketId: "MOR-1" }, { ticketId: "MOR-2" }]);
 
-    await run("update_task", {
-      projectId,
-      ticketId: "MOR-1",
-      title: "First, renamed",
-      priority: "high",
-      removeLabels: ["Bug"],
-    });
+    expect(
+      await run("update_tasks", {
+        projectId,
+        items: [
+          {
+            ticketId: "MOR-1",
+            title: "First, renamed",
+            priority: "high",
+            removeLabels: ["Bug"],
+          },
+        ],
+      }),
+    ).toEqual([
+      { ticketId: "MOR-1", changed: ["title", "priority", "removeLabels"] },
+    ]);
     await run("move_task", {
       projectId,
       ticketId: "MOR-1",
@@ -296,7 +300,7 @@ describe("MCP endpoint", () => {
       labels: [],
       comments: [{ body: "Looks great" }],
     });
-    const tasks = await run("list_tasks", { projectId });
+    const { tasks } = await run("list_tasks", { projectId });
     expect(tasks.map((t: { ticketId: string }) => t.ticketId)).toEqual([
       "MOR-1",
       "MOR-2",
@@ -312,6 +316,188 @@ describe("MCP endpoint", () => {
       ticketId: "MOR-1",
     });
     expect(missing.result?.isError).toBe(true);
+  });
+
+  it("creates and changes tasks in batches, creating missing labels", async () => {
+    const owner = await signUp("Owner");
+    const viewer = await signUp("Viewer");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Batch", slug: "batch-writes", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values([
+      {
+        workspaceId: workspace.id,
+        userId: owner.user.id,
+        role: "owner",
+        joinedAt: new Date(),
+      },
+      {
+        workspaceId: workspace.id,
+        userId: viewer.user.id,
+        role: "viewer",
+        joinedAt: new Date(),
+      },
+    ]);
+    const as =
+      (who: { token: string }) =>
+      async (name: string, args = {}) => {
+        const response = await call(who.token, name, {
+          workspaceId: workspace.id,
+          ...args,
+        });
+        expect(response.result?.isError, response.result?.content[0].text).toBe(
+          false,
+        );
+        return JSON.parse(response.result!.content[0].text);
+      };
+    const run = as(owner);
+    const { projectId } = await run("create_project", {
+      name: "Morrow",
+      key: "MOR",
+    });
+
+    const created = await run("create_tasks", {
+      projectId,
+      items: [
+        { title: "Seed", labels: ["Fresh"], description: "needle in text" },
+        { title: "Broken", column: "Nowhere" },
+        { title: "Mine", assignee: owner.user.email, priority: "high" },
+      ],
+    });
+    expect(created[0]).toEqual({
+      ticketId: "MOR-1",
+      createdLabels: ["Fresh"],
+    });
+    expect(created[1]).toMatchObject({ index: 1 });
+    expect(created[1].error).toContain("Nowhere");
+    expect(created[2]).toEqual({ ticketId: "MOR-2" });
+
+    const updated = await run("update_tasks", {
+      projectId,
+      items: [
+        { ticketId: "MOR-1", addLabels: ["Fresh", "Second"], priority: "low" },
+        { ticketId: "MOR-9", title: "Ghost" },
+      ],
+    });
+    expect(updated[0]).toEqual({
+      ticketId: "MOR-1",
+      changed: ["priority", "addLabels"],
+      createdLabels: ["Second"],
+    });
+    expect(updated[1]).toMatchObject({ index: 1 });
+    const detail = await run("get_task", { projectId, ticketId: "MOR-1" });
+    expect(detail.title).toBe("Seed");
+    expect(detail.priority).toBe("low");
+    expect(detail.labels.map((l: { name: string }) => l.name).sort()).toEqual([
+      "Fresh",
+      "Second",
+    ]);
+
+    const titles = async (args: Record<string, unknown>) =>
+      (await run("list_tasks", args)).tasks.map(
+        (t: { title: string }) => t.title,
+      );
+    expect(await titles({ projectId, assignee: "me" })).toEqual(["Mine"]);
+    expect(await titles({ projectId, assignee: owner.user.email })).toEqual([
+      "Mine",
+    ]);
+    expect(await titles({ projectId, label: "FRESH" })).toEqual(["Seed"]);
+    expect(
+      await titles({ projectId, column: detail.column.toUpperCase() }),
+    ).toEqual(["Seed", "Mine"]);
+    expect(await titles({ projectId, query: "NEEDLE" })).toEqual(["Seed"]);
+    expect(await titles({ projectId, query: "100%" })).toEqual([]);
+
+    const withText = await run("list_tasks", {
+      projectId,
+      query: "needle",
+      withDescription: true,
+    });
+    expect(withText.tasks[0]).toMatchObject({
+      description: "needle in text",
+      labels: expect.arrayContaining(["Fresh"]),
+    });
+    expect(withText.tasks[0]).not.toHaveProperty("project");
+
+    // Without a project it spans the workspace and names each task's project.
+    const second = await run("create_project", { name: "Other", key: "OTH" });
+    await run("create_tasks", {
+      projectId: second.projectId,
+      items: [{ title: "Elsewhere" }],
+    });
+    const everywhere = await run("list_tasks", {});
+    expect(everywhere.tasks).toHaveLength(3);
+    expect(everywhere.tasks.map((t: { project: string }) => t.project)).toEqual(
+      ["MOR", "MOR", "OTH"],
+    );
+    const tooNarrow = await call(owner.token, "list_tasks", {
+      workspaceId: workspace.id,
+      column: "To Do",
+    });
+    expect(tooNarrow.result?.isError).toBe(true);
+
+    const limited = await run("list_tasks", { limit: 1 });
+    expect(limited).toMatchObject({ truncated: true });
+    expect(limited.tasks).toHaveLength(1);
+
+    // A role that cannot create labels gets a clear error for that item only.
+    const refused = await as(viewer)("update_tasks", {
+      projectId,
+      items: [{ ticketId: "MOR-2", addLabels: ["Brand new"] }],
+    });
+    expect(refused[0].error).toContain("may not create labels");
+  });
+
+  it("marks a listing cut at 200 tasks as truncated", async () => {
+    const owner = await signUp("Owner");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Big", slug: "big-listing", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const [project] = await db
+      .insert(schema.projectTable)
+      .values({
+        workspaceId: workspace.id,
+        key: "BIG",
+        name: "Big",
+        position: "a0",
+        lastTaskNumber: 201,
+      })
+      .returning();
+    const [column] = await db
+      .insert(schema.projectColumnTable)
+      .values({
+        projectId: project.id,
+        name: "To Do",
+        category: "unstarted",
+        color: "slate",
+        position: "a0",
+      })
+      .returning();
+    await db.insert(schema.taskTable).values(
+      Array.from({ length: 201 }, (_, index) => ({
+        id: `tbig${String(index).padStart(20, "0")}`,
+        projectId: project.id,
+        columnId: column.id,
+        number: index + 1,
+        title: `Task ${index + 1}`,
+        position: `a${String(index).padStart(4, "0")}`,
+      })),
+    );
+
+    const response = await call(owner.token, "list_tasks", {
+      workspaceId: workspace.id,
+    });
+    const listed = JSON.parse(response.result!.content[0].text);
+    expect(listed.tasks).toHaveLength(200);
+    expect(listed.truncated).toBe(true);
   });
 
   it("lists a workspace's projects with their columns in board order", async () => {
@@ -444,7 +630,9 @@ describe("MCP endpoint", () => {
       projectId: project.id,
     });
     expect(listed.result?.isError).toBe(false);
-    const tasks = JSON.parse(listed.result!.content[0].text);
+    const { tasks, truncated } = JSON.parse(listed.result!.content[0].text);
+    expect(truncated).toBe(false);
+    expect(tasks[0]).not.toHaveProperty("description");
     expect(tasks.map((task: { ticketId: string }) => task.ticketId)).toEqual([
       "MOR-2",
       "MOR-1",

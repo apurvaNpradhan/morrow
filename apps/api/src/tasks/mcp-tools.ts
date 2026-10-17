@@ -1,11 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import { z } from "zod";
+import { ORPCError } from "@orpc/server";
 import { mcpTool } from "#api/platform/orpc/mcp-tool";
 import { resolveColumn } from "#api/projects/index";
 import { description, dueDate, priority, title } from "./schemas";
 import {
   resolveAssigneeId,
   resolveLabelIds,
+  resolveOrCreateLabelIds,
   resolveTask,
   taskPosition,
 } from "./mcp-resolve";
@@ -19,34 +21,100 @@ const task = project.extend({
 });
 const edge = z.enum(["top", "bottom"]);
 
+const MAX_BATCH = 50;
+
+const createItem = z.object({
+  title,
+  description: description.optional(),
+  column: z.string().optional(),
+  priority: priority.optional(),
+  assignee: z.string().optional(),
+  dueDate: dueDate.optional(),
+  labels: z.array(z.string()).optional(),
+  at: edge.default("bottom"),
+});
+
+const updateItem = z.object({
+  ticketId: z.string().trim().min(1).describe("For example MOR-12."),
+  title: title.optional(),
+  description: description.optional(),
+  priority: priority.optional(),
+  dueDate: dueDate.nullable().optional(),
+  assignee: z.string().nullable().optional(),
+  addLabels: z.array(z.string()).optional(),
+  removeLabels: z.array(z.string()).optional(),
+});
+
+/**
+ * Runs the items one at a time, in order. A failure becomes that item's
+ * `{ index, error }` and the rest still run, so one bad item hides nothing.
+ */
+async function runBatch<Item, Result>(
+  items: Item[],
+  run: (item: Item) => Promise<Result>,
+) {
+  const results: Array<Result | { index: number; error: string }> = [];
+  for (const [index, item] of items.entries()) {
+    try {
+      results.push(await run(item));
+    } catch (error) {
+      results.push({
+        index,
+        error: error instanceof Error ? error.message : "Failed",
+      });
+    }
+  }
+  return results;
+}
+
 export const tasksMcpTools = [
   mcpTool({
     name: "list_tasks",
     description:
-      "List the tasks of a project in board order, with ticket id, column, category, priority, assignee, due date and completion and archive state.",
+      'List tasks in board order. Without projectId it lists every project of the workspace (each task then carries its project key). Filter by assignee ("me" or an email), label name, column name (needs projectId), text in title or description, and archived state. Descriptions are left out unless withDescription is true. At most 200 tasks; truncated says when more matched, so narrow the query.',
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
-      projectId: z.string().trim().min(1),
+      projectId: z.string().trim().min(1).optional(),
+      assignee: z.string().trim().min(1).optional(),
+      label: z.string().trim().min(1).optional(),
+      column: z.string().trim().min(1).optional(),
+      query: z.string().trim().min(1).max(200).optional(),
+      includeArchived: z.boolean().default(false),
+      withDescription: z.boolean().default(false),
+      limit: z.number().int().min(1).max(200).default(200),
     }),
-    run: async (input, client) =>
-      (await client.tasks.list(input)).map((task) => ({
-        ticketId: task.ticketId,
-        title: task.title,
-        column: task.columnName,
-        category: task.category,
-        priority: task.priority,
-        assignee: task.assigneeId
-          ? { id: task.assigneeId, name: task.assigneeName }
-          : null,
-        dueDate: task.dueDate,
-        completedAt: task.completedAt,
-        archivedAt: task.archivedAt,
-      })),
+    run: async ({ withDescription, ...input }, client) => {
+      if (input.column && !input.projectId) {
+        throw new ORPCError("BAD_REQUEST", {
+          message: "column needs projectId; columns belong to a project.",
+        });
+      }
+      const { tasks, truncated } = await client.tasks.search(input);
+      return {
+        truncated,
+        tasks: tasks.map((task) => ({
+          ticketId: task.ticketId,
+          ...(input.projectId ? {} : { project: task.projectKey }),
+          title: task.title,
+          column: task.columnName,
+          category: task.category,
+          priority: task.priority,
+          assignee: task.assigneeId
+            ? { id: task.assigneeId, name: task.assigneeName }
+            : null,
+          dueDate: task.dueDate,
+          labels: task.labels,
+          completedAt: task.completedAt,
+          archivedAt: task.archivedAt,
+          ...(withDescription && { description: task.description }),
+        })),
+      };
+    },
   }),
   mcpTool({
     name: "get_task",
     description:
-      "Get one task by ticket id (for example MOR-12): its description, labels (names and colours) and comments, oldest first, with the fields list_tasks gives.",
+      "Get one task by ticket id (for example MOR-12): its description, labels (names and colours), external links (id, url, title) and comments, oldest first, with the fields list_tasks gives.",
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       projectId: z.string().trim().min(1),
@@ -55,100 +123,121 @@ export const tasksMcpTools = [
     run: (input, client) => client.tasks.get(input),
   }),
   mcpTool({
-    name: "create_task",
+    name: "create_tasks",
     description:
-      "Create a task. The column is named (default: the project's first), the assignee is a member's email, labels are named.",
+      "Create 1–50 tasks in one call. Each item has a title and optionally description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created) and at (top or bottom). Items run in order; one failing does not stop the rest. Returns a small result per item.",
     inputSchema: project.extend({
-      title,
-      description: description.optional(),
-      column: z.string().optional(),
-      priority: priority.optional(),
-      assignee: z.string().optional(),
-      dueDate: dueDate.optional(),
-      labels: z.array(z.string()).optional(),
-      at: edge.default("bottom"),
+      items: z.array(createItem).min(1).max(MAX_BATCH),
     }),
-    run: async (input, client) => {
-      const { column, projectKey } = await resolveColumn(
-        client,
-        input,
-        input.column,
-      );
-      const created = await client.tasks.create({
-        workspaceId: input.workspaceId,
-        projectId: input.projectId,
-        id: createId(),
-        columnId: column.id,
-        position: await taskPosition(client, input, column.id, input.at),
-        title: input.title,
-        description: input.description,
-        priority: input.priority,
-        dueDate: input.dueDate,
-        assigneeId: input.assignee
-          ? await resolveAssigneeId(client, input.workspaceId, input.assignee)
-          : undefined,
-        labelIds: input.labels
-          ? await resolveLabelIds(client, input.workspaceId, input.labels)
-          : undefined,
-      });
-      return { ticketId: `${projectKey}-${created.number}` };
-    },
+    run: async (input, client) =>
+      runBatch(input.items, async (item) => {
+        const { column, projectKey } = await resolveColumn(
+          client,
+          input,
+          item.column,
+        );
+        const labels = item.labels
+          ? await resolveOrCreateLabelIds(
+              client,
+              input.workspaceId,
+              item.labels,
+            )
+          : undefined;
+        const created = await client.tasks.create({
+          workspaceId: input.workspaceId,
+          projectId: input.projectId,
+          id: createId(),
+          columnId: column.id,
+          position: await taskPosition(client, input, column.id, item.at),
+          title: item.title,
+          description: item.description,
+          priority: item.priority,
+          dueDate: item.dueDate,
+          assigneeId: item.assignee
+            ? await resolveAssigneeId(client, input.workspaceId, item.assignee)
+            : undefined,
+          labelIds: labels?.ids,
+        });
+        return {
+          ticketId: `${projectKey}-${created.number}`,
+          ...(labels?.created.length && { createdLabels: labels.created }),
+        };
+      }),
   }),
   mcpTool({
-    name: "update_task",
+    name: "update_tasks",
     description:
-      "Change a task. Only the fields you pass change; null clears dueDate and assignee (an email). Labels are named.",
-    inputSchema: task.extend({
-      title: title.optional(),
-      description: description.optional(),
-      priority: priority.optional(),
-      dueDate: dueDate.nullable().optional(),
-      assignee: z.string().nullable().optional(),
-      addLabels: z.array(z.string()).optional(),
-      removeLabels: z.array(z.string()).optional(),
+      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate and assignee (an email). addLabels creates missing labels; removeLabels names existing ones. Items run in order; one failing does not stop the rest. Returns the changed field names per item.",
+    inputSchema: project.extend({
+      items: z.array(updateItem).min(1).max(MAX_BATCH),
     }),
-    run: async (input, client) => {
-      const scope = await resolveTask(client, input, input.ticketId);
-      if (input.title !== undefined)
-        await client.tasks.updateTitle({ ...scope, title: input.title });
-      if (input.description !== undefined)
-        await client.tasks.updateDescription({
-          ...scope,
-          description: input.description,
-        });
-      if (input.priority !== undefined)
-        await client.tasks.updatePriority({
-          ...scope,
-          priority: input.priority,
-        });
-      if (input.dueDate !== undefined)
-        await client.tasks.updateDueDate({ ...scope, dueDate: input.dueDate });
-      if (input.assignee !== undefined)
-        await client.tasks.updateAssignee({
-          ...scope,
-          assigneeId:
-            input.assignee === null
-              ? null
-              : await resolveAssigneeId(
-                  client,
-                  input.workspaceId,
-                  input.assignee,
-                ),
-        });
-      for (const labelId of await resolveLabelIds(
-        client,
-        input.workspaceId,
-        input.addLabels ?? [],
-      ))
-        await client.tasks.addLabel({ ...scope, labelId });
-      for (const labelId of await resolveLabelIds(
-        client,
-        input.workspaceId,
-        input.removeLabels ?? [],
-      ))
-        await client.tasks.removeLabel({ ...scope, labelId });
-      return { ticketId: input.ticketId, updated: true };
-    },
+    run: async (input, client) =>
+      runBatch(input.items, async (item) => {
+        const scope = await resolveTask(client, input, item.ticketId);
+        const changed: string[] = [];
+        if (item.title !== undefined) {
+          await client.tasks.updateTitle({ ...scope, title: item.title });
+          changed.push("title");
+        }
+        if (item.description !== undefined) {
+          await client.tasks.updateDescription({
+            ...scope,
+            description: item.description,
+          });
+          changed.push("description");
+        }
+        if (item.priority !== undefined) {
+          await client.tasks.updatePriority({
+            ...scope,
+            priority: item.priority,
+          });
+          changed.push("priority");
+        }
+        if (item.dueDate !== undefined) {
+          await client.tasks.updateDueDate({ ...scope, dueDate: item.dueDate });
+          changed.push("dueDate");
+        }
+        if (item.assignee !== undefined) {
+          await client.tasks.updateAssignee({
+            ...scope,
+            assigneeId:
+              item.assignee === null
+                ? null
+                : await resolveAssigneeId(
+                    client,
+                    input.workspaceId,
+                    item.assignee,
+                  ),
+          });
+          changed.push("assignee");
+        }
+        let createdLabels: string[] = [];
+        if (item.addLabels?.length) {
+          const labels = await resolveOrCreateLabelIds(
+            client,
+            input.workspaceId,
+            item.addLabels,
+          );
+          createdLabels = labels.created;
+          for (const labelId of labels.ids)
+            await client.tasks.addLabel({ ...scope, labelId });
+          changed.push("addLabels");
+        }
+        if (item.removeLabels?.length) {
+          for (const labelId of await resolveLabelIds(
+            client,
+            input.workspaceId,
+            item.removeLabels,
+          ))
+            await client.tasks.removeLabel({ ...scope, labelId });
+          changed.push("removeLabels");
+        }
+        return {
+          ticketId: item.ticketId,
+          changed,
+          ...(createdLabels.length && { createdLabels }),
+        };
+      }),
   }),
   mcpTool({
     name: "move_task",

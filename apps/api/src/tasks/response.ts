@@ -76,6 +76,27 @@ export const taskListItem = z.object({
   updatedAt: z.date(),
 });
 
+export const taskSearchResult = z.object({
+  truncated: z.boolean().describe("More tasks matched than were returned."),
+  tasks: z.array(
+    z.object({
+      ticketId: z.string(),
+      projectKey: z.string(),
+      title: z.string(),
+      description: z.string(),
+      columnName: z.string(),
+      category: z.string(),
+      priority: z.enum(TASK_PRIORITIES),
+      assigneeId: z.string().nullable(),
+      assigneeName: z.string().nullable(),
+      dueDate: z.string().nullable(),
+      labels: z.array(z.string()),
+      completedAt: z.date().nullable(),
+      archivedAt: z.date().nullable(),
+    }),
+  ),
+});
+
 export const exportDocument = z.object({
   project: z.object({ key: z.string(), name: z.string() }),
   labels: z.array(z.object({ name: z.string(), color: z.string() })),
