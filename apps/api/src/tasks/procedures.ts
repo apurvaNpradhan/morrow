@@ -14,6 +14,7 @@ import { getTask } from "./operations/get-task";
 import { importTasks } from "./operations/import-tasks";
 import { listTasks } from "./operations/list-tasks";
 import { moveTask } from "./operations/move-task";
+import { searchTasks, SEARCH_TASKS_MAX } from "./operations/search-tasks";
 import { setTaskLabel } from "./operations/set-task-label";
 import { setTaskArchived } from "./operations/set-task-archived";
 import { updateTask } from "./operations/update-task";
@@ -23,6 +24,7 @@ import {
   exportDocument,
   importResult,
   taskDetail,
+  taskSearchResult,
   taskListItem,
   txidResult,
 } from "./response";
@@ -69,6 +71,45 @@ const list = authed
   .use(canRead)
   .output(z.array(taskListItem))
   .handler(({ input }) => listTasks(input.workspaceId, input.projectId));
+
+const search = authed
+  .input(
+    z.object({
+      workspaceId,
+      projectId: projectId.optional(),
+      assignee: z
+        .string()
+        .trim()
+        .min(1)
+        .optional()
+        .describe('"me" or a member\'s email.'),
+      label: z.string().trim().min(1).optional(),
+      column: z.string().trim().min(1).optional(),
+      query: z.string().trim().min(1).max(200).optional(),
+      includeArchived: z.boolean().default(false),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(SEARCH_TASKS_MAX)
+        .default(SEARCH_TASKS_MAX),
+    }),
+  )
+  .use(canRead)
+  .output(taskSearchResult)
+  .handler(({ input, context }) =>
+    searchTasks(input.workspaceId, {
+      projectId: input.projectId,
+      ...(input.assignee === "me"
+        ? { assigneeId: context.user.id }
+        : { assigneeEmail: input.assignee }),
+      label: input.label,
+      column: input.column,
+      query: input.query,
+      includeArchived: input.includeArchived,
+      limit: input.limit,
+    }),
+  );
 
 const get = authed
   .input(forProject.extend({ ticketId: z.string().trim().min(1) }))
@@ -285,6 +326,7 @@ const importProject = authed
 
 export const tasksRouter = {
   list,
+  search,
   get,
   create,
   updateTitle,

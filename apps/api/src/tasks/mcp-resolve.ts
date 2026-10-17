@@ -1,4 +1,5 @@
 import { ORPCError } from "@orpc/server";
+import { createId } from "@paralleldrive/cuid2";
 import { generateKeyBetween } from "fractional-indexing";
 import type { McpClient } from "#api/platform/orpc/mcp-tool";
 
@@ -58,4 +59,50 @@ export async function taskPosition(
   return at === "top"
     ? generateKeyBetween(null, keys[0] ?? null)
     : generateKeyBetween(keys.at(-1) ?? null, null);
+}
+
+/**
+ * Label ids for names, creating the ones that do not exist yet (default
+ * colour) through the labels Procedure, which checks the caller may. Returns
+ * the names that were created.
+ */
+export async function resolveOrCreateLabelIds(
+  client: McpClient,
+  workspaceId: string,
+  names: string[],
+) {
+  const labels = await client.labels.list({ workspaceId });
+  const created: string[] = [];
+  const ids: string[] = [];
+  for (const name of names) {
+    let label = labels.find((l) => same(l.name, name));
+    if (!label) {
+      const id = createId();
+      const position = generateKeyBetween(
+        labels.at(-1)?.position ?? null,
+        null,
+      );
+      try {
+        await client.labels.create({
+          workspaceId,
+          id,
+          name,
+          color: "gray",
+          position,
+        });
+      } catch (error) {
+        if (error instanceof ORPCError && error.code === "FORBIDDEN") {
+          throw refused(
+            `No label named "${name}", and your role may not create labels. Use an existing label.`,
+          );
+        }
+        throw error;
+      }
+      label = { id, name: name.trim(), position } as (typeof labels)[number];
+      labels.push(label);
+      created.push(label.name);
+    }
+    ids.push(label.id);
+  }
+  return { ids, created };
 }
