@@ -3,7 +3,7 @@ import { cn } from "@/design-system/cn";
 
 /**
  * A small field on a card or row. With `onOpen` it is a button that opens that
- * field's picker; the card underneath does not see the click.
+ * field's picker; the card underneath does not see the click or the press.
  */
 export function TaskChip({
   children,
@@ -43,6 +43,8 @@ export function TaskChip({
         onOpen(event.currentTarget);
       }}
       onKeyDown={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onTouchStart={(event) => event.stopPropagation()}
     >
       {children}
     </button>
