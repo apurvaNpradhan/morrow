@@ -11,6 +11,8 @@ import {
 } from "@/design-system/ui/menu";
 import { localeWeekStart } from "../lib/calendar-day";
 import { quickDueDates } from "../lib/due-date-picks";
+import { DigitHint, DigitKeys, digitProps } from "./digit-keys";
+import { TypedDueDate } from "./typed-due-date";
 import { ColumnMarker } from "./column-marker";
 import { PersonAvatar } from "./person-avatar";
 import { TaskPriorityIcon } from "./task-priority-icon";
@@ -35,11 +37,17 @@ export function PriorityItems({
       value={value}
       onValueChange={(next) => onSelect(next as TaskPriority)}
     >
-      {TASK_PRIORITIES.map((priority) => (
-        <MenuRadioItem key={priority} value={priority}>
-          <span className="flex items-center gap-2">
+      <DigitKeys />
+      {TASK_PRIORITIES.map((priority, index) => (
+        <MenuRadioItem
+          key={priority}
+          value={priority}
+          {...digitProps(index + 1)}
+        >
+          <span className="flex w-full items-center gap-2">
             <TaskPriorityIcon priority={priority} />
             {t(`priority.${priority}`)}
+            <DigitHint n={index + 1} />
           </span>
         </MenuRadioItem>
       ))}
@@ -58,11 +66,17 @@ export function ColumnItems({
 }) {
   return (
     <MenuRadioGroup value={value} onValueChange={onSelect}>
-      {columns.map((column) => (
-        <MenuRadioItem key={column.id} value={column.id}>
-          <span className="flex items-center gap-2">
+      <DigitKeys />
+      {columns.map((column, index) => (
+        <MenuRadioItem
+          key={column.id}
+          value={column.id}
+          {...digitProps(index + 1)}
+        >
+          <span className="flex w-full items-center gap-2">
             <ColumnMarker column={column} />
             {column.name}
+            <DigitHint n={index + 1} />
           </span>
         </MenuRadioItem>
       ))}
@@ -96,14 +110,25 @@ export function AssigneeItems({
       value={value ?? NOBODY}
       onValueChange={(next) => onSelect(next === NOBODY ? null : next)}
     >
-      <MenuRadioItem value={NOBODY}>{t("assignee.unassigned")}</MenuRadioItem>
-      {choices.map((person) => (
-        <MenuRadioItem key={person.id} value={person.id}>
-          <span className="flex items-center gap-2">
+      <DigitKeys />
+      <MenuRadioItem value={NOBODY} {...digitProps(1)}>
+        <span className="flex w-full items-center gap-2">
+          {t("assignee.unassigned")}
+          <DigitHint n={1} />
+        </span>
+      </MenuRadioItem>
+      {choices.map((person, index) => (
+        <MenuRadioItem
+          key={person.id}
+          value={person.id}
+          {...digitProps(index + 2)}
+        >
+          <span className="flex w-full items-center gap-2">
             <PersonAvatar person={person} className="size-4" />
             {person.id === meId
               ? t("assignee.me", { name: person.name })
               : person.name}
+            <DigitHint n={index + 2} />
           </span>
         </MenuRadioItem>
       ))}
@@ -128,9 +153,16 @@ export function DueDateItems({
   const { t } = useTranslation("tasks");
   return (
     <>
-      {quickDueDates(today, localeWeekStart()).map(({ key, day }) => (
-        <MenuItem key={key} onClick={() => onSelect(day)}>
+      <DigitKeys />
+      <TypedDueDate today={today} onSelect={onSelect} />
+      {quickDueDates(today, localeWeekStart()).map(({ key, day }, index) => (
+        <MenuItem
+          key={key}
+          onClick={() => onSelect(day)}
+          {...digitProps(index + 1)}
+        >
           {t(`due.${key}`)}
+          <DigitHint n={index + 1} />
         </MenuItem>
       ))}
       <MenuItem onClick={onPickDate}>{t("due.pick")}</MenuItem>

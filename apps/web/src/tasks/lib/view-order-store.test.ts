@@ -1,6 +1,11 @@
 import type { TaskRow } from "@morrow/sync-schemas";
 import { afterEach, describe, expect, it } from "vite-plus/test";
-import { clearView, neighborInView, publishView } from "./view-order-store";
+import {
+  clearView,
+  neighborInView,
+  placeInOrder,
+  publishView,
+} from "./view-order-store";
 
 const task = (id: string) => ({ id }) as TaskRow;
 
@@ -24,5 +29,20 @@ describe("neighborInView", () => {
     expect(neighborInView("zzz", 1)).toBeUndefined();
     clearView();
     expect(neighborInView("a", 1)).toBeUndefined();
+  });
+});
+
+describe("placeInOrder", () => {
+  it("keeps the order of the view that was just left, for the full page", () => {
+    publishView({
+      tasks: [task("a"), task("b"), task("c")],
+      lanes: null,
+      reveal: () => {},
+    });
+    clearView();
+    expect(placeInOrder("b")).toMatchObject({ position: 2, total: 3 });
+    expect(placeInOrder("b")?.next?.id).toBe("c");
+    expect(placeInOrder("a")?.previous).toBeUndefined();
+    expect(placeInOrder("zzz")).toBeNull();
   });
 });

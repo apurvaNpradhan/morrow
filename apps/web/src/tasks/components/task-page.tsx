@@ -20,6 +20,7 @@ import { DueDateDialog } from "./due-date-dialog";
 import { ProjectTaskViewProvider } from "./project-task-view-provider";
 import { TaskDetails } from "./task-details";
 import { TaskFieldPicker } from "./task-field-picker";
+import { TaskPager } from "./task-pager";
 import { TaskHeaderActions } from "./task-header-actions";
 
 type Workspace = { id: string; slug: string };
@@ -130,7 +131,14 @@ function LoadedTaskPage({
           </BreadcrumbItem>
         </>
       }
-      headerActions={task ? <TaskHeaderActions task={task} fullPage /> : null}
+      headerActions={
+        task ? (
+          <>
+            <TaskPager task={task} />
+            <TaskHeaderActions task={task} fullPage />
+          </>
+        ) : null
+      }
     >
       <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col">
         {task ? (

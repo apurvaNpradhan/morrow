@@ -66,11 +66,18 @@ export function parseDateQuery(query: string, today: string): string | null {
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
   if (iso) return validDay(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
 
-  const relative = /^in (\d+) (day|week|month)s?$/.exec(text);
+  // "in 3 days", "7 days", "2w", "24h" (hours round up to whole days).
+  const relative =
+    /^(?:in )?(\d+) ?(h|hr|hrs|hours?|d|days?|w|wks?|weeks?|mo|months?)$/.exec(
+      text,
+    );
   if (relative) {
     const amount = Number(relative[1]);
-    if (relative[2] === "day") return dayString(addDays(base, amount));
-    if (relative[2] === "week") return dayString(addDays(base, amount * 7));
+    const unit = relative[2]!;
+    if (unit.startsWith("h"))
+      return dayString(addDays(base, Math.ceil(amount / 24)));
+    if (unit.startsWith("d")) return dayString(addDays(base, amount));
+    if (unit.startsWith("w")) return dayString(addDays(base, amount * 7));
     return dayString(addMonths(base, amount));
   }
 

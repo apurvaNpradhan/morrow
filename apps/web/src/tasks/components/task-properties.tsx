@@ -7,6 +7,7 @@ import {
   PopoverPopup,
   PopoverTrigger,
 } from "@/design-system/ui/popover";
+import { cn } from "@/design-system/cn";
 import { LabelChips, labelsOfTask } from "@/labels";
 import { useTaskActions } from "../actions/use-task-actions";
 import { openDatePicker } from "../lib/date-picker-store";
@@ -51,7 +52,8 @@ export function TaskProperties({ task }: { task: TaskRow }) {
   const creator = task.createdBy ? personById.get(task.createdBy) : undefined;
 
   return (
-    <dl className="flex flex-wrap gap-2 @min-[720px]:flex-col @min-[720px]:gap-4">
+    <dl className="flex flex-wrap items-start gap-2 @min-[720px]:flex-col @min-[720px]:gap-0.5">
+      <RailHeading>{t("sheet.properties")}</RailHeading>
       <Field label={t("fields.column")}>
         <FieldChipMenu
           label={t("fields.column")}
@@ -73,7 +75,12 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           sheetField="priority"
           disabled={!editable}
           icon={<TaskPriorityIcon priority={task.priority} />}
-          value={t(`priority.${task.priority}`)}
+          muted={task.priority === "none"}
+          value={
+            task.priority === "none"
+              ? t("priority.set")
+              : t(`priority.${task.priority}`)
+          }
         >
           <PriorityItems
             value={task.priority}
@@ -93,7 +100,8 @@ export function TaskProperties({ task }: { task: TaskRow }) {
               <UserRound aria-hidden="true" className="size-3.5" />
             )
           }
-          value={assignee?.name ?? t("assignee.unassigned")}
+          muted={!assignee}
+          value={assignee?.name ?? t("assignee.assign")}
         >
           <AssigneeItems
             people={people}
@@ -111,6 +119,7 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           label={t("fields.dueDate")}
           sheetField="dueDate"
           disabled={!editable}
+          muted={!task.dueDate}
           icon={<CalendarDays aria-hidden="true" className="size-3.5" />}
           value={
             task.dueDate
@@ -130,20 +139,25 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           />
         </FieldChipMenu>
       </Field>
+      <RailHeading>{t("fields.labels")}</RailHeading>
       <Field label={t("fields.labels")}>
         <Popover>
           <PopoverTrigger
             disabled={!editable}
             aria-label={t("fields.labels")}
             data-sheet-field="labels"
-            className="inline-flex min-h-7 max-w-full cursor-pointer flex-wrap items-center gap-1 rounded-md border bg-control px-2 py-1 text-xs outline-none hover:bg-control-hover focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-64"
+            className={cn(
+              "inline-flex min-h-7 max-w-full cursor-pointer flex-wrap items-center gap-1 rounded-md px-2 py-1 text-xs outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-64 @min-[720px]:w-full @min-[720px]:min-h-8 @min-[720px]:text-sm",
+              labels.length === 0 &&
+                "border bg-control text-muted-foreground @min-[720px]:border-transparent @min-[720px]:bg-transparent",
+            )}
           >
             {labels.length > 0 ? (
               <LabelChips labels={labels} max={6} />
             ) : (
               <>
                 <Tag aria-hidden="true" className="size-3.5" />
-                {t("labels.none")}
+                {t("labels.add")}
               </>
             )}
           </PopoverTrigger>
@@ -152,13 +166,14 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           </PopoverPopup>
         </Popover>
       </Field>
+      <RailHeading>{t("sheet.details")}</RailHeading>
       <Field label={t("fields.createdBy")}>
-        <span className="inline-flex h-7 items-center gap-1.5 text-xs">
-          {creator?.name ?? t("sheet.unknownUser")}
-        </span>
-        <span className="block text-xs text-muted-foreground">
-          {formatDateTime(task.createdAt)}
-        </span>
+        <p className="px-2 text-xs text-muted-foreground @min-[720px]:py-1">
+          {t("sheet.createdBy", {
+            name: creator?.name ?? t("sheet.unknownUser"),
+          })}
+          <span className="block">{formatDateTime(task.createdAt)}</span>
+        </p>
       </Field>
     </dl>
   );
@@ -172,9 +187,21 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
+    <div className="@min-[720px]:w-full">
+      <dt className="sr-only">{label}</dt>
       <dd>{children}</dd>
     </div>
+  );
+}
+
+/** A small group title in the rail; narrow views are one row of chips and have none. */
+function RailHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <dt
+      aria-hidden="true"
+      className="mt-3 mb-1 hidden px-2 text-xs font-medium text-muted-foreground first:mt-0 @min-[720px]:block"
+    >
+      {children}
+    </dt>
   );
 }
