@@ -6,6 +6,9 @@ export const accountMcpTools = [
     name: "whoami",
     description: "Return the current Morrow user.",
     inputSchema: z.object({}),
-    run: (_args, client) => client.account.me(),
+    run: async (_args, client) => {
+      const { id, name, email, role } = await client.account.me();
+      return { id, name, email, instanceRole: role };
+    },
   }),
 ];

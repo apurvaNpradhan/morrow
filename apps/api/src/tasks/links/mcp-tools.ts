@@ -15,17 +15,17 @@ export const linksMcpTools = [
   mcpTool({
     name: "manage_link",
     description:
-      "Add, edit or remove an external link (pull request, design, doc) on a task. Edit and remove take a linkId from get_task. Adding a URL the task already has returns the existing link. Only http and https URLs.",
+      "Create, update or delete an external link (pull request, design, doc) on a task. Update and delete take a linkId from get_task. Creating a URL the task already has returns the existing link. Only http and https URLs.",
     inputSchema: z.object({
       ...task,
-      action: z.enum(["add", "edit", "remove"]),
+      action: z.enum(["create", "update", "delete"]),
       linkId: z.string().optional(),
       url: linkUrl.optional(),
       title: linkTitle.optional(),
     }),
     run: async ({ action, linkId, url, title, ...input }, client) => {
       const scope = await resolveTask(client, input, input.ticketId);
-      if (action === "add") {
+      if (action === "create") {
         if (!url) throw missing("url");
         const link = await client.links.add({
           ...scope,
@@ -36,7 +36,7 @@ export const linksMcpTools = [
         return { linkId: link.id, url, title: title ?? null };
       }
       if (!linkId) throw missing("linkId");
-      if (action === "edit") {
+      if (action === "update") {
         await client.links.update({
           ...scope,
           linkId,
@@ -50,7 +50,7 @@ export const linksMcpTools = [
         };
       }
       await client.links.delete({ ...scope, linkId });
-      return { linkId, removed: true };
+      return { linkId, deleted: true };
     },
   }),
 ];

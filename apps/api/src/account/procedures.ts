@@ -1,3 +1,4 @@
+import { colorHex } from "@morrow/sync-schemas";
 import { type } from "@orpc/server";
 import { z } from "zod";
 import { authApi } from "#api/platform/orpc/auth-api";
@@ -44,7 +45,7 @@ const accountExportSchema = z.object({
         z.object({
           name: z.string(),
           category: z.string(),
-          color: z.string(),
+          color: colorHex,
         }),
       ),
     }),

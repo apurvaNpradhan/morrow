@@ -15,16 +15,16 @@ export const commentsMcpTools = [
   mcpTool({
     name: "comment_task",
     description:
-      "Add, edit or delete a comment on a task. Edit and delete take a commentId from get_task; you can only change your own comments.",
+      "Create, update or delete a comment on a task. Update and delete take a commentId from get_task; you can only change your own comments.",
     inputSchema: z.object({
       ...task,
-      action: z.enum(["add", "edit", "delete"]),
+      action: z.enum(["create", "update", "delete"]),
       commentId: z.string().optional(),
       body: commentBody.optional(),
     }),
     run: async ({ action, commentId, body, ...input }, client) => {
       const scope = await resolveTask(client, input, input.ticketId);
-      if (action === "add") {
+      if (action === "create") {
         if (!body) throw missing("body");
         const { id } = await client.comments.create({
           ...scope,
@@ -34,13 +34,13 @@ export const commentsMcpTools = [
         return { commentId: id };
       }
       if (!commentId) throw missing("commentId");
-      if (action === "edit") {
+      if (action === "update") {
         if (!body) throw missing("body");
         await client.comments.update({ ...scope, commentId, body });
       } else {
         await client.comments.delete({ ...scope, commentId });
       }
-      return { commentId, [action === "edit" ? "edited" : "deleted"]: true };
+      return { commentId, [action === "update" ? "updated" : "deleted"]: true };
     },
   }),
 ];

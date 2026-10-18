@@ -220,7 +220,11 @@ describe("MCP endpoint", () => {
       name: "Morrow",
       key: "MOR",
     });
-    await run("manage_label", { action: "create", name: "Bug", color: "red" });
+    await run("manage_label", {
+      action: "create",
+      name: "Bug",
+      color: "#ef4444",
+    });
     await run("manage_column", {
       projectId,
       action: "create",
@@ -477,7 +481,7 @@ describe("MCP endpoint", () => {
         projectId: project.id,
         name: "To Do",
         category: "unstarted",
-        color: "slate",
+        color: "#64748b",
         position: "a0",
       })
       .returning();
@@ -527,14 +531,14 @@ describe("MCP endpoint", () => {
         projectId: project.id,
         name: "Done",
         category: "done",
-        color: "green",
+        color: "#22c55e",
         position: "a0",
       },
       {
         projectId: project.id,
         name: "To Do",
         category: "unstarted",
-        color: "slate",
+        color: "#64748b",
         position: "a0",
       },
     ]);
@@ -590,14 +594,14 @@ describe("MCP endpoint", () => {
           projectId: project.id,
           name: "To Do",
           category: "unstarted",
-          color: "slate",
+          color: "#64748b",
           position: "a0",
         },
         {
           projectId: project.id,
           name: "Done",
           category: "done",
-          color: "green",
+          color: "#22c55e",
           position: "a0",
         },
       ])
@@ -686,7 +690,7 @@ describe("MCP endpoint", () => {
         projectId: project.id,
         name: "To Do",
         category: "unstarted",
-        color: "slate",
+        color: "#64748b",
         position: "a0",
       })
       .returning();
@@ -696,13 +700,13 @@ describe("MCP endpoint", () => {
         {
           workspaceId: workspace.id,
           name: "Bug",
-          color: "red",
+          color: "#ef4444",
           position: "a0",
         },
         {
           workspaceId: workspace.id,
           name: "Design",
-          color: "violet",
+          color: "#8b5cf6",
           position: "a1",
         },
       ])
@@ -756,8 +760,8 @@ describe("MCP endpoint", () => {
     });
 
     expect(JSON.parse(labels.result!.content[0].text)).toEqual([
-      { name: "Bug", color: "red" },
-      { name: "Design", color: "violet" },
+      { name: "Bug", color: "#ef4444" },
+      { name: "Design", color: "#8b5cf6" },
     ]);
     expect(bug.name).toBe("Bug");
     const task_ = JSON.parse(detail.result!.content[0].text);
@@ -765,7 +769,7 @@ describe("MCP endpoint", () => {
       ticketId: "MOR-1",
       title: "Look closer",
       description: "Details here",
-      labels: [{ name: "Design", color: "violet" }],
+      labels: [{ name: "Design", color: "#8b5cf6" }],
       comments: [
         { author: { id: owner.user.id, name: "Owner" }, body: "A remark" },
       ],

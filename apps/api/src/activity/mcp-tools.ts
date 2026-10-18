@@ -11,6 +11,12 @@ export const activityMcpTools = [
       cursor: z.string().trim().min(1).optional(),
       limit: z.number().int().min(1).max(100).optional(),
     }),
-    run: (args, client) => client.activity.list(args),
+    run: async (args, client) => {
+      const { items, nextCursor } = await client.activity.list(args);
+      return {
+        nextCursor,
+        items: items.map(({ workspaceId: _, content: __, ...item }) => item),
+      };
+    },
   }),
 ];
