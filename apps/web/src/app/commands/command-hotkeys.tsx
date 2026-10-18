@@ -3,6 +3,7 @@ import {
   useAppHotkeys,
   useHotkeys,
 } from "@tanstack/react-hotkeys";
+import { openSearch } from "@/search";
 import { isOverlayOpen, toggleOverlay } from "./overlay-store";
 import type { Command } from "./use-commands";
 
@@ -78,6 +79,7 @@ export function CommandHotkeys({ commands: all }: { commands: Command[] }) {
       hotkey: hotkeys.palette,
       callback: unlessModal(() => toggleOverlay("palette")),
     },
+    { hotkey: hotkeys.search, callback: unlessModal(() => openSearch()) },
     ...bindings,
   ]);
 

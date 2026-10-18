@@ -20,6 +20,7 @@ import {
 } from "@/design-system/ui/command";
 import { Kbd, KbdGroup } from "@/design-system/ui/kbd";
 import { useNavProjects } from "@/projects";
+import { openSearch } from "@/search";
 import { useTicketLookup } from "@/tasks";
 import { useActiveWorkspace, useMyWorkspaces } from "@/workspace";
 
@@ -138,6 +139,23 @@ export function PaletteContent({ commands }: { commands: AppCommand[] }) {
             navigate({ to: "/$slug", params: { slug: other.slug } }),
           ),
         })),
+      });
+    }
+    if (query.trim()) {
+      result.push({
+        value: "search",
+        label: t("navigation:search.button"),
+        items: [
+          {
+            value: "search:handoff",
+            label: t("navigation:commandPalette.searchFor", {
+              query: query.trim(),
+            }),
+            // Always listed, whatever else matched: the way to the full search.
+            search: query,
+            onRun: () => openSearch(query.trim()),
+          },
+        ],
       });
     }
     return result.filter((group) => group.items.length > 0);

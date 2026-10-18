@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 export type Overlay =
   | "palette"
+  | "search"
   | "help"
   | "createWorkspace"
   | "createProject"

@@ -74,6 +74,12 @@ export const taskTable = pgTable(
   },
   (table) => [
     index("task_projectId_idx").on(table.projectId),
+    // Search: words (stemmed) and half-typed or misspelled words in titles.
+    index("task_title_fts_idx").using(
+      "gin",
+      sql`to_tsvector('english', ${table.title})`,
+    ),
+    index("task_title_trgm_idx").using("gin", sql`${table.title} gin_trgm_ops`),
     index("task_columnId_idx").on(table.columnId),
     index("task_assigneeId_idx").on(table.assigneeId),
     uniqueIndex("task_project_number_uidx").on(table.projectId, table.number),
@@ -102,7 +108,13 @@ export const taskDescriptionTable = pgTable(
       .references(() => projectTable.id, { onDelete: "cascade" }),
     description: text("description").notNull().default(""),
   },
-  (table) => [index("task_description_projectId_idx").on(table.projectId)],
+  (table) => [
+    index("task_description_projectId_idx").on(table.projectId),
+    index("task_description_fts_idx").using(
+      "gin",
+      sql`to_tsvector('english', ${table.description})`,
+    ),
+  ],
 );
 
 /*
@@ -138,6 +150,10 @@ export const taskCommentTable = pgTable(
   (table) => [
     index("task_comment_task_created_idx").on(table.taskId, table.createdAt),
     index("task_comment_projectId_idx").on(table.projectId),
+    index("task_comment_body_fts_idx").using(
+      "gin",
+      sql`to_tsvector('english', ${table.body})`,
+    ),
   ],
 );
 

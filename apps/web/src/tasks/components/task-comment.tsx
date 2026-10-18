@@ -2,6 +2,7 @@ import type { TaskCommentRow } from "@morrow/sync-schemas";
 import { Ellipsis, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/design-system/cn";
 import { errorMessage } from "@/app/lib/error-message";
 import { formatDateTime, formatRelativeTime } from "@/design-system/format";
 import { toast } from "@/design-system/toast";
@@ -21,7 +22,14 @@ import { useTaskView } from "./task-view-context";
  * One comment: who wrote it and when, "edited" when it was, its markdown, and a
  * menu to edit (the author) or delete (the author, or a moderator).
  */
-export function TaskComment({ comment }: { comment: TaskCommentRow }) {
+export function TaskComment({
+  comment,
+  highlighted = false,
+}: {
+  comment: TaskCommentRow;
+  /** Briefly marked, for a comment a search result opened. */
+  highlighted?: boolean;
+}) {
   const { t } = useTranslation("tasks");
   const { personById, meId, can, frozen } = useTaskView();
   const [editing, setEditing] = useState(false);
@@ -49,7 +57,13 @@ export function TaskComment({ comment }: { comment: TaskCommentRow }) {
   }
 
   return (
-    <li className="flex gap-2.5" data-comment-id={comment.id}>
+    <li
+      className={cn(
+        "-m-1.5 flex gap-2.5 rounded-xl p-1.5 transition-colors duration-700",
+        highlighted && "bg-primary/10",
+      )}
+      data-comment-id={comment.id}
+    >
       <PersonAvatar
         person={author ?? { name: t("comments.deletedUser"), image: null }}
         className="mt-0.5 size-6"

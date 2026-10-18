@@ -3,6 +3,11 @@ import { defineAppHotkeys } from "@tanstack/react-hotkeys";
 /** Every keyboard shortcut in the web app. Labels are looked up by id in i18n (`navigation:commands.<id>`). */
 export const appHotkeys = defineAppHotkeys({
   palette: { hotkey: "Mod+K", meta: { group: "general" } },
+  search: {
+    hotkey: "/",
+    meta: { group: "general" },
+    options: { ignoreInputs: true },
+  },
   help: { hotkey: "?", meta: { group: "general" } },
   toggleSidebar: {
     hotkey: "Mod+B",

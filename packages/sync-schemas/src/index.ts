@@ -7,6 +7,7 @@ export * from "./task-events.js";
 export * from "./labels.js";
 export * from "./links.js";
 export * from "./projects.js";
+export * from "./search.js";
 export * from "./tasks.js";
 
 /**

@@ -12,6 +12,7 @@ import {
 } from "@/design-system/ui/sidebar";
 import { VersionDisplay } from "./version-display";
 import { SidebarProjects } from "@/projects";
+import { SearchButton } from "@/search";
 import { useActiveWorkspace, WorkspaceSwitcher } from "@/workspace";
 import { useRegisterSidebarToggle } from "@/app/commands";
 
@@ -29,7 +30,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       <SidebarHeader className="pt-1 pb-1.5">
-        <WorkspaceSwitcher />
+        <WorkspaceSwitcher>
+          <SearchButton />
+        </WorkspaceSwitcher>
       </SidebarHeader>
       <SidebarContent className="overflow-hidden gap-1 py-1">
         <NavMain />
