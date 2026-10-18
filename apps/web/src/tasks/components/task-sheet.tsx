@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Sheet, SheetDescription, SheetPopup } from "@/design-system/ui/sheet";
 import { Skeleton } from "@/design-system/ui/skeleton";
+import { markFocusRestore } from "../lib/active-task-store";
 import { useTicketTask } from "../queries/use-task-queries";
 import { TaskSheetBody } from "./task-sheet-body";
 import { useTaskView } from "./task-view-context";
@@ -28,7 +29,11 @@ export function TaskSheet({
         if (!open) onClose();
       }}
     >
-      <SheetPopup className="max-w-4xl" aria-label={t("sheet.label")}>
+      <SheetPopup
+        className="max-w-4xl"
+        finalFocus={markFocusRestore}
+        aria-label={t("sheet.label")}
+      >
         <SheetDescription className="sr-only">
           {t("sheet.description")}
         </SheetDescription>
