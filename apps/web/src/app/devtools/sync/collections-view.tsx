@@ -35,7 +35,9 @@ export function CollectionsView() {
         <Button
           size="xs"
           variant="outline"
-          onClick={() => void cleanupSyncedCollections()}
+          onClick={() =>
+            void cleanupSyncedCollections().then(() => window.location.reload())
+          }
         >
           Clean up all (as sign-out)
         </Button>
