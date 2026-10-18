@@ -60,9 +60,9 @@ export function TaskPager({ task }: { task: TaskRow }) {
 
   if (!place || place.total < 2) return null;
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="flex shrink-0 items-center gap-0.5">
       <span
-        className="px-1.5 text-xs text-muted-foreground tabular-nums"
+        className="whitespace-nowrap px-1.5 text-sm text-muted-foreground tabular-nums"
         aria-label={t("pager.position", {
           position: place.position,
           total: place.total,
