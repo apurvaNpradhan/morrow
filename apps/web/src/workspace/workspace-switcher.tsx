@@ -30,7 +30,12 @@ import {
 import type { WorkspaceSummary } from "./types";
 import { WorkspaceLogo } from "./logo/workspace-logo";
 
-export function WorkspaceSwitcher() {
+/** The workspace menu and the user's avatar; `children` sit between them. */
+export function WorkspaceSwitcher({
+  children,
+}: {
+  children?: React.ReactNode;
+}) {
   const { t } = useTranslation();
   const { data: workspace } = useActiveWorkspace();
 
@@ -161,6 +166,7 @@ export function WorkspaceSwitcher() {
         </SidebarMenu>
 
         <div className="flex items-center gap-0.5">
+          {children}
           <div className="h-8 w-8 shrink-0">
             <UserAvatar />
           </div>

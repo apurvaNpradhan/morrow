@@ -1,6 +1,7 @@
 import type { TaskRow } from "@morrow/sync-schemas";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useFocusedComment } from "../lib/use-focused-comment";
 import { buildTimeline } from "../lib/timeline";
 import { useTaskComments, useTaskEvents } from "../queries/use-task-queries";
 import { CommentComposer } from "./comment-composer";
@@ -22,6 +23,11 @@ export function TaskTimeline({ task }: { task: TaskRow }) {
     () => buildTimeline(comments, events),
     [comments, events],
   );
+  const listRef = useRef<HTMLOListElement>(null);
+  const flashId = useFocusedComment(
+    listRef,
+    comments.map((comment) => comment.id),
+  );
   // Folded runs the reader opened, by the id of their first entry.
   const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
 
@@ -31,11 +37,15 @@ export function TaskTimeline({ task }: { task: TaskRow }) {
         {t("comments.title")}
       </h2>
       {items.length > 0 ? (
-        <ol className="space-y-3">
+        <ol ref={listRef} className="space-y-3">
           {items.map((item) => {
             if (item.kind === "comment") {
               return (
-                <TaskComment key={item.comment.id} comment={item.comment} />
+                <TaskComment
+                  key={item.comment.id}
+                  comment={item.comment}
+                  highlighted={item.comment.id === flashId}
+                />
               );
             }
             if (item.kind === "event") {

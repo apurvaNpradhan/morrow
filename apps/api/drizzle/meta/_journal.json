@@ -162,6 +162,13 @@
       "when": 1792228196878,
       "tag": "0022_task_links",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792234606842,
+      "tag": "0023_search_indexes",
+      "breakpoints": true
     }
   ]
 }

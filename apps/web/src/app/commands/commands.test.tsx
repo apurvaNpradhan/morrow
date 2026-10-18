@@ -22,6 +22,7 @@ import { closeOverlay } from "./overlay-store";
 
 const navigate = vi.fn();
 const openCreateTask = vi.fn();
+const openSearch = vi.fn();
 const capabilities = {
   createProjects: true,
   createTasks: true,
@@ -69,6 +70,11 @@ vi.mock("@/tasks", () => ({
   openCreateTask: () => openCreateTask(),
   CreateTaskDialog: () => null,
   useTicketLookup: () => undefined,
+}));
+
+vi.mock("@/search", () => ({
+  openSearch: (query?: string) => openSearch(query),
+  SearchDialog: () => null,
 }));
 
 vi.mock("@/members", () => ({
@@ -119,6 +125,7 @@ afterEach(() => {
   closeOverlay();
   navigate.mockReset();
   openCreateTask.mockReset();
+  openSearch.mockReset();
 });
 
 describe("hotkey registry", () => {
@@ -128,6 +135,44 @@ describe("hotkey registry", () => {
       const conflicts = findHotkeyConflicts(hotkey.hotkey, { scope: "all" });
       expect(conflicts).toHaveLength(0);
     }
+  });
+});
+
+describe("search", () => {
+  it("opens with / but not while typing in a field", () => {
+    mount();
+    press("/");
+    expect(openSearch).toHaveBeenCalledTimes(1);
+    press("k", { ctrlKey: true });
+    press("/", {}, screen.getByRole("combobox"));
+    expect(openSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it("is handed the typed text by the palette's last row", () => {
+    mount();
+    press("k", { ctrlKey: true });
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: " login bug " },
+    });
+    fireEvent.click(screen.getByText("navigation:commandPalette.searchFor"));
+    expect(openSearch).toHaveBeenCalledWith("login bug");
+  });
+
+  it("is reached with Enter when nothing else in the palette matches", () => {
+    mount();
+    press("k", { ctrlKey: true });
+    const input = screen.getByRole("combobox");
+    fireEvent.change(input, { target: { value: "zzzqqq" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(openSearch).toHaveBeenCalledWith("zzzqqq");
+  });
+
+  it("is not offered before anything is typed", () => {
+    mount();
+    press("k", { ctrlKey: true });
+    expect(
+      screen.queryByText("navigation:commandPalette.searchFor"),
+    ).toBeNull();
   });
 });
 

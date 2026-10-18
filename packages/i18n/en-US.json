@@ -816,7 +816,8 @@
 				"open": "Open",
 				"close": "Close"
 			},
-			"openTicket": "Open {{id}}"
+			"openTicket": "Open {{id}}",
+			"searchFor": "Search for “{{query}}”"
 		},
 		"commands": {
 			"palette": "Open command palette",
@@ -851,7 +852,8 @@
 			"setTaskDueDate": "Set due date",
 			"deleteTask": "Delete task",
 			"setTaskLabels": "Set labels",
-			"copyTaskBranch": "Copy branch name"
+			"copyTaskBranch": "Copy branch name",
+			"search": "Search"
 		},
 		"sidebar": {
 			"home": "Home"
@@ -883,6 +885,23 @@
 			"subtitle": "Speed up your workflow with keyboard shortcuts",
 			"searchPlaceholder": "Search shortcuts...",
 			"footer": "Press <kbd>Escape</kbd> to close"
+		},
+		"search": {
+			"placeholder": "Search tasks, comments, projects…",
+			"button": "Search",
+			"hint": "Type to search tasks, comments, projects, labels and members.",
+			"searching": "Searching…",
+			"empty": "No results for “{{query}}”.",
+			"archived": "Archived",
+			"groups": {
+				"tasks": "Tasks",
+				"comments": "Comments",
+				"projects": "Projects",
+				"labels": "Labels",
+				"members": "Members"
+			},
+			"commentOn": "{{author}} on {{ticketId}}",
+			"deletedUser": "Deleted user"
 		}
 	},
 	"emails": {
