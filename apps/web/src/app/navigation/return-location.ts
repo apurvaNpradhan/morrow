@@ -7,8 +7,16 @@ export function getReturnLocation() {
   return current;
 }
 
+// The last page outside Settings, including a full-page task: Settings leaves here.
+let beforeSettings: ReturnLocation | null = null;
+
+export function getSettingsReturnLocation() {
+  return beforeSettings;
+}
+
 export function setReturnLocation(next: ReturnLocation | null) {
   current = next;
+  beforeSettings = next;
 }
 
 const SETTINGS = /^\/[^/]+\/settings(\/|$)/;
@@ -21,6 +29,7 @@ export function isReturnable(pathname: string) {
 
 /** Records each resolved location that is a place to come back to. */
 export function recordLocation(location: ReturnLocation) {
+  if (!SETTINGS.test(location.pathname)) beforeSettings = location;
   if (!isReturnable(location.pathname)) return;
   // An open sheet is not part of the place: leaving brings back the page alone.
   const search = new URLSearchParams(location.search);
