@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import type { CSSProperties } from "react";
 
 export type SettingsNavSubLink = {
   id: string;
@@ -8,7 +9,7 @@ export type SettingsNavSubLink = {
 
 export type SettingsNavLink = SettingsNavSubLink & {
   icon: LucideIcon;
-  iconClassName?: string;
+  iconStyle?: CSSProperties;
   /** A path whose pages all belong to this link, e.g. a project's General and Workflow pages. */
   matchPrefix?: string;
 };

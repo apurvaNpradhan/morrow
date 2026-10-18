@@ -7,7 +7,7 @@ import { ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
-import { COLUMN_COLOR_CLASSES } from "@/projects";
+import { colorLaneStyle } from "@/projects";
 import { Spinner } from "@/design-system/ui/spinner";
 import { LaneHeader } from "./lane-header";
 import { SortableTaskCard } from "./sortable-task-card";
@@ -83,9 +83,9 @@ export function BoardLane({
       className={cn(
         "flex w-72 shrink-0 flex-col self-start rounded-xl border bg-card/80",
         expanded && "h-full",
-        COLUMN_COLOR_CLASSES[column.color].lane,
         isDropTarget && "ring-1 ring-ring",
       )}
+      style={colorLaneStyle(column.color)}
     >
       <header
         className={cn(

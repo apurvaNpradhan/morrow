@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { COLUMN_CATEGORIES, COLUMN_COLORS } from "./projects.js";
+import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
 export * from "./comments.js";
@@ -94,7 +94,7 @@ export const projectsShape = shape(
     name: z.string(),
     description: z.string().nullable(),
     icon: z.string().nullable(),
-    color: z.enum(COLUMN_COLORS).nullable(),
+    color: colorHex.nullable(),
     backgroundUrl: z.string().nullable(),
     archivedAt: z.date().nullable(),
     position: z.string(),
@@ -110,7 +110,7 @@ export const projectColumnsShape = shape(
     projectId: z.string(),
     name: z.string(),
     category: z.enum(COLUMN_CATEGORIES),
-    color: z.enum(COLUMN_COLORS),
+    color: colorHex,
     position: z.string(),
     createdAt: z.date(),
     updatedAt: z.date(),
@@ -173,7 +173,7 @@ export const labelsShape = shape(
     id: z.string(),
     workspaceId: z.string(),
     name: z.string(),
-    color: z.enum(COLUMN_COLORS),
+    color: colorHex,
     position: z.string(),
     createdAt: z.date(),
     updatedAt: z.date(),

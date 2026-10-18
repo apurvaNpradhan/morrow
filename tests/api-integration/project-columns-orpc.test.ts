@@ -62,24 +62,24 @@ describe("adding a column", () => {
     const added = (await columnsOf(projectId)).find(
       (column) => column.name === "In Review",
     );
-    expect(added?.color).toBe("blue");
+    expect(added?.color).toBe("#3b82f6");
   });
 
-  it("takes a colour from the palette and refuses anything else", async () => {
+  it("takes a #rrggbb colour and refuses a palette name or upper-case hex", async () => {
     const { client, base, projectId } = await setup();
 
     await client.projects.columns.create({
       ...base,
       name: "Blocked",
       category: "started",
-      color: "orange",
+      color: "#f97316",
     });
     const error = await rejection(
       client.projects.columns.create({
         ...base,
         name: "Odd",
         category: "started",
-        color: "#ff0000" as never,
+        color: "red" as never,
       }),
     );
 
@@ -87,7 +87,7 @@ describe("adding a column", () => {
     const blocked = (await columnsOf(projectId)).find(
       (column) => column.name === "Blocked",
     );
-    expect(blocked?.color).toBe("orange");
+    expect(blocked?.color).toBe("#f97316");
   });
 
   it("refuses an unknown category", async () => {
@@ -148,14 +148,14 @@ describe("editing a column", () => {
       ...base,
       columnId: column.id,
       name: "Doing",
-      color: "violet",
+      color: "#8b5cf6",
     });
 
     const [row] = await db
       .select()
       .from(schema.projectColumnTable)
       .where(eq(schema.projectColumnTable.id, column.id));
-    expect(row).toMatchObject({ name: "Doing", color: "violet" });
+    expect(row).toMatchObject({ name: "Doing", color: "#8b5cf6" });
     expect(txid).toBeGreaterThan(0);
   });
 

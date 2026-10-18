@@ -30,7 +30,7 @@ export function SettingsNavGroup({ group, pathname }: SettingsNavGroupProps) {
                 className="h-8 text-sm"
                 render={<Link to={link.to} />}
               >
-                <link.icon aria-hidden="true" className={link.iconClassName} />
+                <link.icon aria-hidden="true" style={link.iconStyle} />
                 <span>{link.label}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>

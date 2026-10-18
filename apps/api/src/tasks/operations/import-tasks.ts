@@ -1,7 +1,9 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
+  COLUMN_COLOR_BY_NAME,
   COLUMN_COLORS,
-  type ColumnColor,
+  type ColumnColorName,
+  colorHex,
   compareColumns,
   isClosedCategory,
   LABEL_NAME_MAX,
@@ -37,6 +39,15 @@ import {
 
 /** Rows per insert: a task has 17 bound columns and Postgres allows 65,535 parameters. */
 const INSERT_CHUNK = 1000;
+
+/** A label colour in an imported file: `#rrggbb`, or an older palette name. */
+function importedColor(value: string | undefined) {
+  if (value === undefined) return undefined;
+  if (colorHex.safeParse(value).success) return value;
+  return Object.hasOwn(COLUMN_COLOR_BY_NAME, value)
+    ? COLUMN_COLOR_BY_NAME[value as ColumnColorName]
+    : undefined;
+}
 
 /**
  * Imports tasks from an export document into a project, all or nothing. Tasks
@@ -115,7 +126,7 @@ export async function importTasks(
     const colorByName = new Map(
       document.labels.map((label) => [
         normalizeLabelName(label.name),
-        label.color,
+        importedColor(label.color),
       ]),
     );
     const missing = new Map<string, string>();
@@ -141,16 +152,13 @@ export async function importTasks(
         missing.size,
       );
       const created = [...missing].map(([key, name], at) => {
-        const wanted = colorByName.get(key);
         return {
           id: createId(),
           workspaceId,
           name,
-          color: (COLUMN_COLORS as readonly string[]).includes(wanted ?? "")
-            ? (wanted as ColumnColor)
-            : COLUMN_COLORS[
-                (existingLabels.length + at) % COLUMN_COLORS.length
-              ]!,
+          color:
+            colorByName.get(key) ??
+            COLUMN_COLORS[(existingLabels.length + at) % COLUMN_COLORS.length]!,
           position: positions[at]!,
         };
       });

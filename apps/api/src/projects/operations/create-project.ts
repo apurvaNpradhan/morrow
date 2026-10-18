@@ -1,8 +1,4 @@
-import {
-  type ColumnColor,
-  DEFAULT_COLUMN_COLOR,
-  DEFAULT_COLUMNS,
-} from "@morrow/sync-schemas";
+import { DEFAULT_COLUMN_COLOR, DEFAULT_COLUMNS } from "@morrow/sync-schemas";
 import { eq, max, sql } from "drizzle-orm";
 import { generateKeyBetween } from "fractional-indexing";
 import { recordWorkspaceActivity } from "#api/activity/index";
@@ -15,7 +11,7 @@ type NewProject = {
   name: string;
   key: string;
   icon?: string;
-  color?: ColumnColor;
+  color?: string;
   description?: string;
 };
 

@@ -56,8 +56,8 @@ describe("exporting labels and comments", () => {
     const document = await client.tasks.export(base);
 
     expect(document.labels).toEqual([
-      { name: "Bug", color: "red" },
-      { name: "Design", color: "red" },
+      { name: "Bug", color: "#ef4444" },
+      { name: "Design", color: "#ef4444" },
     ]);
     const [task] = document.tasks;
     expect(task?.labels.toSorted()).toEqual(["Bug", "Design"]);
@@ -108,7 +108,7 @@ describe("importing labels and comments", () => {
     const { workspace, target, into, client } = await setupSource();
     const member = as(await addWorkspaceMember(workspace.id, "member"));
     const document = {
-      labels: [{ name: "Ops", color: "teal" }],
+      labels: [{ name: "Ops", color: "#14b8a6" }],
       tasks: [
         { title: "Imported", column: "To Do", labels: ["bUG", "Ops", "ops"] },
       ],
@@ -123,7 +123,7 @@ describe("importing labels and comments", () => {
 
     expect(result.warnings).toEqual([]);
     expect(labels.map((label) => label.name)).toEqual(["Bug", "Design", "Ops"]);
-    expect(labels[2]).toMatchObject({ color: "teal" });
+    expect(labels[2]).toMatchObject({ color: "#14b8a6" });
     expect(copied?.labelIds).toHaveLength(2);
   });
 

@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * What Projects and their Columns are made of, shared by the API (which
  * validates writes) and the web app (which renders them). A value can only be
@@ -26,27 +28,44 @@ export const REQUIRED_COLUMN_CATEGORIES = [
   "done",
 ] as const satisfies readonly ColumnCategory[];
 
-/** Named colours; the web app maps each to theme-aware design-system colours. */
-export const COLUMN_COLORS = [
-  "gray",
-  "slate",
-  "red",
-  "orange",
-  "amber",
-  "green",
-  "teal",
-  "blue",
-  "violet",
-  "pink",
-] as const;
+/**
+ * The palette, by name. The name is only for i18n labels and swatch aria
+ * text; a colour is stored, validated and sent as its lower-case hex value.
+ */
+export const COLUMN_COLOR_BY_NAME = {
+  gray: "#a1a1aa",
+  slate: "#64748b",
+  red: "#ef4444",
+  orange: "#f97316",
+  amber: "#f59e0b",
+  green: "#22c55e",
+  teal: "#14b8a6",
+  blue: "#3b82f6",
+  violet: "#8b5cf6",
+  pink: "#ec4899",
+} as const;
+export type ColumnColorName = keyof typeof COLUMN_COLOR_BY_NAME;
+
+type ColumnColorHex = (typeof COLUMN_COLOR_BY_NAME)[ColumnColorName];
+export const COLUMN_COLORS = Object.values(
+  COLUMN_COLOR_BY_NAME,
+) as readonly ColumnColorHex[];
 export type ColumnColor = (typeof COLUMN_COLORS)[number];
 
+/** A colour as stored and sent: `#` and six lower-case hex digits. */
+export const colorHex = z.string().regex(/^#[0-9a-f]{6}$/);
+
+/** The name of each palette colour, by its hex value, for i18n keys. */
+export const COLUMN_COLOR_NAMES = Object.fromEntries(
+  Object.entries(COLUMN_COLOR_BY_NAME).map(([name, hex]) => [hex, name]),
+) as Record<ColumnColorHex, ColumnColorName>;
+
 export const DEFAULT_COLUMN_COLOR = {
-  backlog: "gray",
-  unstarted: "slate",
-  started: "blue",
-  done: "green",
-  canceled: "red",
+  backlog: COLUMN_COLOR_BY_NAME.gray,
+  unstarted: COLUMN_COLOR_BY_NAME.slate,
+  started: COLUMN_COLOR_BY_NAME.blue,
+  done: COLUMN_COLOR_BY_NAME.green,
+  canceled: COLUMN_COLOR_BY_NAME.red,
 } as const satisfies Record<ColumnCategory, ColumnColor>;
 
 /** The Columns a new Project starts with, in order. */

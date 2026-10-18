@@ -1,6 +1,6 @@
 import {
   COLUMN_CATEGORIES,
-  COLUMN_COLORS,
+  colorHex,
   PROJECT_ICONS,
   PROJECT_KEY_PATTERN,
 } from "@morrow/sync-schemas";
@@ -22,12 +22,12 @@ export const projectKey = z
 export const projectName = z.string().trim().min(1).max(100);
 export const projectDescription = z.string().trim().max(2000);
 export const projectIcon = z.enum(PROJECT_ICONS);
-/** A project's colour is one of the column colour tokens. */
-export const projectColor = z.enum(COLUMN_COLORS);
+/** A project's colour: `#rrggbb`. */
+export const projectColor = colorHex;
 
 /** A fractional-index key; its format is checked by the operation. */
 export const position = z.string().min(1).max(64);
 
 export const columnName = z.string().trim().min(1).max(50);
 export const columnCategory = z.enum(COLUMN_CATEGORIES);
-export const columnColor = z.enum(COLUMN_COLORS);
+export const columnColor = colorHex;

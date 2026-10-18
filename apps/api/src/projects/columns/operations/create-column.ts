@@ -1,6 +1,5 @@
 import {
   type ColumnCategory,
-  type ColumnColor,
   DEFAULT_COLUMN_COLOR,
 } from "@morrow/sync-schemas";
 import { and, eq, max } from "drizzle-orm";
@@ -13,7 +12,7 @@ import { projectColumnTable } from "#api/projects/tables";
 type NewColumn = {
   name: string;
   category: ColumnCategory;
-  color?: ColumnColor;
+  color?: string;
 };
 
 /** Adds a column at the end of its category. */

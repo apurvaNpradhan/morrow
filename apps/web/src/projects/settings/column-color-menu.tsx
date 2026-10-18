@@ -1,13 +1,16 @@
-import { COLUMN_COLORS, type ColumnColor } from "@morrow/sync-schemas";
+import {
+  COLUMN_COLOR_NAMES,
+  COLUMN_COLORS,
+  type ColumnColor,
+} from "@morrow/sync-schemas";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/design-system/cn";
 import {
   Menu,
   MenuItem,
   MenuPopup,
   MenuTrigger,
 } from "@/design-system/ui/menu";
-import { COLUMN_COLOR_CLASSES } from "../lib/column-style";
+import { colorDotStyle } from "../lib/column-style";
 
 type ColumnColorMenuProps = {
   columnName: string;
@@ -34,7 +37,8 @@ export function ColumnColorMenu({
       >
         <span
           aria-hidden="true"
-          className={cn("size-3 rounded-full", COLUMN_COLOR_CLASSES[value].dot)}
+          className="size-3 rounded-full"
+          style={colorDotStyle(value)}
         />
       </MenuTrigger>
       <MenuPopup align="start">
@@ -42,12 +46,10 @@ export function ColumnColorMenu({
           <MenuItem key={color} onClick={() => onChange(color)}>
             <span
               aria-hidden="true"
-              className={cn(
-                "size-3 rounded-full",
-                COLUMN_COLOR_CLASSES[color].dot,
-              )}
+              className="size-3 rounded-full"
+              style={colorDotStyle(color)}
             />
-            {t(`colors.${color}`)}
+            {t(`colors.${COLUMN_COLOR_NAMES[color]}`)}
           </MenuItem>
         ))}
       </MenuPopup>

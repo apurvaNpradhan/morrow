@@ -26,7 +26,11 @@ const assignee = (from: string | null, to: string | null): TaskEvent => ({
   type: "assignee",
   data: { from: person(from), to: person(to) },
 });
-const label = (id: string) => ({ id, name: `L ${id}`, color: "red" as const });
+const label = (id: string) => ({
+  id,
+  name: `L ${id}`,
+  color: "#ef4444" as const,
+});
 const labels = (added: string[], removed: string[] = []): TaskEvent => ({
   type: "labels",
   data: { added: added.map(label), removed: removed.map(label) },

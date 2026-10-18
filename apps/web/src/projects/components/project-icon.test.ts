@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vite-plus/test";
-import { projectColorClass } from "./project-icon";
+import { projectColorStyle } from "../lib/column-style";
 
-describe("projectColorClass", () => {
-  it("maps a colour token to its text class", () => {
-    expect(projectColorClass("blue")).toContain("text-blue-");
+describe("projectColorStyle", () => {
+  it("colours the text with a hex colour", () => {
+    expect(projectColorStyle("#3b82f6")).toEqual({ color: "#3b82f6" });
   });
 
-  it("returns nothing for no colour or an unknown one", () => {
-    expect(projectColorClass(null)).toBeUndefined();
-    expect(projectColorClass("chartreuse")).toBeUndefined();
+  it("returns nothing for no colour or a value that is not hex", () => {
+    expect(projectColorStyle(null)).toBeUndefined();
+    expect(projectColorStyle("blue")).toBeUndefined();
+    expect(projectColorStyle("#3B82F6")).toBeUndefined();
   });
 });

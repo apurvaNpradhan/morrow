@@ -169,6 +169,13 @@
       "when": 1792234606842,
       "tag": "0023_search_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792400000000,
+      "tag": "0024_color_hex_only",
+      "breakpoints": true
     }
   ]
 }

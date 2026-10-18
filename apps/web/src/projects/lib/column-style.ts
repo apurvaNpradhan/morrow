@@ -1,4 +1,8 @@
-import type { ColumnCategory, ColumnColor } from "@morrow/sync-schemas";
+import {
+  type ColumnCategory,
+  type ColumnColor,
+  colorHex,
+} from "@morrow/sync-schemas";
 import {
   Circle,
   CircleCheck,
@@ -7,63 +11,30 @@ import {
   CircleX,
   type LucideIcon,
 } from "lucide-react";
+import type { CSSProperties } from "react";
 
-/** Each colour token as a dot, an icon colour and a faint lane tint, readable in both themes. */
-export const COLUMN_COLOR_CLASSES = {
-  gray: {
-    dot: "bg-zinc-400 dark:bg-zinc-500",
-    text: "text-zinc-500 dark:text-zinc-400",
-    lane: "bg-zinc-500/5",
-  },
-  slate: {
-    dot: "bg-slate-500 dark:bg-slate-400",
-    text: "text-slate-500 dark:text-slate-400",
-    lane: "bg-slate-500/5",
-  },
-  red: {
-    dot: "bg-red-500 dark:bg-red-400",
-    text: "text-red-500 dark:text-red-400",
-    lane: "bg-red-500/5",
-  },
-  orange: {
-    dot: "bg-orange-500 dark:bg-orange-400",
-    text: "text-orange-500 dark:text-orange-400",
-    lane: "bg-orange-500/5",
-  },
-  amber: {
-    dot: "bg-amber-500 dark:bg-amber-400",
-    text: "text-amber-500 dark:text-amber-400",
-    lane: "bg-amber-500/5",
-  },
-  green: {
-    dot: "bg-green-500 dark:bg-green-400",
-    text: "text-green-500 dark:text-green-400",
-    lane: "bg-green-500/5",
-  },
-  teal: {
-    dot: "bg-teal-500 dark:bg-teal-400",
-    text: "text-teal-500 dark:text-teal-400",
-    lane: "bg-teal-500/5",
-  },
-  blue: {
-    dot: "bg-blue-500 dark:bg-blue-400",
-    text: "text-blue-500 dark:text-blue-400",
-    lane: "bg-blue-500/5",
-  },
-  violet: {
-    dot: "bg-violet-500 dark:bg-violet-400",
-    text: "text-violet-500 dark:text-violet-400",
-    lane: "bg-violet-500/5",
-  },
-  pink: {
-    dot: "bg-pink-500 dark:bg-pink-400",
-    text: "text-pink-500 dark:text-pink-400",
-    lane: "bg-pink-500/5",
-  },
-} as const satisfies Record<
-  ColumnColor,
-  { dot: string; text: string; lane: string }
->;
+/** A colour as a dot: a filled circle in the colour itself. */
+export function colorDotStyle(color: ColumnColor): CSSProperties {
+  return { backgroundColor: color };
+}
+
+/** A colour as foreground: an icon or text drawn in the colour itself. */
+export function colorTextStyle(color: ColumnColor): CSSProperties {
+  return { color };
+}
+
+/** A lane's faint tint: the colour at 5% opacity, layered over the card background. */
+export function colorLaneStyle(color: ColumnColor): CSSProperties {
+  return { backgroundImage: `linear-gradient(${color}0d, ${color}0d)` };
+}
+
+/** A project's colour as text; nothing for no colour or a value that is not a hex colour. */
+export function projectColorStyle(
+  color: string | null | undefined,
+): CSSProperties | undefined {
+  const parsed = colorHex.safeParse(color);
+  return parsed.success ? { color: parsed.data } : undefined;
+}
 
 /** A column's icon follows its category, so its meaning shows without configuration. */
 export const CATEGORY_ICONS = {

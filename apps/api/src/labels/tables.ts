@@ -1,5 +1,4 @@
 import { createId } from "@paralleldrive/cuid2";
-import { COLUMN_COLORS } from "@morrow/sync-schemas";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -28,7 +27,7 @@ export const labelTable = pgTable(
       .notNull()
       .references(() => workspaceTable.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    color: text("color", { enum: COLUMN_COLORS }).notNull(),
+    color: text("color").notNull(),
     position: text("position").notNull(),
     createdAt: timestamp("created_at", { mode: "date" })
       .default(utcNow)
@@ -48,9 +47,6 @@ export const labelTable = pgTable(
       table.workspaceId,
       table.position,
     ),
-    check(
-      "label_color_check",
-      sql`${table.color} IN ('gray', 'slate', 'red', 'orange', 'amber', 'green', 'teal', 'blue', 'violet', 'pink')`,
-    ),
+    check("label_color_check", sql`${table.color} ~ '^#[0-9a-f]{6}$'`),
   ],
 );

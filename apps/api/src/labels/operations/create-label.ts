@@ -1,4 +1,4 @@
-import { type ColumnColor, LABEL_ID_PATTERN } from "@morrow/sync-schemas";
+import { LABEL_ID_PATTERN } from "@morrow/sync-schemas";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { assertValidPosition } from "#api/projects/index";
 import { labelError, rethrowLabelViolation } from "#api/labels/errors";
@@ -7,7 +7,7 @@ import { labelTable } from "#api/labels/tables";
 export type NewLabel = {
   id: string;
   name: string;
-  color: ColumnColor;
+  color: string;
   position: string;
 };
 

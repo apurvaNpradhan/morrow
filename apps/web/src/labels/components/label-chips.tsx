@@ -8,9 +8,12 @@ import { LabelChip } from "./label-chip";
 export function LabelChips({
   labels,
   max,
+  chipClassName,
 }: {
   labels: readonly LabelRow[];
   max: number;
+  /** Sizes the chips where the default is too small, such as the task rail. */
+  chipClassName?: string;
 }) {
   if (labels.length === 0) return null;
   const shown = labels.slice(0, max);
@@ -18,7 +21,7 @@ export function LabelChips({
   return (
     <>
       {shown.map((label) => (
-        <LabelChip key={label.id} label={label} />
+        <LabelChip key={label.id} label={label} className={chipClassName} />
       ))}
       {hidden.length > 0 ? (
         <span

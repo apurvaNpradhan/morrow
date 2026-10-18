@@ -1,6 +1,6 @@
 import type { LabelRow } from "@morrow/sync-schemas";
 import { cn } from "@/design-system/cn";
-import { COLUMN_COLOR_CLASSES } from "@/projects";
+import { colorDotStyle } from "@/projects";
 
 /** A label as a small chip: a dot in its colour and its name. */
 export function LabelChip({
@@ -19,10 +19,8 @@ export function LabelChip({
     >
       <span
         aria-hidden="true"
-        className={cn(
-          "size-2 shrink-0 rounded-full",
-          COLUMN_COLOR_CLASSES[label.color].dot,
-        )}
+        className="size-2 shrink-0 rounded-full"
+        style={colorDotStyle(label.color)}
       />
       <span className="truncate">{label.name}</span>
     </span>
@@ -40,11 +38,8 @@ export function LabelDot({
   return (
     <span
       aria-hidden="true"
-      className={cn(
-        "size-2.5 shrink-0 rounded-full",
-        COLUMN_COLOR_CLASSES[color].dot,
-        className,
-      )}
+      className={cn("size-2.5 shrink-0 rounded-full", className)}
+      style={colorDotStyle(color)}
     />
   );
 }

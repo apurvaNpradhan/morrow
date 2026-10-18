@@ -20,7 +20,7 @@ export const labelsMcpTools = [
   mcpTool({
     name: "manage_label",
     description:
-      "Create, update or delete a workspace label. create takes name and color. update takes label (its name) with a new name and/or color. delete takes label.",
+      "Create, update or delete a workspace label. create takes name and color as #rrggbb hex. update takes label (its name) with a new name and/or color (#rrggbb). delete takes label.",
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       action: z.enum(["create", "update", "delete"]),

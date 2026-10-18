@@ -8,6 +8,15 @@ import {
   projectName,
 } from "./schemas";
 
+/** Any icon name on the wire: the full list would add thousands of tokens to the tool list. */
+const iconName = z
+  .string()
+  .refine(
+    (name) => projectIcon.safeParse(name).success,
+    "Unknown icon name. Use a Lucide icon name like Rocket or Bug, or omit it.",
+  )
+  .describe("A Lucide icon name, for example Rocket, Bug or Database.");
+
 const workspace = z.object({ workspaceId: z.string().trim().min(1) });
 const project = workspace.extend({ projectId: z.string().trim().min(1) });
 
@@ -42,25 +51,42 @@ export const projectsMcpTools = [
       name: projectName,
       key: projectKey,
       description: projectDescription.optional(),
-      icon: projectIcon.optional(),
+      icon: iconName.optional(),
       color: projectColor.optional(),
     }),
-    run: async (input, client) => ({
-      projectId: (await client.projects.create(input)).id,
-    }),
+    run: async ({ icon, ...input }, client) => {
+      const { id } = await client.projects.create({
+        ...input,
+        icon: icon === undefined ? undefined : projectIcon.parse(icon),
+      });
+      const created = (
+        await client.projects.list({ workspaceId: input.workspaceId })
+      ).find((project) => project.id === id);
+      return {
+        projectId: id,
+        columns: created?.columns.map(({ name, category }) => ({
+          name,
+          category,
+        })),
+      };
+    },
   }),
   mcpTool({
     name: "update_project",
     description:
-      "Change a project. Only the fields you pass change; null clears description, icon and color. archived archives or restores it.",
+      "Change a project. Only the fields you pass change; null clears description, icon and color. color is #rrggbb hex. archived archives or restores it.",
     inputSchema: project.extend({
       name: projectName.optional(),
       description: projectDescription.nullable().optional(),
-      icon: projectIcon.nullable().optional(),
+      icon: iconName.nullable().optional(),
       color: projectColor.nullable().optional(),
       archived: z.boolean().optional(),
     }),
-    run: async ({ archived, ...input }, client) => {
+    run: async ({ archived, icon, ...rest }, client) => {
+      const input = {
+        ...rest,
+        icon: icon == null ? icon : projectIcon.parse(icon),
+      };
       const { workspaceId, projectId, ...fields } = input;
       if (Object.values(fields).some((value) => value !== undefined)) {
         await client.projects.update(input);
