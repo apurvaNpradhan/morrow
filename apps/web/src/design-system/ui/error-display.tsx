@@ -94,7 +94,7 @@ export function ErrorDisplay({
                   window.open("https://morrow.example.com/docs", "_blank")
                 }
                 variant="outline"
-                size="icon"
+                size="default"
                 className="w-full"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
@@ -105,7 +105,7 @@ export function ErrorDisplay({
             <Button
               onClick={() => window.location.reload()}
               variant="outline"
-              size="icon"
+              size="default"
               className="w-full"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
