@@ -42,6 +42,14 @@ export const devicePreferencesSchema = z.object({
       ),
     )
     .default({}),
+  /**
+   * Lanes the user expanded or collapsed on the board or list, by Project id
+   * and Column id. A Column without an entry keeps its default. Column ids are
+   * never reused, so a re-created Column starts at its default.
+   */
+  columnExpanded: z
+    .record(z.string(), z.record(z.string(), z.boolean()))
+    .default({}),
   taskSorts: z
     .record(
       z.string(),

@@ -27,7 +27,7 @@ export function ListView({
   const { project, columns, meId, today } = useTaskView();
   const [archivedExpanded, setArchivedExpanded] = useState(false);
   const { expandedIds, openIds, expandedClosedIds, toggle } =
-    useColumnExpansion(columns);
+    useColumnExpansion(project.id, columns);
 
   const openTasks = useOpenColumnsTasks(project.id, openIds);
   const closed = useExpandedColumnsTasks(project.id, expandedClosedIds);

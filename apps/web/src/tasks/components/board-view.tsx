@@ -24,7 +24,7 @@ export function BoardView({
 }) {
   const { project, columns, meId, today } = useTaskView();
   const { expandedIds, openIds, expandedClosedIds, toggle } =
-    useColumnExpansion(columns);
+    useColumnExpansion(project.id, columns);
   const openTasks = useOpenColumnsTasks(project.id, openIds);
   const closed = useExpandedColumnsTasks(project.id, expandedClosedIds);
   const model = useTaskViewModel({
