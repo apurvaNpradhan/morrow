@@ -16,6 +16,7 @@ import type { McpTool } from "#api/platform/orpc/mcp-tool";
 import { appRouter } from "#api/platform/orpc/router";
 import { workspaceMcpTools } from "#api/workspace/index";
 import { logFailure } from "#api/platform/logger";
+import { resolveScope } from "./resolve-scope";
 
 /** Every tool MCP clients see. A vertical adds its tools here. */
 export const mcpTools: McpTool[] = [
@@ -32,9 +33,20 @@ export const mcpTools: McpTool[] = [
 ] as McpTool[];
 
 function textResult(data: unknown, isError = false): CallToolResult {
-  const text =
-    typeof data === "string" ? data : (JSON.stringify(data, null, 2) ?? "");
+  const text = typeof data === "string" ? data : (JSON.stringify(data) ?? "");
   return { content: [{ type: "text", text }], isError };
+}
+
+/** Tools that take a ticketId let callers leave projectId out; resolveScope fills it in. */
+function advertisedSchema(tool: McpTool) {
+  const shape = tool.inputSchema.shape;
+  return "ticketId" in shape && "projectId" in shape
+    ? tool.inputSchema.extend({
+        projectId: shape.projectId
+          .optional()
+          .describe("Optional; the ticketId's key prefix names the project."),
+      })
+    : tool.inputSchema;
 }
 
 /**
@@ -48,19 +60,27 @@ export function registerMcpTools(server: McpServer, userId: string): void {
   for (const tool of mcpTools) {
     server.registerTool(
       tool.name,
-      { description: tool.description, inputSchema: tool.inputSchema },
+      { description: tool.description, inputSchema: advertisedSchema(tool) },
       async (args: unknown) => {
-        const parsed = (tool.inputSchema as z.ZodObject).safeParse(args);
-        if (!parsed.success) {
-          return textResult({ error: parsed.error.message }, true);
-        }
         try {
+          const parsed = (tool.inputSchema as z.ZodObject).safeParse(
+            await resolveScope(client, args as Record<string, unknown>),
+          );
+          if (!parsed.success) {
+            return textResult({ error: parsed.error.message }, true);
+          }
           return textResult(await tool.run(parsed.data, client));
         } catch (error) {
           // Typed failures are meant for the caller; anything else (driver
           // errors can carry SQL and parameters) stays in the server log.
           if (error instanceof ORPCError) {
-            return textResult({ error: error.message }, true);
+            const code = (error.data as { code?: unknown } | undefined)?.code;
+            return textResult(
+              typeof code === "string"
+                ? { error: error.message, code }
+                : { error: error.message },
+              true,
+            );
           }
           logFailure("mcp.tool", { tool: tool.name }, error);
           return textResult({ error: "Internal error" }, true);

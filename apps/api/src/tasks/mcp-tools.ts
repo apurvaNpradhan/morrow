@@ -46,17 +46,20 @@ const updateItem = z.object({
 });
 
 /**
- * Runs the items one at a time, in order. A failure becomes that item's
- * `{ index, error }` and the rest still run, so one bad item hides nothing.
+ * Runs the items one at a time, in order. Every result carries its `index`; a
+ * failure becomes that item's `{ index, error }` and the rest still run, so
+ * one bad item hides nothing.
  */
-async function runBatch<Item, Result>(
+async function runBatch<Item, Result extends object>(
   items: Item[],
   run: (item: Item) => Promise<Result>,
 ) {
-  const results: Array<Result | { index: number; error: string }> = [];
+  const results: Array<
+    ({ index: number } & Result) | { index: number; error: string }
+  > = [];
   for (const [index, item] of items.entries()) {
     try {
-      results.push(await run(item));
+      results.push({ index, ...(await run(item)) });
     } catch (error) {
       results.push({
         index,
@@ -71,7 +74,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "list_tasks",
     description:
-      'List tasks in board order. Without projectId it lists every project of the workspace (each task then carries its project key). Filter by assignee ("me" or an email), label name, column name (needs projectId), text in title or description, and archived state. Descriptions are left out unless withDescription is true. At most 200 tasks; truncated says when more matched, so narrow the query.',
+      'List tasks in board order. Without projectId it lists every project of the workspace (each task then carries its project key). Filter by assignee ("me" or an email), label name, column name (needs projectId), text in title or description, and archived state. Descriptions are left out unless withDescription is true. At most limit tasks (default 50, max 200); truncated says when more matched, so narrow the query or raise limit.',
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       projectId: z.string().trim().min(1).optional(),
@@ -81,7 +84,7 @@ export const tasksMcpTools = [
       query: z.string().trim().min(1).max(200).optional(),
       includeArchived: z.boolean().default(false),
       withDescription: z.boolean().default(false),
-      limit: z.number().int().min(1).max(200).default(200),
+      limit: z.number().int().min(1).max(200).default(50),
     }),
     run: async ({ withDescription, ...input }, client) => {
       if (input.column && !input.projectId) {
@@ -125,7 +128,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "create_tasks",
     description:
-      "Create 1–50 tasks in one call. Each item has a title and optionally description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created) and at (top or bottom). Items run in order; one failing does not stop the rest. Returns a small result per item.",
+      "Create 1–50 tasks in one call. Each item has a title and optionally description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(createItem).min(1).max(MAX_BATCH),
     }),
@@ -167,13 +170,41 @@ export const tasksMcpTools = [
   mcpTool({
     name: "update_tasks",
     description:
-      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate and assignee (an email). addLabels creates missing labels; removeLabels names existing ones. Items run in order; one failing does not stop the rest. Returns the changed field names per item.",
+      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate and assignee (an email). addLabels creates missing labels; removeLabels names existing ones. Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(updateItem).min(1).max(MAX_BATCH),
     }),
     run: async (input, client) =>
       runBatch(input.items, async (item) => {
-        const scope = await resolveTask(client, input, item.ticketId);
+        const { ticketId, ...fields } = item;
+        if (
+          Object.values(fields).every(
+            (value) =>
+              value === undefined ||
+              (Array.isArray(value) && value.length === 0),
+          )
+        ) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Nothing to change; pass a field besides ticketId.",
+          });
+        }
+        const scope = await resolveTask(client, input, ticketId);
+        // Resolve every name before the first write, so a bad one changes nothing.
+        const assigneeId =
+          item.assignee == null
+            ? item.assignee
+            : await resolveAssigneeId(client, input.workspaceId, item.assignee);
+        const removeIds = item.removeLabels?.length
+          ? await resolveLabelIds(client, input.workspaceId, item.removeLabels)
+          : [];
+        const added = item.addLabels?.length
+          ? await resolveOrCreateLabelIds(
+              client,
+              input.workspaceId,
+              item.addLabels,
+            )
+          : undefined;
+
         const changed: string[] = [];
         if (item.title !== undefined) {
           await client.tasks.updateTitle({ ...scope, title: item.title });
@@ -197,45 +228,24 @@ export const tasksMcpTools = [
           await client.tasks.updateDueDate({ ...scope, dueDate: item.dueDate });
           changed.push("dueDate");
         }
-        if (item.assignee !== undefined) {
-          await client.tasks.updateAssignee({
-            ...scope,
-            assigneeId:
-              item.assignee === null
-                ? null
-                : await resolveAssigneeId(
-                    client,
-                    input.workspaceId,
-                    item.assignee,
-                  ),
-          });
+        if (assigneeId !== undefined) {
+          await client.tasks.updateAssignee({ ...scope, assigneeId });
           changed.push("assignee");
         }
-        let createdLabels: string[] = [];
-        if (item.addLabels?.length) {
-          const labels = await resolveOrCreateLabelIds(
-            client,
-            input.workspaceId,
-            item.addLabels,
-          );
-          createdLabels = labels.created;
-          for (const labelId of labels.ids)
+        if (added) {
+          for (const labelId of added.ids)
             await client.tasks.addLabel({ ...scope, labelId });
           changed.push("addLabels");
         }
-        if (item.removeLabels?.length) {
-          for (const labelId of await resolveLabelIds(
-            client,
-            input.workspaceId,
-            item.removeLabels,
-          ))
+        if (removeIds.length) {
+          for (const labelId of removeIds)
             await client.tasks.removeLabel({ ...scope, labelId });
           changed.push("removeLabels");
         }
         return {
-          ticketId: item.ticketId,
+          ticketId,
           changed,
-          ...(createdLabels.length && { createdLabels }),
+          ...(added?.created.length && { createdLabels: added.created }),
         };
       }),
   }),

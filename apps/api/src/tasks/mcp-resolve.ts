@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { createId } from "@paralleldrive/cuid2";
 import { generateKeyBetween } from "fractional-indexing";
+import { COLUMN_COLOR_BY_NAME } from "@morrow/sync-schemas";
 import type { McpClient } from "#api/platform/orpc/mcp-tool";
 
 /** MCP callers name things; the procedures want ids. These look them up. */
@@ -15,8 +16,17 @@ export async function resolveTask(
   scope: { workspaceId: string; projectId: string },
   ticketId: string,
 ) {
-  const task = await client.tasks.get({ ...scope, ticketId });
-  return { ...scope, taskId: task.id };
+  try {
+    const task = await client.tasks.get({ ...scope, ticketId });
+    return { ...scope, taskId: task.id };
+  } catch (error) {
+    if (error instanceof ORPCError && error.code === "NOT_FOUND") {
+      throw new ORPCError("NOT_FOUND", {
+        message: `No task ${ticketId} in this project`,
+      });
+    }
+    throw error;
+  }
 }
 
 export async function resolveLabelIds(
@@ -87,7 +97,7 @@ export async function resolveOrCreateLabelIds(
           workspaceId,
           id,
           name,
-          color: "gray",
+          color: COLUMN_COLOR_BY_NAME.gray,
           position,
         });
       } catch (error) {
