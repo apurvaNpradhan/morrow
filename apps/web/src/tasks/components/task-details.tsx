@@ -8,6 +8,7 @@ import { useDescriptionAutosave } from "../actions/use-description-autosave";
 import { useTaskDescription } from "../queries/use-task-queries";
 import { updateTask } from "../actions/task-actions";
 import { errorMessage } from "@/app/lib/error-message";
+import { cn } from "@/design-system/cn";
 import { PageTitle } from "@/design-system/page-title";
 import { toast } from "@/design-system/toast";
 import { Textarea } from "@/design-system/ui/textarea";
@@ -24,7 +25,14 @@ import { useTaskView } from "./task-view-context";
  * sheet and the full page are one view. Everything is read-only for a viewer
  * and in an archived Project; an archived task is editable and says so.
  */
-export function TaskDetails({ task }: { task: TaskRow }) {
+export function TaskDetails({
+  task,
+  fullPage = false,
+}: {
+  task: TaskRow;
+  /** The task page centres its content; the scrollbar stays at the screen edge. */
+  fullPage?: boolean;
+}) {
   const { t } = useTranslation("tasks");
   const { can, frozen, project } = useTaskView();
   const actions = useTaskActions();
@@ -74,7 +82,12 @@ export function TaskDetails({ task }: { task: TaskRow }) {
         </div>
       ) : null}
       <div className="@container min-h-0 flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-6 p-4 @min-[720px]:flex-row">
+        <div
+          className={cn(
+            "flex flex-col gap-6 p-4 @min-[720px]:flex-row",
+            fullPage && "mx-auto w-full max-w-5xl",
+          )}
+        >
           <div className="order-2 min-w-0 flex-1 space-y-4 @min-[720px]:order-1">
             <Textarea
               unstyled

@@ -1,7 +1,7 @@
 import { CalendarDays, Tag, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
-import { formatDate, formatDateTime } from "@/design-system/format";
+import { formatDate } from "@/design-system/format";
 import {
   Popover,
   PopoverPopup,
@@ -49,7 +49,6 @@ export function TaskProperties({ task }: { task: TaskRow }) {
     ? personById.get(task.assigneeId)
     : undefined;
   const labels = labelsOfTask(task.labelIds, labelById);
-  const creator = task.createdBy ? personById.get(task.createdBy) : undefined;
 
   return (
     <dl className="flex flex-wrap items-start gap-2 @min-[720px]:flex-col @min-[720px]:gap-0.5">
@@ -153,7 +152,11 @@ export function TaskProperties({ task }: { task: TaskRow }) {
             )}
           >
             {labels.length > 0 ? (
-              <LabelChips labels={labels} max={6} />
+              <LabelChips
+                labels={labels}
+                max={6}
+                chipClassName="h-6 max-w-40 gap-1.5 px-2 text-sm"
+              />
             ) : (
               <>
                 <Tag aria-hidden="true" className="size-3.5" />
@@ -165,15 +168,6 @@ export function TaskProperties({ task }: { task: TaskRow }) {
             <TaskLabelPicker taskId={task.id} />
           </PopoverPopup>
         </Popover>
-      </Field>
-      <RailHeading>{t("sheet.details")}</RailHeading>
-      <Field label={t("fields.createdBy")}>
-        <p className="px-2 text-xs text-muted-foreground @min-[720px]:py-1">
-          {t("sheet.createdBy", {
-            name: creator?.name ?? t("sheet.unknownUser"),
-          })}
-          <span className="block">{formatDateTime(task.createdAt)}</span>
-        </p>
       </Field>
     </dl>
   );
