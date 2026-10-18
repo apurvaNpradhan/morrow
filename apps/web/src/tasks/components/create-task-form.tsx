@@ -1,4 +1,4 @@
-import { isCalendarDate } from "@morrow/sync-schemas";
+import { isCalendarDate, TASK_DESCRIPTION_MAX } from "@morrow/sync-schemas";
 import { CalendarDays, Layers, UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -192,6 +192,7 @@ export function CreateTaskForm({
           onChange={(description) => update({ description })}
           onSubmit={() => void submit()}
           className="min-h-24"
+          limit={TASK_DESCRIPTION_MAX}
         />
         <div className="flex flex-wrap items-center gap-1.5">
           {!insideProject ? (

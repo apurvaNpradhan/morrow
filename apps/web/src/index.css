@@ -389,6 +389,8 @@ input:-webkit-autofill:active {
     position: fixed;
     z-index: 50;
     min-width: 16rem;
+    max-height: 20rem;
+    overflow-y: auto;
     border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
     border-radius: 0.5rem;
     background: var(--popover);
@@ -653,6 +655,67 @@ input:-webkit-autofill:active {
     font-family: var(--font-mono);
     font-size: 0.85rem;
     color: var(--code-foreground);
+  }
+
+  /* Syntax tokens from lowlight. The theme colours keep contrast in light and dark. */
+  .morrow-tiptap-content .ProseMirror pre .hljs-keyword,
+  .morrow-tiptap-content .ProseMirror pre .hljs-selector-tag,
+  .morrow-tiptap-content .ProseMirror pre .hljs-meta .hljs-keyword {
+    color: var(--chart-4);
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-string,
+  .morrow-tiptap-content .ProseMirror pre .hljs-addition,
+  .morrow-tiptap-content .ProseMirror pre .hljs-regexp {
+    color: var(--success);
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-number,
+  .morrow-tiptap-content .ProseMirror pre .hljs-literal,
+  .morrow-tiptap-content .ProseMirror pre .hljs-symbol,
+  .morrow-tiptap-content .ProseMirror pre .hljs-bullet {
+    color: var(--warning);
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-title,
+  .morrow-tiptap-content .ProseMirror pre .hljs-function,
+  .morrow-tiptap-content .ProseMirror pre .hljs-section {
+    color: var(--info);
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-type,
+  .morrow-tiptap-content .ProseMirror pre .hljs-built_in,
+  .morrow-tiptap-content .ProseMirror pre .hljs-class {
+    color: var(--chart-1);
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-attr,
+  .morrow-tiptap-content .ProseMirror pre .hljs-attribute,
+  .morrow-tiptap-content .ProseMirror pre .hljs-property,
+  .morrow-tiptap-content .ProseMirror pre .hljs-template-variable,
+  .morrow-tiptap-content .ProseMirror pre .hljs-variable {
+    color: var(--chart-3);
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-tag,
+  .morrow-tiptap-content .ProseMirror pre .hljs-name,
+  .morrow-tiptap-content .ProseMirror pre .hljs-deletion {
+    color: var(--destructive);
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-comment,
+  .morrow-tiptap-content .ProseMirror pre .hljs-quote,
+  .morrow-tiptap-content .ProseMirror pre .hljs-doctag {
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .morrow-tiptap-content .ProseMirror pre .hljs-strong {
+    font-weight: 600;
   }
 
   .morrow-mermaid-preview {

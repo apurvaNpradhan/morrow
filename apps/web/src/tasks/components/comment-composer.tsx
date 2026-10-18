@@ -1,4 +1,4 @@
-import type { TaskRow } from "@morrow/sync-schemas";
+import { COMMENT_BODY_MAX, type TaskRow } from "@morrow/sync-schemas";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
@@ -46,6 +46,7 @@ export function CommentComposer({ task }: { task: TaskRow }) {
         onChange={setBody}
         onSubmit={() => void post()}
         className="min-h-10"
+        limit={COMMENT_BODY_MAX}
       />
       <div className="flex justify-end">
         <Button
