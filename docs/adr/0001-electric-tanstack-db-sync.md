@@ -32,7 +32,7 @@ The web app read everything through oRPC queries cached by TanStack Query. A cha
 
 - Synced collections live in a `collections/` role folder inside the Vertical, next to `queries/`, and are created once at module level. Shared options (proxy URL, `snakeCamelMapper`, timestamp parsing, error handling) are defined once. Each collection is registered in `registerSyncedCollection`, and `cleanupSyncedCollections()` runs next to `queryClient.clear()` at sign-out, on a 401 and at account deletion.
 - The Workspace layout route preloads its collections in its loader, so pages read with `useLiveSuspenseQuery`; link hover starts the sync early. A failed first sync shows a retry screen, not a crash.
-- No offline or SQLite persistence for synced collections.
+- No offline or SQLite persistence for synced collections. (Superseded by [0007](0007-local-database.md): synced collections are kept in a browser database; there are still no offline writes.)
 - Device preferences (theme, compact mode, sidebar default) are a TanStack DB `localStorageCollection`, not a synced collection. They belong to the browser, survive sign-out and sync between tabs.
 
 ## Consequences

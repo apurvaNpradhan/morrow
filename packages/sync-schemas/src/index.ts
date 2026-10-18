@@ -242,3 +242,4 @@ export const taskEventsShape = shape(
 );
 
 export type TaskEventRow = z.infer<typeof taskEventsShape.schema>;
+export * from "./shape-schema-version.js";
