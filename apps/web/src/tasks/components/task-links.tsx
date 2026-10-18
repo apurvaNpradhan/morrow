@@ -6,6 +6,14 @@ import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
 import { toast } from "@/design-system/toast";
 import { Button } from "@/design-system/ui/button";
+import {
+  Dialog,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/design-system/ui/dialog";
 import { Input } from "@/design-system/ui/input";
 import { addLink, editLink, removeLink } from "../actions/link-actions";
 import { faviconUrl, linkHost, linkLabel } from "../lib/link-display";
@@ -23,8 +31,10 @@ export function TaskLinks({ task }: { task: TaskRow }) {
   const { can, frozen } = useTaskView();
   const links = useTaskLinks(task.id);
   const editable = can.edit && !frozen;
-  const [adding, setAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // The dialog adds a link (`null` link) or edits one; `null` is closed.
+  const [dialog, setDialog] = useState<{ link: TaskLinkRow | null } | null>(
+    null,
+  );
 
   if (links.length === 0 && !editable) return null;
 
@@ -35,46 +45,48 @@ export function TaskLinks({ task }: { task: TaskRow }) {
       </h2>
       {links.length > 0 ? (
         <ul className="space-y-0.5">
-          {links.map((link) =>
-            editingId === link.id ? (
-              <li key={link.id}>
-                <LinkForm
-                  initial={link}
-                  existing={links}
-                  onSubmit={(value) => editLink(link.id, value)}
-                  onClose={() => setEditingId(null)}
-                />
-              </li>
-            ) : (
-              <LinkRow
-                key={link.id}
-                link={link}
-                editable={editable}
-                onEdit={() => setEditingId(link.id)}
-              />
-            ),
-          )}
+          {links.map((link) => (
+            <LinkRow
+              key={link.id}
+              link={link}
+              editable={editable}
+              onEdit={() => setDialog({ link })}
+            />
+          ))}
         </ul>
       ) : null}
       {editable ? (
-        adding ? (
-          <LinkForm
-            existing={links}
-            onSubmit={(value) => addLink(task, value)}
-            onClose={() => setAdding(false)}
-          />
-        ) : (
-          <Button
-            variant="ghost"
-            size="xs"
-            className="text-muted-foreground"
-            onClick={() => setAdding(true)}
-          >
-            <Plus aria-hidden="true" />
-            {t("links.add")}
-          </Button>
-        )
+        <Button
+          variant="ghost"
+          size="xs"
+          className="text-muted-foreground"
+          onClick={() => setDialog({ link: null })}
+        >
+          <Plus aria-hidden="true" />
+          {t("links.add")}
+        </Button>
       ) : null}
+      <Dialog
+        open={dialog !== null}
+        onOpenChange={(open) => {
+          if (!open) setDialog(null);
+        }}
+      >
+        {dialog ? (
+          <LinkForm
+            // A different link starts the fields afresh.
+            key={dialog.link?.id ?? "new"}
+            initial={dialog.link ?? undefined}
+            existing={links}
+            onSubmit={(value) =>
+              dialog.link
+                ? editLink(dialog.link.id, value)
+                : addLink(task, value)
+            }
+            onClose={() => setDialog(null)}
+          />
+        ) : null}
+      </Dialog>
     </section>
   );
 }
@@ -200,54 +212,52 @@ function LinkForm({
   }
 
   return (
-    <form
-      className="space-y-1.5 rounded-lg border bg-card p-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void submit();
-      }}
-      onKeyDown={(event) => {
-        if (event.key !== "Escape") return;
-        // Only the form closes; the sheet and the page stay.
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
-      }}
-    >
-      <Input
-        autoFocus
-        size="sm"
-        value={url}
-        maxLength={LINK_URL_MAX}
-        placeholder={t("links.urlPlaceholder")}
-        aria-label={t("links.url")}
-        aria-invalid={invalid}
-        onChange={(event) => {
-          setUrl(event.target.value);
-          setInvalid(false);
+    <DialogPopup className="w-full max-w-md">
+      <DialogHeader>
+        <DialogTitle>{initial ? t("links.edit") : t("links.add")}</DialogTitle>
+      </DialogHeader>
+      <form
+        className="contents"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
         }}
-      />
-      {invalid ? (
-        <p role="alert" className="text-destructive text-xs">
-          {t("links.invalid")}
-        </p>
-      ) : null}
-      <Input
-        size="sm"
-        value={title}
-        maxLength={LINK_TITLE_MAX}
-        placeholder={t("links.titlePlaceholder")}
-        aria-label={t("links.titleLabel")}
-        onChange={(event) => setTitle(event.target.value)}
-      />
-      <div className="flex justify-end gap-1.5">
-        <Button type="button" variant="ghost" size="xs" onClick={onClose}>
-          {t("common:actions.cancel")}
-        </Button>
-        <Button type="submit" size="xs">
-          {initial ? t("links.save") : t("links.add")}
-        </Button>
-      </div>
-    </form>
+      >
+        <DialogPanel className="space-y-2">
+          <Input
+            autoFocus
+            value={url}
+            maxLength={LINK_URL_MAX}
+            placeholder={t("links.urlPlaceholder")}
+            aria-label={t("links.url")}
+            aria-invalid={invalid}
+            onChange={(event) => {
+              setUrl(event.target.value);
+              setInvalid(false);
+            }}
+          />
+          {invalid ? (
+            <p role="alert" className="text-destructive text-xs">
+              {t("links.invalid")}
+            </p>
+          ) : null}
+          <Input
+            value={title}
+            maxLength={LINK_TITLE_MAX}
+            placeholder={t("links.titlePlaceholder")}
+            aria-label={t("links.titleLabel")}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+        </DialogPanel>
+        <DialogFooter>
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
+            {t("common:actions.cancel")}
+          </Button>
+          <Button type="submit" size="sm">
+            {initial ? t("links.save") : t("links.add")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogPopup>
   );
 }
