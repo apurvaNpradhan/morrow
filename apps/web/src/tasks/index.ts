@@ -3,6 +3,7 @@ export { TaskTicketPage } from "./components/task-ticket-page";
 export { TasksSettingsSection } from "./settings/tasks-settings-section";
 export { CreateTaskDialog } from "./components/create-task-dialog";
 export { useTicketLookup } from "./queries/use-ticket-lookup";
+export { TicketWorkspaceProvider } from "./components/ticket-workspace-context";
 export { openCreateTask } from "./lib/create-task-store";
 export { preloadProjectTasks } from "./lib/preload-project-tasks";
 export { preloadTicketTask } from "./lib/preload-ticket-task";

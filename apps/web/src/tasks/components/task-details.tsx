@@ -1,4 +1,4 @@
-import type { TaskRow } from "@morrow/sync-schemas";
+import { TASK_DESCRIPTION_MAX, type TaskRow } from "@morrow/sync-schemas";
 import { Archive } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -122,6 +122,7 @@ export function TaskDetails({
                 editable={editable}
                 onChange={(markdown) => saveDescription(markdown)}
                 className="min-h-40"
+                limit={TASK_DESCRIPTION_MAX}
               />
             )}
             <TaskLinks task={task} />

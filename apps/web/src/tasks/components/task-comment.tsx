@@ -1,4 +1,4 @@
-import type { TaskCommentRow } from "@morrow/sync-schemas";
+import { COMMENT_BODY_MAX, type TaskCommentRow } from "@morrow/sync-schemas";
 import { Ellipsis, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -141,6 +141,7 @@ export function TaskComment({
               autoFocus
               onSubmit={() => void save()}
               className="min-h-10"
+              limit={COMMENT_BODY_MAX}
             />
             <div className="flex justify-end gap-2">
               <Button

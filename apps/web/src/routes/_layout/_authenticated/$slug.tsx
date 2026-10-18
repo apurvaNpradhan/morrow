@@ -17,6 +17,7 @@ import { resolveWorkspaceBySlug, useActiveWorkspace } from "@/workspace";
 import { canonicalWorkspaceHref } from "@/workspace";
 import { errorCode } from "@/app/lib/orpc-error";
 import { toNavigation } from "@/onboarding";
+import { TicketWorkspaceProvider } from "@/tasks";
 
 export const Route = createFileRoute("/_layout/_authenticated/$slug")({
   beforeLoad: async ({ context, params, location }) => {
@@ -75,5 +76,9 @@ function WorkspaceLayout() {
   useCanonicalWorkspaceUrl();
   useRememberLastWorkspace(workspace.id, session, sessionError);
 
-  return <Outlet />;
+  return (
+    <TicketWorkspaceProvider id={workspace.id} slug={workspace.slug}>
+      <Outlet />
+    </TicketWorkspaceProvider>
+  );
 }
