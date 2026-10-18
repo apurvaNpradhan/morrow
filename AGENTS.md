@@ -41,7 +41,9 @@ Decisions and reasons: `docs/adr/0001-electric-tanstack-db-sync.md` and `docs/ad
 
 ### Issue tracker
 
-Issues and specs live as local markdown under `.scratch/`. See `docs/agents/issue-tracker.md`.
+Specs live as local markdown under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+Tickets (`MOR-n`) live in the Morrow app, workspace `atlas`, project `MOR`. Use the `morrow` MCP, not `.scratch/`. Read the ticket's description and notes (they list required tests) before changing code; finish them before moving it to Done.
 
 ### Triage labels
 
