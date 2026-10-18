@@ -1,14 +1,11 @@
 import type { TaskRow } from "@morrow/sync-schemas";
 import { useAppHotkeys, useHotkeys } from "@tanstack/react-hotkeys";
-import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
-import { openFieldPicker, type PickerField } from "../lib/field-picker-store";
 import { taskHotkeysAllowed } from "../lib/hotkey-scope";
 import { focusedTaskId } from "../lib/task-links";
 import { focusTask } from "../lib/focus-task";
 import { currentView, neighborInView } from "../lib/view-order-store";
-import { requestDeleteTask } from "./delete-task-dialog";
-import { useTaskView } from "./task-view-context";
+import { useTaskFieldHotkeys } from "./use-task-field-hotkeys";
 
 /** Whether the focus is in a field where arrow keys move a cursor. */
 function isEditing(element: Element | null) {
@@ -44,9 +41,7 @@ export function useTaskHotkeys({
   focusSearch: () => void;
 }) {
   const hotkeys = useAppHotkeys();
-  const { can, frozen, meId } = useTaskView();
-  const actions = useTaskActions();
-  const editable = can.edit && !frozen;
+  useTaskFieldHotkeys();
 
   /** The sheet's task when it is open, else the focused card or row. */
   function currentTask() {
@@ -61,22 +56,6 @@ export function useTaskHotkeys({
     () => {
       if (taskHotkeysAllowed()) run();
     };
-
-  function pick(field: PickerField, sheetField: string): Run {
-    return guarded(() => {
-      if (!editable) return;
-      const sheetChip = document.querySelector<HTMLElement>(
-        `[data-sheet-field="${sheetField}"]`,
-      );
-      if (sheetChip) {
-        sheetChip.click();
-        return;
-      }
-      const id = focusedTaskId();
-      const card = id ? document.querySelector(`[data-task-id="${id}"]`) : null;
-      if (id && card) openFieldPicker(id, field, card);
-    });
-  }
 
   function step(delta: 1 | -1): Run {
     return guarded(() => {
@@ -108,24 +87,5 @@ export function useTaskHotkeys({
     { hotkey: hotkeys.previousTask, callback: step(-1) },
     { hotkey: "ArrowDown", callback: stepInSheet(1) },
     { hotkey: "ArrowUp", callback: stepInSheet(-1) },
-    { hotkey: hotkeys.setTaskColumn, callback: pick("column", "column") },
-    { hotkey: hotkeys.setTaskPriority, callback: pick("priority", "priority") },
-    { hotkey: hotkeys.assignTask, callback: pick("assignee", "assignee") },
-    { hotkey: hotkeys.setTaskDueDate, callback: pick("dueDate", "dueDate") },
-    { hotkey: hotkeys.setTaskLabels, callback: pick("labels", "labels") },
-    {
-      hotkey: hotkeys.assignTaskToMe,
-      callback: guarded(() => {
-        const task = currentTask();
-        if (task && editable && meId) void actions.setAssignee(task, meId);
-      }),
-    },
-    {
-      hotkey: hotkeys.deleteTask,
-      callback: guarded(() => {
-        const task = currentTask();
-        if (task && can.delete && !frozen) requestDeleteTask(task);
-      }),
-    },
   ]);
 }
