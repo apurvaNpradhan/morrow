@@ -27,3 +27,22 @@ export function useActiveTaskId() {
     () => current,
   );
 }
+
+let restoringFocus = false;
+
+/**
+ * Closing the sheet puts focus back on its card, which is not the user picking
+ * that task; the next focus after it does not make the task active.
+ */
+export function markFocusRestore() {
+  restoringFocus = true;
+  // The focus follows at once; if nothing takes it, do not eat a later one.
+  setTimeout(() => (restoringFocus = false), 0);
+  return true;
+}
+
+export function takeFocusRestore() {
+  const was = restoringFocus;
+  restoringFocus = false;
+  return was;
+}

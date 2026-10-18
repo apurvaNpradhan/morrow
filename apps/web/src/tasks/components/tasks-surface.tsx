@@ -2,7 +2,7 @@ import type { TaskRow } from "@morrow/sync-schemas";
 import { Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useTaskCommands } from "../actions/use-task-commands";
-import { setActiveTaskId } from "../lib/active-task-store";
+import { setActiveTaskId, takeFocusRestore } from "../lib/active-task-store";
 import { arrowTarget } from "../lib/arrow-navigation";
 import { focusTask } from "../lib/focus-task";
 import { currentView } from "../lib/view-order-store";
@@ -65,6 +65,7 @@ export function TasksSurface({
                 ? event.target.closest<HTMLElement>("[data-task-id]")?.dataset
                     .taskId
                 : undefined;
+            if (takeFocusRestore()) return;
             if (id) setActiveTaskId(id);
           }}
           onKeyDown={(event) => {
