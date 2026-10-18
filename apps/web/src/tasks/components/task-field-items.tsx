@@ -136,7 +136,7 @@ export function AssigneeItems({
   );
 }
 
-/** Today, tomorrow, this weekend, next week, a date of your own, or none. */
+/** A date of your own, today, tomorrow, this weekend, next week, or none. */
 export function DueDateItems({
   today,
   hasValue,
@@ -153,19 +153,13 @@ export function DueDateItems({
   const { t } = useTranslation("tasks");
   return (
     <>
-      <DigitKeys />
       <TypedDueDate today={today} onSelect={onSelect} />
-      {quickDueDates(today, localeWeekStart()).map(({ key, day }, index) => (
-        <MenuItem
-          key={key}
-          onClick={() => onSelect(day)}
-          {...digitProps(index + 1)}
-        >
+      <MenuItem onClick={onPickDate}>{t("due.pick")}</MenuItem>
+      {quickDueDates(today, localeWeekStart()).map(({ key, day }) => (
+        <MenuItem key={key} onClick={() => onSelect(day)}>
           {t(`due.${key}`)}
-          <DigitHint n={index + 1} />
         </MenuItem>
       ))}
-      <MenuItem onClick={onPickDate}>{t("due.pick")}</MenuItem>
       {hasValue ? (
         <MenuItem onClick={() => onSelect(null)}>{t("due.clear")}</MenuItem>
       ) : null}
