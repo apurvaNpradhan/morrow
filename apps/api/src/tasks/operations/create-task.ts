@@ -16,6 +16,9 @@ import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import { freePosition } from "#api/tasks/lib/free-position";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { checklistColumns, saveDescription } from "#api/tasks/lib/description";
+import { findParent } from "#api/tasks/lib/find-parent";
+import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
+import { recordParentChange } from "#api/tasks/history/record-parent-change";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
@@ -30,6 +33,7 @@ export type NewTask = {
   assigneeId?: string | null;
   dueDate?: string | null;
   labelIds?: string[];
+  parentId?: string | null;
 };
 
 /**
@@ -69,6 +73,10 @@ export async function createTask(
         null,
       );
 
+      const parent = input.parentId
+        ? await findParent(tx, projectId, input.parentId)
+        : null;
+
       const [counter] = await tx
         .update(projectTable)
         .set({ lastTaskNumber: sql`${projectTable.lastTaskNumber} + 1` })
@@ -81,6 +89,7 @@ export async function createTask(
         .values({
           id: input.id,
           projectId,
+          parentId: parent?.id ?? null,
           columnId: input.columnId,
           number: counter.number,
           title: input.title,
@@ -105,6 +114,8 @@ export async function createTask(
         type: "created",
         data: {},
       });
+      await refreshSubtaskCounts(tx, [parent?.id]);
+      await recordParentChange(tx, project, task, null, parent);
       return task;
     });
     return { id: result.id, number: result.number, txid };

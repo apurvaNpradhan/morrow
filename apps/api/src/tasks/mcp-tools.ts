@@ -23,6 +23,12 @@ const edge = z.enum(["top", "bottom"]);
 
 const MAX_BATCH = 50;
 
+const parentTicket = z
+  .string()
+  .trim()
+  .min(1)
+  .describe("The parent's ticket id, for example MOR-12; same project.");
+
 const createItem = z.object({
   title,
   description: description.optional(),
@@ -31,6 +37,7 @@ const createItem = z.object({
   assignee: z.string().optional(),
   dueDate: dueDate.optional(),
   labels: z.array(z.string()).optional(),
+  parentId: parentTicket.optional(),
   at: edge.default("bottom"),
 });
 
@@ -43,6 +50,10 @@ const updateItem = z.object({
   assignee: z.string().nullable().optional(),
   addLabels: z.array(z.string()).optional(),
   removeLabels: z.array(z.string()).optional(),
+  parentId: parentTicket
+    .nullable()
+    .optional()
+    .describe("A ticket id sets the parent; null makes the task top-level."),
 });
 
 /**
@@ -106,6 +117,8 @@ export const tasksMcpTools = [
             ? { id: task.assigneeId, name: task.assigneeName }
             : null,
           dueDate: task.dueDate,
+          parent: task.parentTicketId,
+          subtasks: { done: task.subtaskDone, total: task.subtaskTotal },
           labels: task.labels,
           completedAt: task.completedAt,
           archivedAt: task.archivedAt,
@@ -117,7 +130,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "get_task",
     description:
-      "Get one task by ticket id (for example MOR-12): its description, labels (names and colours), external links (id, url, title) and comments, oldest first, with the fields list_tasks gives.",
+      "Get one task by ticket id (for example MOR-12): its parent (ticket id and title), subtask counts (done of total, archived left out, canceled counted as done), description, labels (names and colours), external links (id, url, title) and comments, oldest first, with the fields list_tasks gives.",
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       projectId: z.string().trim().min(1),
@@ -128,7 +141,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "create_tasks",
     description:
-      "Create 1–50 tasks in one call. Each item has a title and optionally description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
+      "Create 1–50 tasks in one call. Each item has a title and optionally parentId (a ticket id of this project), description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(createItem).min(1).max(MAX_BATCH),
     }),
@@ -160,6 +173,9 @@ export const tasksMcpTools = [
             ? await resolveAssigneeId(client, input.workspaceId, item.assignee)
             : undefined,
           labelIds: labels?.ids,
+          parentId: item.parentId
+            ? (await resolveTask(client, input, item.parentId)).taskId
+            : undefined,
         });
         return {
           ticketId: `${projectKey}-${created.number}`,
@@ -170,7 +186,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "update_tasks",
     description:
-      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate and assignee (an email). addLabels creates missing labels; removeLabels names existing ones. Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
+      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate, assignee (an email) and parentId (a ticket id; refused if it would make a loop). addLabels creates missing labels; removeLabels names existing ones. Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(updateItem).min(1).max(MAX_BATCH),
     }),
@@ -194,6 +210,10 @@ export const tasksMcpTools = [
           item.assignee == null
             ? item.assignee
             : await resolveAssigneeId(client, input.workspaceId, item.assignee);
+        const parentId =
+          item.parentId == null
+            ? item.parentId
+            : (await resolveTask(client, input, item.parentId)).taskId;
         const removeIds = item.removeLabels?.length
           ? await resolveLabelIds(client, input.workspaceId, item.removeLabels)
           : [];
@@ -231,6 +251,10 @@ export const tasksMcpTools = [
         if (assigneeId !== undefined) {
           await client.tasks.updateAssignee({ ...scope, assigneeId });
           changed.push("assignee");
+        }
+        if (parentId !== undefined) {
+          await client.tasks.updateParent({ ...scope, parentId });
+          changed.push("parentId");
         }
         if (added) {
           for (const labelId of added.ids)

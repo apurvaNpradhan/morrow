@@ -56,9 +56,12 @@ export async function createTask(input: NewTask): Promise<TaskRow> {
       id,
       projectId: input.projectId,
       columnId: input.column.id,
+      parentId: null,
       // The server numbers it; until then the card shows the key and an ellipsis.
       number: 0,
       title: input.title,
+      subtaskDone: 0,
+      subtaskTotal: 0,
       // The server counts them from the description and sends them back.
       checklistDone: 0,
       checklistTotal: 0,

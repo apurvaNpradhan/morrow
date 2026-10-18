@@ -22,6 +22,8 @@ const CODES = {
   LINK_ID_TAKEN: "CONFLICT",
   LINK_URL_TAKEN: "CONFLICT",
   TOO_MANY_LINKS: "CONFLICT",
+  PARENT_NOT_IN_PROJECT: "BAD_REQUEST",
+  PARENT_CYCLE: "BAD_REQUEST",
 } as const;
 
 export type TaskErrorCode = keyof typeof CODES;

@@ -51,6 +51,12 @@ export const taskEventSchema = z.discriminatedUnion("type", [
   event("archived", none),
   event("unarchived", none),
   event("description", none),
+  event(
+    "parent",
+    z.object({ from: z.string().nullable(), to: z.string().nullable() }),
+  ),
+  event("subtask_added", z.object({ ticketId: z.string() })),
+  event("subtask_removed", z.object({ ticketId: z.string() })),
 ]);
 
 export type TaskEvent = z.infer<typeof taskEventSchema>;

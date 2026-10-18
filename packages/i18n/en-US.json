@@ -1599,6 +1599,11 @@
 			"archived": "archived the task",
 			"unarchived": "unarchived the task",
 			"description": "edited the description",
+			"parentSet": "made this a subtask of {{to}}",
+			"parentChanged": "moved this from {{from}} to {{to}}",
+			"parentCleared": "removed this from {{from}}",
+			"subtaskAdded": "added the subtask {{ticket}}",
+			"subtaskRemoved": "removed the subtask {{ticket}}",
 			"more_one": "{{count}} more change",
 			"more_other": "{{count}} more changes"
 		}
