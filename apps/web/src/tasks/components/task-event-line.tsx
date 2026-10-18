@@ -9,6 +9,7 @@ import {
 import { parseDay } from "../lib/calendar-day";
 import type { TimelineEvent } from "../lib/timeline";
 import { PersonAvatar } from "./person-avatar";
+import { TaskEventIcon } from "./task-event-icon";
 import { useTaskView } from "./task-view-context";
 
 /** A short date for a due-date entry. */
@@ -39,6 +40,9 @@ export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
 
   return (
     <li className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span className="flex size-5 shrink-0 items-center justify-center">
+        <TaskEventIcon event={event} />
+      </span>
       <PersonAvatar
         person={actor ?? { name: t("comments.deletedUser"), image: null }}
         className="size-5"
