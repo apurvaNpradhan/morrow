@@ -134,5 +134,16 @@ function sentence(t: TFunction, event: TaskEvent, names: Names): string {
       return t("history.unarchived");
     case "description":
       return t("history.description");
+    case "parent": {
+      const { from, to } = event.data;
+      if (to === null) return t("history.parentCleared", { from });
+      return from === null
+        ? t("history.parentSet", { to })
+        : t("history.parentChanged", { from, to });
+    }
+    case "subtask_added":
+      return t("history.subtaskAdded", { ticket: event.data.ticketId });
+    case "subtask_removed":
+      return t("history.subtaskRemoved", { ticket: event.data.ticketId });
   }
 }

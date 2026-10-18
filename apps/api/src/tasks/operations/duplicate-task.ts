@@ -17,6 +17,8 @@ import type { TaskActor } from "#api/tasks/lib/assignee";
 import { saveDescription } from "#api/tasks/lib/description";
 import { findTask } from "#api/tasks/lib/find-task";
 import { freePosition } from "#api/tasks/lib/free-position";
+import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
+import { recordParentChange } from "#api/tasks/history/record-parent-change";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
@@ -61,6 +63,7 @@ export async function duplicateTask(
         .values({
           id: copy.id,
           projectId,
+          parentId: source.parentId,
           columnId: source.columnId,
           number: counter.number,
           title: `${source.title.slice(0, TASK_TITLE_MAX - COPY_SUFFIX.length)}${COPY_SUFFIX}`,
@@ -95,6 +98,11 @@ export async function duplicateTask(
         type: "duplicated",
         data: { sourceTicketId: ticketId(project.key, source.number) },
       });
+      if (source.parentId) {
+        const parent = await findTask(tx, projectId, source.parentId);
+        await refreshSubtaskCounts(tx, [parent.id]);
+        await recordParentChange(tx, project, task, null, parent);
+      }
       return task;
     });
     return { id: result.id, number: result.number, txid };

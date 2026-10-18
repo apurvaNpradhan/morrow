@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import {
   check,
   date,
+  type AnyPgColumn,
   index,
   integer,
   jsonb,
@@ -36,12 +37,21 @@ export const taskTable = pgTable(
     columnId: text("column_id")
       .notNull()
       .references(() => projectColumnTable.id),
+    // A subtask's parent, in the same Project (Tasks never change Project).
+    // Deleting the parent keeps its subtasks as top-level tasks.
+    parentId: text("parent_id").references((): AnyPgColumn => taskTable.id, {
+      onDelete: "set null",
+    }),
     number: integer("number").notNull(),
     title: text("title").notNull(),
     // Counted from the description whenever it is written, so a card shows
     // progress without the description (see `taskDescriptionTable`).
     checklistDone: integer("checklist_done").notNull().default(0),
     checklistTotal: integer("checklist_total").notNull().default(0),
+    // Recomputed from the rows of the direct subtasks (see
+    // `refreshSubtaskCounts`): those not archived, and those of them closed.
+    subtaskDone: integer("subtask_done").notNull().default(0),
+    subtaskTotal: integer("subtask_total").notNull().default(0),
     // Kept by the Procedures that create and delete comments, so a card shows
     // a badge without the comments themselves.
     commentCount: integer("comment_count").notNull().default(0),
@@ -82,6 +92,7 @@ export const taskTable = pgTable(
     index("task_title_trgm_idx").using("gin", sql`${table.title} gin_trgm_ops`),
     index("task_columnId_idx").on(table.columnId),
     index("task_assigneeId_idx").on(table.assigneeId),
+    index("task_parentId_idx").on(table.parentId),
     uniqueIndex("task_project_number_uidx").on(table.projectId, table.number),
     uniqueIndex("task_column_position_uidx").on(table.columnId, table.position),
     check(

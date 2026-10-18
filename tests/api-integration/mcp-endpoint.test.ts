@@ -322,6 +322,73 @@ describe("MCP endpoint", () => {
     expect(missing.result?.isError).toBe(true);
   });
 
+  it("sets, clears and reports a parent task, refusing loops", async () => {
+    const owner = await signUp("Owner");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Tree", slug: "tree-writes", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const run = async (name: string, args: Record<string, unknown>) => {
+      const response = await call(owner.token, name, {
+        workspaceId: workspace.id,
+        ...args,
+      });
+      return {
+        failed: response.result?.isError === true,
+        body: JSON.parse(response.result!.content[0].text),
+      };
+    };
+    const { body: project } = await run("create_project", {
+      name: "Morrow",
+      key: "MOR",
+    });
+    const projectId = project.projectId;
+
+    const created = await run("create_tasks", {
+      projectId,
+      items: [{ title: "Epic" }, { title: "Part", parentId: "MOR-1" }],
+    });
+    expect(created.body).toEqual([
+      { index: 0, ticketId: "MOR-1" },
+      { index: 1, ticketId: "MOR-2" },
+    ]);
+
+    const epic = await run("get_task", { projectId, ticketId: "MOR-1" });
+    expect(epic.body).toMatchObject({
+      parent: null,
+      subtaskDone: 0,
+      subtaskTotal: 1,
+    });
+    const part = await run("get_task", { projectId, ticketId: "MOR-2" });
+    expect(part.body.parent).toEqual({ ticketId: "MOR-1", title: "Epic" });
+    const listed = await run("list_tasks", { projectId });
+    expect(listed.body.tasks).toMatchObject([
+      { ticketId: "MOR-1", parent: null, subtasks: { done: 0, total: 1 } },
+      { ticketId: "MOR-2", parent: "MOR-1", subtasks: { done: 0, total: 0 } },
+    ]);
+
+    const loop = await run("update_tasks", {
+      projectId,
+      items: [{ ticketId: "MOR-1", parentId: "MOR-2" }],
+    });
+    expect(loop.body[0].error).toBeTruthy();
+    const cleared = await run("update_tasks", {
+      projectId,
+      items: [{ ticketId: "MOR-2", parentId: null }],
+    });
+    expect(cleared.body).toEqual([
+      { index: 0, ticketId: "MOR-2", changed: ["parentId"] },
+    ]);
+    const after = await run("get_task", { projectId, ticketId: "MOR-1" });
+    expect(after.body.subtaskTotal).toBe(0);
+  });
+
   it("creates and changes tasks in batches, creating missing labels", async () => {
     const owner = await signUp("Owner");
     const viewer = await signUp("Viewer");

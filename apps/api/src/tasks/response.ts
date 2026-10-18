@@ -61,6 +61,9 @@ export const taskListItem = z.object({
   title: z.string(),
   description: z.string(),
   columnId: z.string(),
+  parentId: z.string().nullable(),
+  subtaskDone: z.number(),
+  subtaskTotal: z.number(),
   columnName: z.string(),
   category: z.string(),
   priority: z.enum(TASK_PRIORITIES),
@@ -81,6 +84,9 @@ export const taskSearchResult = z.object({
   tasks: z.array(
     z.object({
       ticketId: z.string(),
+      parentTicketId: z.string().nullable(),
+      subtaskDone: z.number(),
+      subtaskTotal: z.number(),
       projectKey: z.string(),
       title: z.string(),
       description: z.string(),
@@ -131,6 +137,9 @@ export const exportDocument = z.object({
 export const taskDetail = z.object({
   id: z.string(),
   ticketId: z.string(),
+  parent: z.object({ ticketId: z.string(), title: z.string() }).nullable(),
+  subtaskDone: z.number(),
+  subtaskTotal: z.number(),
   title: z.string(),
   description: z.string(),
   column: z.string(),

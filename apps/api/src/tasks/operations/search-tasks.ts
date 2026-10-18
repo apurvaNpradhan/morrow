@@ -1,5 +1,5 @@
 import { COLUMN_CATEGORIES, ticketId } from "@morrow/sync-schemas";
-import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { labelTable } from "#api/labels/index";
 import { db, schema } from "#api/platform/database/index";
 import { projectColumnTable, projectTable } from "#api/projects/index";
@@ -98,6 +98,17 @@ export async function searchTasks(workspaceId: string, search: TaskSearch) {
     )
     .limit(limit + 1);
 
+  const page = rows.slice(0, limit);
+  const parentIds = page.flatMap(({ task }) => task.parentId ?? []);
+  const parents =
+    parentIds.length === 0
+      ? []
+      : await db
+          .select({ id: taskTable.id, number: taskTable.number })
+          .from(taskTable)
+          .where(inArray(taskTable.id, parentIds));
+  const parentNumber = new Map(parents.map((p) => [p.id, p.number]));
+
   const labels = await db
     .select({ id: labelTable.id, name: labelTable.name })
     .from(labelTable)
@@ -106,22 +117,28 @@ export async function searchTasks(workspaceId: string, search: TaskSearch) {
 
   return {
     truncated: rows.length > limit,
-    tasks: rows
-      .slice(0, limit)
-      .map(({ task, projectKey, column, assigneeName, description }) => ({
-        ticketId: ticketId(projectKey, task.number),
-        projectKey,
-        title: task.title,
-        description,
-        columnName: column.name,
-        category: column.category,
-        priority: task.priority,
-        assigneeId: task.assigneeId,
-        assigneeName,
-        dueDate: task.dueDate,
-        labels: task.labelIds.flatMap((id) => labelName.get(id) ?? []),
-        completedAt: task.completedAt,
-        archivedAt: task.archivedAt,
-      })),
+    tasks: page.map(
+      ({ task, projectKey, column, assigneeName, description }) => {
+        const parent = task.parentId ? parentNumber.get(task.parentId) : null;
+        return {
+          ticketId: ticketId(projectKey, task.number),
+          parentTicketId: parent == null ? null : ticketId(projectKey, parent),
+          subtaskDone: task.subtaskDone,
+          subtaskTotal: task.subtaskTotal,
+          projectKey,
+          title: task.title,
+          description,
+          columnName: column.name,
+          category: column.category,
+          priority: task.priority,
+          assigneeId: task.assigneeId,
+          assigneeName,
+          dueDate: task.dueDate,
+          labels: task.labelIds.flatMap((id) => labelName.get(id) ?? []),
+          completedAt: task.completedAt,
+          archivedAt: task.archivedAt,
+        };
+      },
+    ),
   };
 }

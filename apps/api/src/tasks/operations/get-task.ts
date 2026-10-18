@@ -63,6 +63,12 @@ export async function getTask(
     );
   if (!found) throw taskNotFound();
   const { task, column } = found;
+  const [parent] = task.parentId
+    ? await db
+        .select({ number: taskTable.number, title: taskTable.title })
+        .from(taskTable)
+        .where(eq(taskTable.id, task.parentId))
+    : [];
 
   const labels = await db
     .select({
@@ -103,6 +109,11 @@ export async function getTask(
   return {
     id: task.id,
     ticketId: ticketId(project.key, task.number),
+    parent: parent
+      ? { ticketId: ticketId(project.key, parent.number), title: parent.title }
+      : null,
+    subtaskDone: task.subtaskDone,
+    subtaskTotal: task.subtaskTotal,
     title: task.title,
     description: found.description,
     column: column.name,
