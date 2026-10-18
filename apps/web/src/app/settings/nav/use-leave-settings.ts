@@ -12,7 +12,7 @@ export function useLeaveSettings() {
     select: (p) => p.slug,
   });
   const { data: workspace } = useActiveWorkspace();
-  const goBack = useGoBack({ id: workspace?.id ?? "", slug });
+  const goBack = useGoBack({ id: workspace?.id ?? "", slug }, "settings");
 
   const leave = useCallback(() => {
     goBack(() => void navigate({ to: "/$slug", params: { slug } }));

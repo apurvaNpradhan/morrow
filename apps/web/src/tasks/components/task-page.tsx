@@ -1,5 +1,5 @@
 import { ticketId } from "@morrow/sync-schemas";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useGoBack } from "@/app/navigation/use-go-back";
 import { useLeaveSettingsOnEscape } from "@/app/settings/nav/use-leave-settings-on-escape";
@@ -13,6 +13,7 @@ import { Skeleton } from "@/design-system/ui/skeleton";
 import { ProjectIcon, ProjectNotFound, useProjectByKey } from "@/projects";
 import type { ProjectRow } from "@morrow/sync-schemas";
 import { useTaskCommands } from "../actions/use-task-commands";
+import { useTaskFieldHotkeys } from "./use-task-field-hotkeys";
 import { displayTicketId } from "../lib/task-links";
 import { useTicketTask } from "../queries/use-task-queries";
 import { DeleteTaskDialog } from "./delete-task-dialog";
@@ -89,21 +90,22 @@ function LoadedTaskPage({
 }) {
   const { t } = useTranslation("tasks");
   const navigate = useNavigate();
+  const router = useRouter();
   const goBack = useGoBack(workspace);
   const { task, isReady } = useTicketTask(project.id, number);
   const ticket = displayTicketId(project.key, number);
 
+  // Nothing recorded (a reload, a pasted link): step back in the app's own
+  // history, else go Home. The task's project board is not where you were.
   function leave() {
-    goBack(
-      () =>
-        void navigate({
-          to: "/$slug/projects/$key/board",
-          params: { slug: workspace.slug, key: project.key },
-        }),
-    );
+    goBack(() => {
+      if (router.history.canGoBack()) router.history.back();
+      else void navigate({ to: "/$slug", params: { slug: workspace.slug } });
+    });
   }
   useLeaveSettingsOnEscape(leave);
   useTaskCommands();
+  useTaskFieldHotkeys();
 
   return (
     <WorkspaceLayout
@@ -140,9 +142,9 @@ function LoadedTaskPage({
         ) : null
       }
     >
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col">
+      <div className="flex h-full min-h-0 w-full flex-col">
         {task ? (
-          <TaskDetails key={task.id} task={task} />
+          <TaskDetails key={task.id} task={task} fullPage />
         ) : isReady ? (
           <p className="p-6 text-sm text-muted-foreground">
             {t("sheet.notFound", { key: project.key, number })}
