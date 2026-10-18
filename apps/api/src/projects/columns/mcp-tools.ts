@@ -8,7 +8,7 @@ export const columnsMcpTools = [
   mcpTool({
     name: "manage_column",
     description:
-      "Create, update or delete a project column. create takes name, category and optional color. update takes column (its name) with a new name and/or color. delete takes column and moveTasksTo, the column that receives its tasks.",
+      "Create, update or delete a project column. create takes name, category and optional color as #rrggbb hex. update takes column (its name) with a new name and/or color (#rrggbb). delete takes column and moveTasksTo, the column that receives its tasks.",
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       projectId: z.string().trim().min(1),

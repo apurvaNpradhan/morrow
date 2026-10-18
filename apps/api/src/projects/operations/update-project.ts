@@ -1,4 +1,3 @@
-import type { ColumnColor } from "@morrow/sync-schemas";
 import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { lockProject } from "#api/projects/lib/lock-project";
@@ -8,7 +7,7 @@ type ProjectChanges = {
   name?: string;
   description?: string | null;
   icon?: string | null;
-  color?: ColumnColor | null;
+  color?: string | null;
 };
 
 /** Changes a project's name, description, icon or colour. An empty description clears it. */

@@ -1,4 +1,4 @@
-import { COLUMN_CATEGORIES, COLUMN_COLORS } from "@morrow/sync-schemas";
+import { colorHex, COLUMN_CATEGORIES } from "@morrow/sync-schemas";
 import { z } from "zod";
 
 export const txid = z
@@ -25,7 +25,7 @@ const columnSchema = z.object({
   projectId: z.string(),
   name: z.string(),
   category: z.enum(COLUMN_CATEGORIES),
-  color: z.enum(COLUMN_COLORS),
+  color: colorHex,
   position: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -38,7 +38,7 @@ export const projectWithColumnsSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   icon: z.string().nullable(),
-  color: z.enum(COLUMN_COLORS).nullable(),
+  color: colorHex.nullable(),
   backgroundUrl: z.string().nullable(),
   archivedAt: z.date().nullable(),
   lastTaskNumber: z.number(),

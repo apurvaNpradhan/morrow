@@ -1,4 +1,3 @@
-import type { ColumnColor } from "@morrow/sync-schemas";
 import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { rethrowViolation } from "#api/projects/errors";
@@ -11,7 +10,7 @@ export async function updateColumn(
   workspaceId: string,
   projectId: string,
   columnId: string,
-  changes: { name?: string; color?: ColumnColor },
+  changes: { name?: string; color?: string },
 ) {
   try {
     const { txid } = await withTxid(async (tx) => {

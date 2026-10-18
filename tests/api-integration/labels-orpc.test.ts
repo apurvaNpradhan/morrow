@@ -36,13 +36,13 @@ describe("creating a label", () => {
       workspaceId: workspace.id,
       id,
       name: "  Bug  ",
-      color: "red",
+      color: "#ef4444",
       position: positionAt(0),
     });
 
     expect(created.txid).toBe(await xminOfLabel(id));
     expect(await labelRows(workspace.id)).toMatchObject([
-      { id, name: "Bug", color: "red", position: positionAt(0) },
+      { id, name: "Bug", color: "#ef4444", position: positionAt(0) },
     ]);
   });
 
@@ -55,7 +55,7 @@ describe("creating a label", () => {
         workspaceId: workspace.id,
         id: newLabelId(),
         name: "bUG",
-        color: "blue",
+        color: "#3b82f6",
         position: positionAt(5),
       }),
     );
@@ -79,7 +79,7 @@ describe("creating a label", () => {
         workspaceId: workspace.id,
         id: newLabelId(),
         name: "Second",
-        color: "blue",
+        color: "#3b82f6",
         position: positionAt(5),
         ...input,
       } as Parameters<typeof client.labels.create>[0]);
@@ -113,7 +113,7 @@ describe("changing a label", () => {
     const recoloured = await client.labels.update({
       workspaceId: workspace.id,
       labelId: id,
-      color: "violet",
+      color: "#8b5cf6",
     });
     const moved = await client.labels.move({
       workspaceId: workspace.id,
@@ -124,7 +124,7 @@ describe("changing a label", () => {
     expect(renamed.txid).toBeLessThan(recoloured.txid);
     expect(moved.txid).toBe(await xminOfLabel(id));
     expect(await labelRows(workspace.id)).toMatchObject([
-      { id, name: "Defect", color: "violet", position: positionAt(9) },
+      { id, name: "Defect", color: "#8b5cf6", position: positionAt(9) },
     ]);
   });
 
@@ -361,7 +361,7 @@ describe("label permissions", () => {
       workspaceId: workspace.id,
       id: newLabelId(),
       name: "Mine",
-      color: "teal",
+      color: "#14b8a6",
       position: positionAt(9),
     });
     const applied = await member.tasks.addLabel({
@@ -408,7 +408,7 @@ describe("label permissions", () => {
         workspaceId: workspace.id,
         id: newLabelId(),
         name: "Mine",
-        color: "teal",
+        color: "#14b8a6",
         position: positionAt(9),
       }),
     );

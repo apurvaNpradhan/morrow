@@ -26,7 +26,7 @@ export function labelFactory<
         workspaceId: string;
         id: string;
         name: string;
-        color: "red";
+        color: "#ef4444";
         position: string;
       }) => Promise<{ id: string; txid: number }>;
     };
@@ -39,7 +39,7 @@ export function labelFactory<
       workspaceId,
       id,
       name,
-      color: "red",
+      color: "#ef4444",
       position: positionAt(next++),
     });
     return { ...created, id };

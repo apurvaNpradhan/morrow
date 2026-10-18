@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { COLUMN_CATEGORIES, COLUMN_COLORS } from "@morrow/sync-schemas";
+import { COLUMN_CATEGORIES } from "@morrow/sync-schemas";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -31,7 +31,7 @@ export const projectTable = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
-    color: text("color", { enum: COLUMN_COLORS }),
+    color: text("color"),
     backgroundUrl: text("background_url"),
     archivedAt: timestamp("archived_at", { mode: "date" }),
     lastTaskNumber: integer("last_task_number").notNull().default(0),
@@ -50,6 +50,7 @@ export const projectTable = pgTable(
       table.workspaceId,
       table.position,
     ),
+    check("project_color_check", sql`${table.color} ~ '^#[0-9a-f]{6}$'`),
   ],
 );
 
@@ -64,7 +65,7 @@ export const projectColumnTable = pgTable(
       .references(() => projectTable.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     category: text("category", { enum: COLUMN_CATEGORIES }).notNull(),
-    color: text("color", { enum: COLUMN_COLORS }).notNull(),
+    color: text("color").notNull(),
     position: text("position").notNull(),
     createdAt: timestamp("created_at", { mode: "date" })
       .default(utcNow)
@@ -89,5 +90,6 @@ export const projectColumnTable = pgTable(
       "project_column_category_check",
       sql`${table.category} IN ('backlog', 'unstarted', 'started', 'done', 'canceled')`,
     ),
+    check("project_column_color_check", sql`${table.color} ~ '^#[0-9a-f]{6}$'`),
   ],
 );

@@ -1,4 +1,8 @@
-import { COLUMN_COLORS, type ColumnColor } from "@morrow/sync-schemas";
+import {
+  COLUMN_COLOR_NAMES,
+  COLUMN_COLORS,
+  type ColumnColor,
+} from "@morrow/sync-schemas";
 import { useTranslation } from "react-i18next";
 import {
   Menu,
@@ -35,7 +39,7 @@ export function LabelColorMenu({
         {COLUMN_COLORS.map((color) => (
           <MenuItem key={color} onClick={() => onChange(color)}>
             <LabelDot color={color} className="size-3" />
-            {t(`colors.${color}`)}
+            {t(`colors.${COLUMN_COLOR_NAMES[color]}`)}
           </MenuItem>
         ))}
       </MenuPopup>

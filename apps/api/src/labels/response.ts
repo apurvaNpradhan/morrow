@@ -1,3 +1,4 @@
+import { colorHex } from "@morrow/sync-schemas";
 import { z } from "zod";
 
 export const txidResult = z.object({
@@ -14,7 +15,7 @@ export const labelListResult = z.array(
   z.object({
     id: z.string(),
     name: z.string(),
-    color: z.string(),
+    color: colorHex,
     position: z.string(),
   }),
 );

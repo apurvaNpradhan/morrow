@@ -1,8 +1,12 @@
-import { COLUMN_COLORS, type ColumnColor } from "@morrow/sync-schemas";
+import {
+  COLUMN_COLOR_NAMES,
+  COLUMN_COLORS,
+  type ColumnColor,
+} from "@morrow/sync-schemas";
 import { Ban } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
-import { COLUMN_COLOR_CLASSES } from "../lib/column-style";
+import { colorDotStyle } from "../lib/column-style";
 
 type ProjectColorSwatchesProps = {
   value: string | null;
@@ -40,17 +44,15 @@ export function ProjectColorSwatches({
           key={color}
           type="button"
           aria-pressed={value === color}
-          aria-label={t(`colors.${color}`)}
-          title={t(`colors.${color}`)}
+          aria-label={t(`colors.${COLUMN_COLOR_NAMES[color]}`)}
+          title={t(`colors.${COLUMN_COLOR_NAMES[color]}`)}
           onClick={() => onChange(color)}
           className={swatch}
         >
           <span
             aria-hidden="true"
-            className={cn(
-              "size-4 rounded-full",
-              COLUMN_COLOR_CLASSES[color].dot,
-            )}
+            className="size-4 rounded-full"
+            style={colorDotStyle(color)}
           />
         </button>
       ))}

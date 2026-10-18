@@ -11,7 +11,7 @@ const column = (
   projectId: "p",
   name: id,
   category,
-  color: "gray",
+  color: "#a1a1aa",
   position,
   createdAt: new Date(0),
   updatedAt: new Date(0),

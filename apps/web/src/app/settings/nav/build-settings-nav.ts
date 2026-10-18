@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SettingsNav } from "./types";
+import type { CSSProperties } from "react";
 
 type Translate = (key: string) => string;
 
@@ -19,7 +20,7 @@ export type SettingsNavProject = {
   key: string;
   name: string;
   icon: LucideIcon;
-  iconClassName?: string;
+  iconStyle?: CSSProperties;
 };
 
 type BuildSettingsNavInput = {
@@ -105,7 +106,7 @@ export function buildSettingsNav({
                 `/settings/projects/${project.key}`,
               ),
               icon: project.icon,
-              iconClassName: project.iconClassName,
+              iconStyle: project.iconStyle,
             })),
           }
         : null,

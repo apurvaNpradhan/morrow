@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { COLUMN_CATEGORIES, COLUMN_COLORS } from "./projects.js";
+import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
 /**
@@ -18,7 +18,7 @@ const personRef = z.object({ id: z.string(), name: z.string() }).nullable();
 const labelRef = z.object({
   id: z.string(),
   name: z.string(),
-  color: z.enum(COLUMN_COLORS),
+  color: colorHex,
 });
 const none = z.object({});
 

@@ -1,4 +1,3 @@
-import type { ColumnColor } from "@morrow/sync-schemas";
 import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { rethrowLabelViolation } from "#api/labels/errors";
@@ -9,7 +8,7 @@ import { labelTable } from "#api/labels/tables";
 export async function updateLabel(
   workspaceId: string,
   labelId: string,
-  changes: { name?: string; color?: ColumnColor },
+  changes: { name?: string; color?: string },
 ) {
   try {
     const { txid } = await withTxid(async (tx) => {

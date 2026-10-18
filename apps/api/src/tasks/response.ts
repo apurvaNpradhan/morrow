@@ -1,4 +1,4 @@
-import { TASK_PRIORITIES } from "@morrow/sync-schemas";
+import { colorHex, TASK_PRIORITIES } from "@morrow/sync-schemas";
 import { z } from "zod";
 
 export const txid = z
@@ -99,7 +99,7 @@ export const taskSearchResult = z.object({
 
 export const exportDocument = z.object({
   project: z.object({ key: z.string(), name: z.string() }),
-  labels: z.array(z.object({ name: z.string(), color: z.string() })),
+  labels: z.array(z.object({ name: z.string(), color: colorHex })),
   columns: z.array(z.object({ name: z.string(), category: z.string() })),
   tasks: z.array(
     z.object({
@@ -141,7 +141,7 @@ export const taskDetail = z.object({
   completedAt: z.date().nullable(),
   archivedAt: z.date().nullable(),
   createdAt: z.date(),
-  labels: z.array(z.object({ name: z.string(), color: z.string() })),
+  labels: z.array(z.object({ name: z.string(), color: colorHex })),
   links: z.array(
     z.object({ id: z.string(), url: z.string(), title: z.string().nullable() }),
   ),

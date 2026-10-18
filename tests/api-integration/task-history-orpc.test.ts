@@ -120,7 +120,7 @@ describe("what a task's history records", () => {
       {
         type: "labels",
         data: {
-          added: [{ id: design.id, name: "Design", color: "red" }],
+          added: [{ id: design.id, name: "Design", color: "#ef4444" }],
           removed: [],
         },
       },

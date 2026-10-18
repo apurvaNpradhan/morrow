@@ -8,7 +8,7 @@ function label(id: string, position: string): LabelRow {
     id,
     workspaceId: "w",
     name: id,
-    color: "red",
+    color: "#ef4444",
     position,
     createdAt: now,
     updatedAt: now,

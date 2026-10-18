@@ -14,7 +14,7 @@ import {
 } from "@/design-system/ui/popover";
 import { filterProjectIcons } from "../lib/filter-project-icons";
 import { PROJECT_ICON_COMPONENTS } from "../lib/project-icons";
-import { projectColorClass } from "./project-icon";
+import { projectColorStyle } from "../lib/column-style";
 import { ProjectColorSwatches } from "./project-color-swatches";
 
 type ProjectIconPickerProps = {
@@ -87,8 +87,8 @@ export function ProjectIconPicker({
         aria-label={t("icon.label")}
         className={cn(
           "grid size-8.5 shrink-0 place-items-center rounded-lg border bg-control text-sm font-semibold text-foreground outline-none transition-colors hover:bg-control-hover focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60",
-          projectColorClass(color),
         )}
+        style={projectColorStyle(color)}
       >
         {Selected ? (
           <Selected aria-hidden="true" className="size-4" />

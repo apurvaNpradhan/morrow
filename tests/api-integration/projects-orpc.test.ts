@@ -41,11 +41,11 @@ describe("creating a project", () => {
         .sort(),
     ).toEqual(
       [
-        ["Backlog", "backlog", "gray"],
-        ["To Do", "unstarted", "slate"],
-        ["In Progress", "started", "blue"],
-        ["Done", "done", "green"],
-        ["Canceled", "canceled", "red"],
+        ["Backlog", "backlog", "#a1a1aa"],
+        ["To Do", "unstarted", "#64748b"],
+        ["In Progress", "started", "#3b82f6"],
+        ["Done", "done", "#22c55e"],
+        ["Canceled", "canceled", "#ef4444"],
       ].sort(),
     );
     const listed = await client.projects.list({ workspaceId: workspace.id });
@@ -89,7 +89,7 @@ describe("creating a project", () => {
       name: "Morrow",
       key: "MOR",
       icon: "Rocket",
-      color: "blue",
+      color: "#3b82f6",
       description: "The personal workspace platform",
     });
 
@@ -100,7 +100,7 @@ describe("creating a project", () => {
     expect(row).toMatchObject({
       name: "Morrow",
       icon: "Rocket",
-      color: "blue",
+      color: "#3b82f6",
       description: "The personal workspace platform",
       lastTaskNumber: 0,
       archivedAt: null,
@@ -760,7 +760,7 @@ describe("project activity", () => {
     await client.projects.columns.update({
       ...base,
       columnId: column!.id,
-      color: "pink",
+      color: "#ec4899",
     });
 
     expect(await activityTypes(workspace.id)).toEqual(["project.created"]);

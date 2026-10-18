@@ -1,6 +1,6 @@
 import type { ProjectColumnRow } from "@morrow/sync-schemas";
 import { cn } from "@/design-system/cn";
-import { COLUMN_COLOR_CLASSES } from "@/projects";
+import { colorTextStyle } from "@/projects";
 
 /*
  * The shapes are the Circle template's status icons (MIT, Copyright (c) 2025
@@ -38,11 +38,8 @@ export function ColumnMarker({
     <svg
       aria-hidden="true"
       viewBox="0 0 14 14"
-      className={cn(
-        "size-4 shrink-0",
-        COLUMN_COLOR_CLASSES[column.color].text,
-        className,
-      )}
+      className={cn("size-4 shrink-0", className)}
+      style={colorTextStyle(column.color)}
     >
       {column.category === "done" ? (
         <path fill="currentColor" fillRule="evenodd" d={CHECK} />
