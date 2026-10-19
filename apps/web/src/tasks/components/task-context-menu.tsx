@@ -24,8 +24,10 @@ import {
 import { MenuHint } from "@/design-system/tooltip-label";
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
+import { useSelectedIds } from "../lib/selection-store";
+import { SelectionMenuItems } from "./selection-menu-items";
 import { openDatePicker } from "../lib/date-picker-store";
-import { requestDeleteTask } from "./delete-task-dialog";
+import { requestDeleteTasks } from "./delete-task-dialog";
 import { ColumnMarker } from "./column-marker";
 import {
   AssigneeItems,
@@ -45,8 +47,12 @@ import { useTaskView } from "./task-view-context";
  * may do.
  */
 export function TaskContextMenu({ children }: { children: ReactNode }) {
+  const { project } = useTaskView();
   const [taskId, setTaskId] = useState<string | null>(null);
   const task = taskId ? taskCollection.get(taskId) : undefined;
+  // A task inside the selection acts for all of it; any other acts alone and leaves the selection be.
+  const selection = useSelectedIds(project.id);
+  const forSelection = taskId !== null && selection.has(taskId);
   return (
     <ContextMenu>
       <ContextMenuTrigger
@@ -66,7 +72,13 @@ export function TaskContextMenu({ children }: { children: ReactNode }) {
       </ContextMenuTrigger>
       {task ? (
         <ContextMenuPopup>
-          <TaskMenuItems task={task} />
+          {forSelection ? (
+            <SelectionMenuItems
+              anchor={document.querySelector(`[data-task-id="${task.id}"]`)}
+            />
+          ) : (
+            <TaskMenuItems task={task} />
+          )}
         </ContextMenuPopup>
       ) : null}
     </ContextMenu>
@@ -178,7 +190,10 @@ function TaskMenuItems({ task }: { task: TaskRow }) {
         </>
       ) : null}
       {can.delete && !frozen ? (
-        <MenuItem variant="destructive" onClick={() => requestDeleteTask(task)}>
+        <MenuItem
+          variant="destructive"
+          onClick={() => requestDeleteTasks([task])}
+        >
           <Trash2 aria-hidden="true" />
           {t("menu.delete")}
           <MenuHint hotkeyId="deleteTask" />

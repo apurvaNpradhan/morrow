@@ -21,7 +21,7 @@ import {
 import { useTaskActions } from "../actions/use-task-actions";
 import { displayTicketId, taskUrl } from "../lib/task-links";
 import { TaskCopyItems } from "./task-copy-items";
-import { requestDeleteTask } from "./delete-task-dialog";
+import { requestDeleteTasks } from "./delete-task-dialog";
 import { useTaskView } from "./task-view-context";
 
 /**
@@ -98,7 +98,7 @@ export function TaskHeaderActions({
           {can.delete && !frozen ? (
             <MenuItem
               variant="destructive"
-              onClick={() => requestDeleteTask(task)}
+              onClick={() => requestDeleteTasks([task])}
             >
               <Trash2 aria-hidden="true" />
               {t("menu.delete")}

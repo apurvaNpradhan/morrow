@@ -16,6 +16,7 @@ import {
   unarchiveTask,
   updateTask,
 } from "./task-actions";
+import { setTaskFieldValue } from "./set-task-field-value";
 import { toggleTaskLabel } from "./toggle-task-label";
 
 /**
@@ -46,6 +47,12 @@ export function useTaskActions() {
         attempt(() => updateTask(task.id, { dueDate })),
       setAssignee: (task: TaskRow, assigneeId: string | null) =>
         attempt(() => updateTask(task.id, { assigneeId })),
+      /** Sets a Field's value to an option id, or clears it with null. */
+      setFieldValue: (
+        task: TaskRow,
+        fieldId: string,
+        optionId: string | null,
+      ) => attempt(() => setTaskFieldValue(task.id, fieldId, optionId)),
       toggleLabel: (task: TaskRow, labelId: string) =>
         attempt(() => toggleTaskLabel(task.id, labelId)),
       setColumn: (task: TaskRow, columnId: string) => {

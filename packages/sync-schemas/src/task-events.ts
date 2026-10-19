@@ -20,6 +20,10 @@ const labelRef = z.object({
   name: z.string(),
   color: colorHex,
 });
+const fieldRef = z.object({ id: z.string(), name: z.string() });
+const optionRef = z
+  .object({ id: z.string(), name: z.string(), color: colorHex })
+  .nullable();
 const none = z.object({});
 
 function event<Type extends string, Data extends z.ZodObject>(
@@ -48,6 +52,10 @@ export const taskEventSchema = z.discriminatedUnion("type", [
     "labels",
     z.object({ added: z.array(labelRef), removed: z.array(labelRef) }),
   ),
+  event(
+    "field_changed",
+    z.object({ field: fieldRef, from: optionRef, to: optionRef }),
+  ),
   event("archived", none),
   event("unarchived", none),
   event("description", none),
@@ -56,3 +64,4 @@ export const taskEventSchema = z.discriminatedUnion("type", [
 export type TaskEvent = z.infer<typeof taskEventSchema>;
 export type TaskEventType = TaskEvent["type"];
 export type TaskEventLabelRef = z.infer<typeof labelRef>;
+export type TaskEventOptionRef = NonNullable<z.infer<typeof optionRef>>;

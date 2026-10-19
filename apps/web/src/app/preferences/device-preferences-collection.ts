@@ -5,8 +5,10 @@ import {
 import { z } from "zod";
 import {
   FILTER_OPERATORS,
-  FILTER_SUBJECTS,
-  SORT_FIELDS,
+  type FilterSubject,
+  isFilterSubject,
+  isSortField,
+  type SortField,
 } from "./task-view-options";
 
 /**
@@ -29,13 +31,17 @@ export const devicePreferencesSchema = z.object({
   showTaskDueDates: z.boolean().default(true),
   showTaskPriority: z.boolean().default(true),
   showTaskChecklist: z.boolean().default(true),
+  /** Whether cards and rows show a custom Field's value, by Field id; on unless switched off. */
+  showTaskFields: z.record(z.string(), z.boolean()).default({}),
   /** Filters and sort of each Project's board and list, by Project id. */
   taskFilters: z
     .record(
       z.string(),
       z.array(
         z.object({
-          subject: z.enum(FILTER_SUBJECTS),
+          subject: z.custom<FilterSubject>(
+            (value) => typeof value === "string" && isFilterSubject(value),
+          ),
           operator: z.enum(FILTER_OPERATORS),
           values: z.array(z.string()),
         }),
@@ -54,7 +60,9 @@ export const devicePreferencesSchema = z.object({
     .record(
       z.string(),
       z.object({
-        field: z.enum(SORT_FIELDS),
+        field: z.custom<SortField>(
+          (value) => typeof value === "string" && isSortField(value),
+        ),
         direction: z.enum(["asc", "desc"]),
       }),
     )

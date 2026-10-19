@@ -28,6 +28,7 @@ import {
   MAX_IMPORT_BYTES,
   MAX_IMPORT_TASKS,
 } from "#api/tasks/lib/import-document";
+import { importFields } from "#api/tasks/lib/import-fields";
 import { matchColumn } from "#api/tasks/lib/match-column";
 import type { ImportWarning } from "#api/tasks/response";
 import {
@@ -54,14 +55,16 @@ function importedColor(value: string | undefined) {
  * get new numbers (in the file's numbering order) and land at the end of their
  * column in file order. Columns match by name, then category; assignees and
  * comment authors match Members by email; labels match by name ignoring case,
- * and are created when the actor may create labels, else dropped. Comments keep
+ * and are created when the actor may create labels, else dropped; Fields and
+ * their options match by name the same way and need `project: update` to be
+ * created. Comments keep
  * their times. Every task gets one `imported` history entry. Whatever could not
  * be matched is reported, not refused.
  */
 export async function importTasks(
   workspaceId: string,
   projectId: string,
-  actor: TaskActor & { canCreateLabels: boolean },
+  actor: TaskActor & { canCreateLabels: boolean; canDefineFields: boolean },
   rawDocument: unknown,
 ) {
   if (Buffer.byteLength(JSON.stringify(rawDocument) ?? "") > MAX_IMPORT_BYTES) {
@@ -180,6 +183,15 @@ export async function importTasks(
       return [...ids].slice(0, MAX_TASK_LABELS);
     };
 
+    // Fields: the Project's, by name ignoring case, and their options. Missing
+    // ones are created when the actor may define Fields, else their values drop.
+    const fields = await importFields(
+      tx,
+      projectId,
+      actor.canDefineFields,
+      document.fields,
+    );
+
     // Comment authors: Members by email; anyone else is "Deleted user".
     const unknownAuthors = new Map<string, number>();
     const commentsFor = (task: (typeof document.tasks)[number]) =>
@@ -218,6 +230,7 @@ export async function importTasks(
         index,
         assigneeId: assigneeFor(task.assigneeEmail),
         labelIds: labelIdsFor(task.labels),
+        fieldValues: fields.valuesFor(task.fields),
         comments: commentsFor(task),
       };
     });
@@ -260,7 +273,15 @@ export async function importTasks(
 
     const now = new Date();
     const rows = placed.map(
-      ({ task, column, index, assigneeId, labelIds, comments }) => ({
+      ({
+        task,
+        column,
+        index,
+        assigneeId,
+        labelIds,
+        fieldValues,
+        comments,
+      }) => ({
         id: createId(),
         projectId,
         columnId: column.id,
@@ -271,6 +292,7 @@ export async function importTasks(
         assigneeId,
         dueDate: task.dueDate,
         labelIds,
+        fieldValues,
         commentCount: comments.length,
         position: positionOf.get(index)!,
         completedAt: isClosedCategory(column.category)
@@ -281,6 +303,7 @@ export async function importTasks(
         createdAt: task.createdAt ?? now,
       }),
     );
+    await fields.save();
     for (let at = 0; at < rows.length; at += INSERT_CHUNK) {
       await tx.insert(taskTable).values(rows.slice(at, at + INSERT_CHUNK));
     }
@@ -338,6 +361,7 @@ export async function importTasks(
     for (const [label, count] of droppedLabels) {
       warnings.push({ kind: "label_dropped", label, count });
     }
+    warnings.push(...fields.warnings());
     for (const [email, count] of unknownAuthors) {
       warnings.push({ kind: "comment_author_unknown", email, count });
     }

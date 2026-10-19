@@ -8,7 +8,7 @@ import { ProjectNotFound } from "../components/project-not-found";
 import { useProjectByKey } from "../queries/use-projects";
 import type { ProjectRow } from "@morrow/sync-schemas";
 
-type Tab = "general" | "workflow";
+type Tab = "general" | "workflow" | "fields";
 
 type ProjectSettingsFrameProps = {
   workspace: { id: string; slug: string };
@@ -20,7 +20,7 @@ type ProjectSettingsFrameProps = {
   actions?: ReactNode;
 };
 
-/** What both project settings pages share: the project lookup, title and the two tabs. */
+/** What both project settings pages share: the project lookup, title and the three tabs. */
 export function ProjectSettingsFrame({
   workspace,
   projectKey,
@@ -63,6 +63,14 @@ export function ProjectSettingsFrame({
             className={linkClass(tab === "workflow")}
           >
             {t("settings.workflow")}
+          </Link>
+          <Link
+            to="/$slug/settings/projects/$key/fields"
+            params={{ slug: workspace.slug, key: project.key }}
+            aria-current={tab === "fields" ? "page" : undefined}
+            className={linkClass(tab === "fields")}
+          >
+            {t("settings.fields")}
           </Link>
         </nav>
         {project.archivedAt ? (

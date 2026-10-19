@@ -1,4 +1,4 @@
-import { CalendarDays, Tag, UserRound } from "lucide-react";
+import { CalendarDays, SlidersHorizontal, Tag, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
 import { formatDate } from "@/design-system/format";
@@ -8,11 +8,13 @@ import {
   PopoverTrigger,
 } from "@/design-system/ui/popover";
 import { cn } from "@/design-system/cn";
-import { LabelChips, labelsOfTask } from "@/labels";
+import { LabelChips, LabelDot, labelsOfTask } from "@/labels";
+import { optionHeld } from "../lib/field-value";
 import { useTaskActions } from "../actions/use-task-actions";
 import { openDatePicker } from "../lib/date-picker-store";
 import { parseDay } from "../lib/calendar-day";
 import { ColumnMarker } from "./column-marker";
+import { FieldValueItems } from "./field-value-items";
 import { FieldChipMenu } from "./field-chip-menu";
 import { PersonAvatar } from "./person-avatar";
 import {
@@ -34,6 +36,7 @@ export function TaskProperties({ task }: { task: TaskRow }) {
   const {
     columns,
     columnById,
+    fields,
     labelById,
     people,
     personById,
@@ -138,6 +141,38 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           />
         </FieldChipMenu>
       </Field>
+      {fields.length > 0 ? (
+        <RailHeading>{t("fieldValues.heading")}</RailHeading>
+      ) : null}
+      {fields.map((field) => {
+        const held = optionHeld(field, task.fieldValues);
+        return (
+          <Field key={field.id} label={field.name}>
+            <FieldChipMenu
+              label={field.name}
+              sheetField={`field:${field.id}`}
+              disabled={!editable}
+              muted={!held}
+              icon={
+                held ? (
+                  <LabelDot color={held.color} />
+                ) : (
+                  <SlidersHorizontal aria-hidden="true" className="size-3.5" />
+                )
+              }
+              value={held?.name ?? field.name}
+            >
+              <FieldValueItems
+                field={field}
+                fieldValues={task.fieldValues}
+                onSelect={(optionId) =>
+                  void actions.setFieldValue(task, field.id, optionId)
+                }
+              />
+            </FieldChipMenu>
+          </Field>
+        );
+      })}
       <RailHeading>{t("fields.labels")}</RailHeading>
       <Field label={t("fields.labels")}>
         <Popover>

@@ -36,6 +36,21 @@ const labels = (added: string[], removed: string[] = []): TaskEvent => ({
   data: { added: added.map(label), removed: removed.map(label) },
 });
 
+const option = (id: string | null) =>
+  id ? { id, name: `Option ${id}`, color: "#ef4444" as const } : null;
+const fieldChanged = (
+  from: string | null,
+  to: string | null,
+  field = "f1",
+): TaskEvent => ({
+  type: "field_changed",
+  data: {
+    field: { id: field, name: `Field ${field}` },
+    from: option(from),
+    to: option(to),
+  },
+});
+
 function latest(
   event: TaskEvent,
   { actor = "u1", ago = 1 }: { actor?: string | null; ago?: number } = {},
@@ -149,6 +164,50 @@ describe("foldTaskEvent", () => {
         now,
       ),
     ).toEqual({ kind: "merge", data: { added: [], removed: [label("x")] } });
+  });
+
+  it("folds a Field's repeated changes, keeping the first from and the last to", () => {
+    expect(
+      foldTaskEvent(
+        latest(fieldChanged(null, "a")),
+        change(fieldChanged("a", "b")),
+        now,
+      ),
+    ).toEqual({
+      kind: "merge",
+      data: {
+        field: { id: "f1", name: "Field f1" },
+        from: null,
+        to: option("b"),
+      },
+    });
+  });
+
+  it("deletes a Field event when the value returns to where it began", () => {
+    expect(
+      foldTaskEvent(
+        latest(fieldChanged("a", "b")),
+        change(fieldChanged("b", "a")),
+        now,
+      ),
+    ).toEqual({ kind: "delete" });
+    expect(
+      foldTaskEvent(
+        latest(fieldChanged(null, "a")),
+        change(fieldChanged("a", null)),
+        now,
+      ),
+    ).toEqual({ kind: "delete" });
+  });
+
+  it("does not fold changes of two different Fields", () => {
+    expect(
+      foldTaskEvent(
+        latest(fieldChanged(null, "a", "f1")),
+        change(fieldChanged(null, "a", "f2")),
+        now,
+      ).kind,
+    ).toBe("insert");
   });
 
   it("folds description edits into one", () => {

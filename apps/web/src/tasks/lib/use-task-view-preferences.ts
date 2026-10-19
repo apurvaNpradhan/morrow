@@ -3,8 +3,10 @@ import {
   saveDevicePreferences,
   useDevicePreferences,
 } from "@/app/preferences/use-device-preferences";
+import { fieldIdOf } from "@/app/preferences/task-view-options";
+import { useProjectFields } from "@/projects";
 import type { TaskDisplay } from "../components/task-view-context";
-import type { TaskFilter } from "./filters";
+import { pruneFieldFilters, type TaskFilter } from "./filters";
 import { DEFAULT_SORT, type TaskSort } from "./sort";
 
 const NO_FILTERS: TaskFilter[] = [];
@@ -21,6 +23,19 @@ const DISPLAY_KEYS = {
 /** What the device remembers about how a Project's tasks are shown. */
 export function useTaskViewPreferences(projectId: string) {
   const preferences = useDevicePreferences();
+  const fields = useProjectFields(projectId);
+  const storedSort = preferences.taskSorts[projectId];
+  // A filter or sort naming a Field or option since deleted is dropped quietly.
+  const filters = pruneFieldFilters(
+    preferences.taskFilters[projectId] ?? NO_FILTERS,
+    fields,
+  ) as TaskFilter[];
+  const sortFieldId = storedSort ? fieldIdOf(storedSort.field) : null;
+  const sort =
+    storedSort &&
+    (sortFieldId === null || fields.some((field) => field.id === sortFieldId))
+      ? storedSort
+      : DEFAULT_SORT;
 
   const display: TaskDisplay = {
     numbers: preferences.showTaskNumbers,
@@ -32,10 +47,20 @@ export function useTaskViewPreferences(projectId: string) {
 
   return {
     layout: preferences.taskView,
-    filters: preferences.taskFilters[projectId] ?? NO_FILTERS,
-    sort: preferences.taskSorts[projectId] ?? DEFAULT_SORT,
+    filters,
+    sort,
+    fields,
     display,
     showBackground: preferences.showProjectBackgrounds,
+    /** A Field's value shows on cards and rows unless this device switched it off. */
+    showsField: (fieldId: string) =>
+      preferences.showTaskFields[fieldId] !== false,
+    setShowField(fieldId: string, value: boolean) {
+      const { showTaskFields } = readDevicePreferences();
+      saveDevicePreferences({
+        showTaskFields: { ...showTaskFields, [fieldId]: value },
+      });
+    },
     setLayout: (layout: "board" | "list") =>
       saveDevicePreferences({ taskView: layout }),
     setFilters(filters: TaskFilter[]) {
@@ -65,6 +90,7 @@ export function useTaskViewPreferences(projectId: string) {
         showTaskDueDates: true,
         showTaskPriority: true,
         showTaskChecklist: true,
+        showTaskFields: {},
         taskSorts: others,
       });
     },

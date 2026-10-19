@@ -15,6 +15,7 @@ import { taskLinkCollection } from "../collections/task-link-collection";
 import { taskEventCollection } from "../collections/task-event-collection";
 import { parseEvents } from "../lib/timeline";
 import { taskDescriptionCollection } from "../collections/task-description-collection";
+import { useSelectedIds } from "../lib/selection-store";
 import { columnsTasks } from "./task-queries";
 
 /** The tasks of the open Columns, for the board and the list; the route loader has preloaded them. */
@@ -99,6 +100,21 @@ export function useTask(taskId: string) {
       q.from({ task: taskCollection }).where(({ task }) => eq(task.id, taskId)),
   });
   return data?.[0];
+}
+
+/** The selected tasks, live, from the tasks the view already loaded; order is not the view's. */
+export function useSelectedTasks(projectId: string) {
+  const ids = [...useSelectedIds(projectId)];
+  const { data } = useLiveQuery(
+    {
+      query: (q) =>
+        q
+          .from({ task: taskCollection })
+          .where(({ task }) => inArray(task.id, ids)),
+    },
+    [ids.join(",")],
+  );
+  return ids.length === 0 ? [] : (data ?? []);
 }
 
 /** A task's comments, oldest first; loaded when the task is opened. */

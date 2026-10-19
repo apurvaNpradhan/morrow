@@ -4,7 +4,7 @@ import {
   type TaskPriority,
   type TaskRow,
 } from "@morrow/sync-schemas";
-import type { SortField } from "@/app/preferences/task-view-options";
+import { fieldIdOf, type SortField } from "@/app/preferences/task-view-options";
 
 export type SortDirection = "asc" | "desc";
 export type TaskSort = { field: SortField; direction: SortDirection };
@@ -18,8 +18,21 @@ export function defaultDirection(field: SortField): SortDirection {
 
 type Sortable = Pick<
   TaskRow,
-  "id" | "position" | "createdAt" | "priority" | "dueDate" | "title" | "number"
+  | "id"
+  | "position"
+  | "createdAt"
+  | "priority"
+  | "dueDate"
+  | "title"
+  | "number"
+  | "fieldValues"
 >;
+
+/** The Fields a sort by `field:<id>` reads: each one's options, in any order. */
+export type SortableField = {
+  id: string;
+  options: readonly { id: string; position: string }[];
+};
 
 // One collator and a rank lookup: a sort of 30k tasks calls the comparator
 // hundreds of thousands of times, and `localeCompare` and `indexOf` cost far
@@ -35,16 +48,32 @@ function direct(order: number, direction: SortDirection) {
 
 /**
  * Orders tasks for display. Manual is the board's own order (by position);
- * any other field ignores position. Tasks without a due date always come last,
- * whichever way the dates run.
+ * any other field ignores position. Tasks without a due date, or without a
+ * value for the Field sorted by, always come last, whichever way the sort runs.
+ * A choice Field orders by its options' order, not their names.
  */
 export function sortTasks<T extends Sortable>(
   tasks: readonly T[],
   { field, direction }: TaskSort,
+  fields: readonly SortableField[] = [],
 ): T[] {
+  const fieldId = fieldIdOf(field);
+  const optionRank = new Map(
+    [...(fields.find((candidate) => candidate.id === fieldId)?.options ?? [])]
+      .sort((a, b) => (a.position < b.position ? -1 : 1))
+      .map((option, rank) => [option.id, rank]),
+  );
   const byNumber = (a: T, b: T) =>
     a.number - b.number || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   return [...tasks].sort((a, b) => {
+    if (fieldId !== null) {
+      const rankA = optionRank.get(a.fieldValues[fieldId] ?? "");
+      const rankB = optionRank.get(b.fieldValues[fieldId] ?? "");
+      if (rankA === rankB) return byNumber(a, b);
+      if (rankA === undefined) return 1;
+      if (rankB === undefined) return -1;
+      return direct(rankA - rankB, direction);
+    }
     switch (field) {
       case "manual":
         return comparePosition(a, b);
@@ -73,6 +102,8 @@ export function sortTasks<T extends Sortable>(
         );
       case "number":
         return direct(a.number - b.number, direction);
+      default:
+        return 0;
     }
   });
 }
