@@ -5,7 +5,11 @@ import { withTxid } from "#api/platform/sync/with-txid";
 import { projectError } from "#api/projects/errors";
 import { lockProject } from "#api/projects/lib/lock-project";
 import { projectColumnTable } from "#api/projects/tables";
-import { refreshSubtaskCounts, taskTable } from "#api/tasks/index";
+import {
+  refreshBlockedCounts,
+  refreshSubtaskCounts,
+  taskTable,
+} from "#api/tasks/index";
 import { findColumn } from "../lib/find-column";
 import { assertNotLastRequiredColumn } from "../lib/required-columns";
 
@@ -71,6 +75,10 @@ export async function deleteColumn(
       await refreshSubtaskCounts(
         tx,
         tasks.map((task) => task.parentId),
+      );
+      await refreshBlockedCounts(
+        tx,
+        tasks.map((task) => task.id),
       );
     }
 

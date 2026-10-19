@@ -5,7 +5,11 @@ import { rethrowViolation } from "#api/projects/errors";
 import { assertValidPosition } from "#api/projects/lib/position";
 import { lockProject } from "#api/projects/lib/lock-project";
 import { projectColumnTable } from "#api/projects/tables";
-import { refreshSubtaskCounts, taskTable } from "#api/tasks/index";
+import {
+  refreshBlockedCounts,
+  refreshSubtaskCounts,
+  taskTable,
+} from "#api/tasks/index";
 import { findColumn } from "../lib/find-column";
 import { assertNotLastRequiredColumn } from "../lib/required-columns";
 
@@ -42,10 +46,14 @@ export async function moveColumn(
               : null,
           })
           .where(eq(taskTable.columnId, columnId))
-          .returning({ parentId: taskTable.parentId });
+          .returning({ id: taskTable.id, parentId: taskTable.parentId });
         await refreshSubtaskCounts(
           tx,
           moved.map((task) => task.parentId),
+        );
+        await refreshBlockedCounts(
+          tx,
+          moved.map((task) => task.id),
         );
       }
     });

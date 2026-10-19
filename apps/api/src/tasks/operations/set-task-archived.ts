@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { lockProject } from "#api/projects/index";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
+import { refreshBlockedCounts } from "#api/tasks/lib/open-blocker-counts";
 import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { findTask } from "#api/tasks/lib/find-task";
 import { taskTable } from "#api/tasks/tables";
@@ -26,6 +27,7 @@ export async function setTaskArchived(
       .where(eq(taskTable.id, taskId));
     if ((task.archivedAt !== null) !== archived) {
       await refreshSubtaskCounts(tx, [task.parentId]);
+      await refreshBlockedCounts(tx, [taskId]);
       await recordTaskEvent(tx, projectId, taskId, {
         type: archived ? "archived" : "unarchived",
         data: {},

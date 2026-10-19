@@ -10,6 +10,7 @@ import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import { findTask } from "#api/tasks/lib/find-task";
 import { freePosition } from "#api/tasks/lib/free-position";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
+import { refreshBlockedCounts } from "#api/tasks/lib/open-blocker-counts";
 import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
@@ -52,6 +53,7 @@ export async function moveTask(
       // Open or closed is all a parent's counter looks at.
       if (isClosedCategory(from.category) !== isClosedCategory(to.category)) {
         await refreshSubtaskCounts(tx, [task.parentId]);
+        await refreshBlockedCounts(tx, [taskId]);
       }
       // A reorder within a Column is not part of the task's story.
       if (from.id !== to.id) {
