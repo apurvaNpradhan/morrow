@@ -3,6 +3,7 @@ import {
   taskDescriptionsShape,
   taskEventsShape,
   taskLinksShape,
+  taskRelationsShape,
   tasksShape,
 } from "@morrow/sync-schemas";
 import { defineShape } from "#api/platform/sync/define-shape";
@@ -11,6 +12,7 @@ import {
   taskDescriptionTable,
   taskEventTable,
   taskLinkTable,
+  taskRelationTable,
   taskTable,
 } from "./tables";
 
@@ -80,10 +82,25 @@ const taskLinks = defineShape({
   }),
 });
 
+/**
+ * The relations of the Workspaces the user belongs to, read with a `where` on
+ * the Task they concern; scoped by membership through the Workspace the row
+ * repeats.
+ */
+const taskRelations = defineShape({
+  shape: taskRelationsShape,
+  table: taskRelationTable,
+  where: ({ userId }) => ({
+    sql: "workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",
+    params: [userId],
+  }),
+});
+
 export const tasksShapes = [
   tasks,
   taskDescriptions,
   taskComments,
   taskEvents,
   taskLinks,
+  taskRelations,
 ];

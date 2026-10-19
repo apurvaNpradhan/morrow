@@ -51,10 +51,10 @@ export function FilterToken({
   onItemFocus: (item: string) => void;
 }) {
   const { t } = useTranslation("tasks");
-  const { labelFor, optionsFor } = useFilterOptions();
+  const { labelFor, optionsFor, subjectLabel: labelOf } = useFilterOptions();
   const reduceMotion = useReducedMotion();
   const subject: FilterSubject = filter.subject;
-  const subjectLabel = t(`filter.subject.${subject}`);
+  const subjectLabel = labelOf(subject);
   const valueText = filter.values
     .map((value) => labelFor(subject, value))
     .join(", ");

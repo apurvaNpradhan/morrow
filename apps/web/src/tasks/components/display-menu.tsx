@@ -1,6 +1,10 @@
 import { SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SORT_FIELDS } from "@/app/preferences/task-view-options";
+import {
+  fieldSubject,
+  isSortField,
+  SORT_FIELDS,
+} from "@/app/preferences/task-view-options";
 import { Button } from "@/design-system/ui/button";
 import { TooltipLabel } from "@/design-system/tooltip-label";
 import {
@@ -54,7 +58,7 @@ export function DisplayMenu({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation("tasks");
-  const { switchLayout } = useTaskView();
+  const { switchLayout, fields } = useTaskView();
   const { layout, sort, display } = preferences;
 
   return (
@@ -95,8 +99,8 @@ export function DisplayMenu({
           <MenuRadioGroup
             value={sort.field}
             onValueChange={(next) => {
-              const field = SORT_FIELDS.find((candidate) => candidate === next);
-              if (field) {
+              if (isSortField(next)) {
+                const field = next;
                 preferences.setSort({
                   field,
                   direction: defaultDirection(field),
@@ -107,6 +111,11 @@ export function DisplayMenu({
             {SORT_FIELDS.map((field) => (
               <MenuRadioItem key={field} value={field}>
                 {t(`display.sortField.${field}`)}
+              </MenuRadioItem>
+            ))}
+            {fields.map((field) => (
+              <MenuRadioItem key={field.id} value={fieldSubject(field.id)}>
+                {field.name}
               </MenuRadioItem>
             ))}
           </MenuRadioGroup>
@@ -147,6 +156,19 @@ export function DisplayMenu({
               closeOnClick={false}
             >
               {t(`display.field.${field}`)}
+            </MenuCheckboxItem>
+          ))}
+          {fields.map((field) => (
+            <MenuCheckboxItem
+              key={field.id}
+              variant="switch"
+              checked={preferences.showsField(field.id)}
+              onCheckedChange={(checked) =>
+                preferences.setShowField(field.id, checked)
+              }
+              closeOnClick={false}
+            >
+              {field.name}
             </MenuCheckboxItem>
           ))}
           {hasBackground ? (

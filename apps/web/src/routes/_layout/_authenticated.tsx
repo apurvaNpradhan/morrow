@@ -6,7 +6,11 @@ import {
   workspaceMemberCollection,
   workspaceMemberUserCollection,
 } from "@/members";
-import { projectCollection, projectColumnCollection } from "@/projects";
+import {
+  projectCollection,
+  projectColumnCollection,
+  projectFieldCollection,
+} from "@/projects";
 import {
   useLeaveLostWorkspace,
   workspaceCollection,
@@ -73,6 +77,7 @@ export const Route = createFileRoute("/_layout/_authenticated")({
         workspaceInvitationCollection,
         projectCollection,
         projectColumnCollection,
+        projectFieldCollection,
       ]) {
         void loadSyncedCollection(collection);
       }

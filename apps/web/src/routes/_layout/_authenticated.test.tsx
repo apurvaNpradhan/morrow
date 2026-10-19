@@ -27,6 +27,7 @@ vi.mock("@/members", () => ({
 vi.mock("@/projects", () => ({
   projectCollection: { preload: vi.fn() },
   projectColumnCollection: { preload: vi.fn() },
+  projectFieldCollection: { preload: vi.fn() },
 }));
 vi.mock("@/workspace", () => ({
   workspaceCollection: { preload: vi.fn() },

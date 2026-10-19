@@ -61,3 +61,11 @@ export const backgroundRemovedResult = z.object({
     .describe("False when the project had no uploaded background to remove."),
   txid,
 });
+
+export const fieldUsageResult = z.array(
+  z.object({
+    fieldId: z.string(),
+    optionId: z.string(),
+    count: z.number().describe("Tasks holding this option of this Field."),
+  }),
+);

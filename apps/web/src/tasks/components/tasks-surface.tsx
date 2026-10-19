@@ -15,6 +15,7 @@ import { ListSkeleton } from "./list-skeleton";
 import { ListView } from "./list-view";
 import { TaskFieldPicker } from "./task-field-picker";
 import { TaskContextMenu } from "./task-context-menu";
+import { SelectionBar } from "./selection-bar";
 import { TaskSheet } from "./task-sheet";
 import { useTaskView } from "./task-view-context";
 import { useTaskHotkeys } from "./use-task-hotkeys";
@@ -97,12 +98,13 @@ export function TasksSurface({
           </Suspense>
         </div>
       </TaskContextMenu>
+      <SelectionBar />
       <TaskSheet number={ticketNumber} onClose={closeSheet} />
       <TaskFieldPicker />
       <DueDateDialog />
       <DeleteTaskDialog
-        onDeleted={(task) => {
-          if (task.number === ticketNumber) closeSheet();
+        onDeleted={(tasks) => {
+          if (tasks.some((task) => task.number === ticketNumber)) closeSheet();
         }}
       />
     </>

@@ -19,12 +19,17 @@ export {
 } from "#api/members/tables";
 export { activityTable } from "#api/activity/tables";
 export { labelTable } from "#api/labels/tables";
-export { projectColumnTable, projectTable } from "#api/projects/tables";
+export {
+  projectColumnTable,
+  projectFieldTable,
+  projectTable,
+} from "#api/projects/tables";
 export {
   taskCommentTable,
   taskDescriptionTable,
   taskEventTable,
   taskLinkTable,
+  taskRelationTable,
   taskTable,
 } from "#api/tasks/tables";
 export { assetTable } from "#api/storage/tables";

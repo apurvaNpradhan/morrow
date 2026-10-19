@@ -14,7 +14,7 @@ import { colorDotStyle } from "../lib/column-style";
 
 type ColumnColorMenuProps = {
   columnName: string;
-  value: ColumnColor;
+  value: string;
   disabled: boolean;
   onChange: (color: ColumnColor) => void;
 };

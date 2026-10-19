@@ -1,4 +1,9 @@
-import { colorHex, TASK_PRIORITIES } from "@morrow/sync-schemas";
+import {
+  colorHex,
+  RELATION_DIRECTIONS,
+  RELATION_TYPES,
+  TASK_PRIORITIES,
+} from "@morrow/sync-schemas";
 import { z } from "zod";
 
 export const txid = z
@@ -8,6 +13,13 @@ export const txid = z
   );
 
 export const txidResult = z.object({ txid });
+
+export const bulkResult = z.object({
+  txid,
+  skipped: z
+    .number()
+    .describe("How many ids were no longer Tasks of the Project."),
+});
 
 export const createdResult = z.object({
   id: z.string(),
@@ -39,6 +51,17 @@ const importWarning = z.discriminatedUnion("kind", [
     count: z.number(),
   }),
   z.object({
+    kind: z.literal("field_dropped"),
+    field: z.string(),
+    count: z.number(),
+  }),
+  z.object({
+    kind: z.literal("option_dropped"),
+    field: z.string(),
+    option: z.string(),
+    count: z.number(),
+  }),
+  z.object({
     kind: z.literal("comment_author_unknown"),
     email: z.string(),
     count: z.number(),
@@ -61,6 +84,10 @@ export const taskListItem = z.object({
   title: z.string(),
   description: z.string(),
   columnId: z.string(),
+  parentId: z.string().nullable(),
+  subtaskDone: z.number(),
+  subtaskTotal: z.number(),
+  openBlockerCount: z.number(),
   columnName: z.string(),
   category: z.string(),
   priority: z.enum(TASK_PRIORITIES),
@@ -81,6 +108,10 @@ export const taskSearchResult = z.object({
   tasks: z.array(
     z.object({
       ticketId: z.string(),
+      parentTicketId: z.string().nullable(),
+      subtaskDone: z.number(),
+      subtaskTotal: z.number(),
+      openBlockerCount: z.number(),
       projectKey: z.string(),
       title: z.string(),
       description: z.string(),
@@ -101,6 +132,13 @@ export const exportDocument = z.object({
   project: z.object({ key: z.string(), name: z.string() }),
   labels: z.array(z.object({ name: z.string(), color: colorHex })),
   columns: z.array(z.object({ name: z.string(), category: z.string() })),
+  fields: z.array(
+    z.object({
+      name: z.string(),
+      type: z.string(),
+      options: z.array(z.object({ name: z.string(), color: colorHex })),
+    }),
+  ),
   tasks: z.array(
     z.object({
       number: z.number(),
@@ -115,6 +153,9 @@ export const exportDocument = z.object({
       archivedAt: z.string().nullable(),
       createdAt: z.string(),
       labels: z.array(z.string()),
+      fields: z
+        .record(z.string(), z.string())
+        .describe("Option name by Field name."),
       comments: z.array(
         z.object({
           authorEmail: z.string().nullable(),
@@ -131,6 +172,10 @@ export const exportDocument = z.object({
 export const taskDetail = z.object({
   id: z.string(),
   ticketId: z.string(),
+  parent: z.object({ ticketId: z.string(), title: z.string() }).nullable(),
+  subtaskDone: z.number(),
+  subtaskTotal: z.number(),
+  openBlockerCount: z.number(),
   title: z.string(),
   description: z.string(),
   column: z.string(),
@@ -144,6 +189,24 @@ export const taskDetail = z.object({
   labels: z.array(z.object({ name: z.string(), color: colorHex })),
   links: z.array(
     z.object({ id: z.string(), url: z.string(), title: z.string().nullable() }),
+  ),
+  relations: z.array(
+    z.object({
+      id: z.string(),
+      type: z.enum(RELATION_TYPES),
+      direction: z
+        .enum(RELATION_DIRECTIONS)
+        .describe("outgoing: this task blocks / is the duplicate."),
+      kind: z.enum([
+        "blocks",
+        "blocked_by",
+        "related",
+        "duplicate_of",
+        "duplicated_by",
+      ]),
+      ticketId: z.string().describe("The other task's."),
+      title: z.string().describe("The other task's."),
+    }),
   ),
   comments: z.array(
     z.object({

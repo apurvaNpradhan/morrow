@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
+import { RELATION_DIRECTIONS, RELATION_TYPES } from "./relations.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
 /**
@@ -20,7 +21,17 @@ const labelRef = z.object({
   name: z.string(),
   color: colorHex,
 });
+const fieldRef = z.object({ id: z.string(), name: z.string() });
+const optionRef = z
+  .object({ id: z.string(), name: z.string(), color: colorHex })
+  .nullable();
 const none = z.object({});
+// The other Task's ticket id is a snapshot; the direction is as this Task sees it.
+const relationData = z.object({
+  type: z.enum(RELATION_TYPES),
+  direction: z.enum(RELATION_DIRECTIONS),
+  ticketId: z.string(),
+});
 
 function event<Type extends string, Data extends z.ZodObject>(
   type: Type,
@@ -48,11 +59,24 @@ export const taskEventSchema = z.discriminatedUnion("type", [
     "labels",
     z.object({ added: z.array(labelRef), removed: z.array(labelRef) }),
   ),
+  event(
+    "field_changed",
+    z.object({ field: fieldRef, from: optionRef, to: optionRef }),
+  ),
   event("archived", none),
   event("unarchived", none),
   event("description", none),
+  event(
+    "parent",
+    z.object({ from: z.string().nullable(), to: z.string().nullable() }),
+  ),
+  event("subtask_added", z.object({ ticketId: z.string() })),
+  event("subtask_removed", z.object({ ticketId: z.string() })),
+  event("relation_added", relationData),
+  event("relation_removed", relationData),
 ]);
 
 export type TaskEvent = z.infer<typeof taskEventSchema>;
 export type TaskEventType = TaskEvent["type"];
 export type TaskEventLabelRef = z.infer<typeof labelRef>;
+export type TaskEventOptionRef = NonNullable<z.infer<typeof optionRef>>;

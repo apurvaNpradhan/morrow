@@ -10,9 +10,11 @@ const rpc = vi.hoisted(() => {
       updatePriority: call(3),
       updateDueDate: call(4),
       updateAssignee: call(5),
+      updateParent: call(9),
       move: call(6),
       archive: call(7),
       unarchive: call(8),
+      setFieldValue: call(9),
     },
   };
 });
@@ -56,6 +58,24 @@ describe("writeTaskChanges", () => {
     expect(txids).toEqual([1, 3]);
   });
 
+  it("sends a parent change, and a cleared parent as null", async () => {
+    await writeTaskChanges({ original, changes: { parentId: "t0" } });
+    await writeTaskChanges({ original, changes: { parentId: null } });
+
+    expect(rpc.tasks.updateParent).toHaveBeenNthCalledWith(1, {
+      workspaceId: "w1",
+      projectId: "p1",
+      taskId: "t1",
+      parentId: "t0",
+    });
+    expect(rpc.tasks.updateParent).toHaveBeenNthCalledWith(2, {
+      workspaceId: "w1",
+      projectId: "p1",
+      taskId: "t1",
+      parentId: null,
+    });
+  });
+
   it("sends a move with the Column and position, filling in whichever did not change", async () => {
     await writeTaskChanges({ original, changes: { position: "a5" } });
     await writeTaskChanges({ original, changes: { columnId: "done" } });
@@ -97,6 +117,39 @@ describe("writeTaskChanges", () => {
 
     expect(rpc.tasks.archive).toHaveBeenCalledTimes(1);
     expect(rpc.tasks.unarchive).toHaveBeenCalledTimes(1);
+  });
+
+  it("sets, changes and clears Field values one Field at a time, leaving the others alone", async () => {
+    const holding = {
+      ...original,
+      fieldValues: { size: "small", customer: "acme", kept: "x" },
+    } as TaskRow;
+
+    const txids = await writeTaskChanges({
+      original: holding,
+      changes: {
+        fieldValues: { size: "large", kept: "x", team: "red" },
+      },
+    });
+
+    const target = { workspaceId: "w1", projectId: "p1", taskId: "t1" };
+    expect(rpc.tasks.setFieldValue).toHaveBeenCalledTimes(3);
+    expect(rpc.tasks.setFieldValue).toHaveBeenCalledWith({
+      ...target,
+      fieldId: "size",
+      value: "large",
+    });
+    expect(rpc.tasks.setFieldValue).toHaveBeenCalledWith({
+      ...target,
+      fieldId: "team",
+      value: "red",
+    });
+    expect(rpc.tasks.setFieldValue).toHaveBeenCalledWith({
+      ...target,
+      fieldId: "customer",
+      value: null,
+    });
+    expect(txids).toEqual([9, 9, 9]);
   });
 
   it("skips a txid the server did not give", async () => {

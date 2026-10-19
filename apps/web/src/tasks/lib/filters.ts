@@ -1,14 +1,18 @@
 import type { TaskRow } from "@morrow/sync-schemas";
 import { weekOf } from "./calendar-day";
+import { isNegated, operatorFor } from "./filter-edit";
 
-import type {
-  FilterOperator,
-  FilterSubject,
+import {
+  fieldIdOf,
+  type FilterOperator,
+  type FilterSubject,
 } from "@/app/preferences/task-view-options";
 
 /** Values a subject offers besides ids and priorities. */
 export const UNASSIGNED = "unassigned";
 export const ME = "me";
+/** The choice of a Field filter that matches Tasks with no value for it. */
+export const NO_FIELD_VALUE = "noValue";
 export const DUE_VALUES = ["overdue", "thisWeek", "nextWeek", "none"] as const;
 
 /** One condition on a subject. Several values are alternatives. */
@@ -35,11 +39,17 @@ function matchesValue(
     | "columnId"
     | "completedAt"
     | "labelIds"
+    | "fieldValues"
   >,
   subject: FilterSubject,
   value: string,
   context: FilterContext,
 ) {
+  const fieldId = fieldIdOf(subject);
+  if (fieldId !== null) {
+    const held = task.fieldValues[fieldId];
+    return value === NO_FIELD_VALUE ? held === undefined : held === value;
+  }
   switch (subject) {
     case "assignee":
       if (value === UNASSIGNED) return task.assigneeId === null;
@@ -70,6 +80,8 @@ function matchesValue(
       }
       return false;
     }
+    default:
+      return false;
   }
 }
 
@@ -101,4 +113,39 @@ export function matchesFilters(
       ? !hit
       : hit;
   });
+}
+
+/**
+ * Drops what names a deleted Field or option: a filter on a Field that is gone,
+ * and values that are no longer one of its options. A filter left with no
+ * value goes too. Returns the same array when nothing changed.
+ */
+export function pruneFieldFilters(
+  filters: readonly TaskFilter[],
+  fields: readonly { id: string; options: readonly { id: string }[] }[],
+): readonly TaskFilter[] {
+  let changed = false;
+  const kept = filters.flatMap((filter) => {
+    const fieldId = fieldIdOf(filter.subject);
+    if (fieldId === null) return [filter];
+    const field = fields.find((candidate) => candidate.id === fieldId);
+    const values = field
+      ? filter.values.filter(
+          (value) =>
+            value === NO_FIELD_VALUE ||
+            field.options.some((option) => option.id === value),
+        )
+      : [];
+    if (values.length === filter.values.length) return [filter];
+    changed = true;
+    if (values.length === 0) return [];
+    return [
+      {
+        ...filter,
+        operator: operatorFor(isNegated(filter.operator), values.length),
+        values,
+      },
+    ];
+  });
+  return changed ? kept : filters;
 }

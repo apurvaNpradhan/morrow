@@ -30,6 +30,7 @@ export function BoardView({
   const model = useTaskViewModel({
     projectKey: project.key,
     columns,
+    fields: preferences.fields,
     tasks: [...openTasks, ...closed.tasks],
     filters: preferences.filters,
     search: toolbar.search,

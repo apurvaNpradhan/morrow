@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
-import { matchesFilters, type TaskFilter } from "./filters";
+import {
+  matchesFilters,
+  NO_FIELD_VALUE,
+  pruneFieldFilters,
+  type TaskFilter,
+} from "./filters";
 
 // 2026-10-15 is a Thursday; with a Monday start its week is 12th to 18th.
 const context = { meId: "me-id", today: "2026-10-15", weekStartsOn: 1 };
@@ -12,6 +17,7 @@ function task(overrides: Partial<Parameters<typeof matchesFilters>[0]> = {}) {
     columnId: "todo",
     completedAt: null,
     labelIds: [] as string[],
+    fieldValues: {} as Record<string, string>,
     ...overrides,
   };
 }
@@ -185,5 +191,130 @@ describe("label filters", () => {
     expect(matchesFilters(task({ labelIds: ["bug"] }), filters, context)).toBe(
       false,
     );
+  });
+});
+
+describe("custom Field filters", () => {
+  const size = (value?: string) =>
+    task({ fieldValues: value ? { f1: value } : {} });
+
+  it("matches the chosen options for is and is any of, and the rest for is not", () => {
+    expect(
+      matchesFilters(
+        size("large"),
+        [filter("field:f1", "is", "large")],
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      matchesFilters(
+        size("small"),
+        [filter("field:f1", "is", "large")],
+        context,
+      ),
+    ).toBe(false);
+    expect(
+      matchesFilters(
+        size("small"),
+        [filter("field:f1", "isAnyOf", "small", "large")],
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      matchesFilters(
+        size("large"),
+        [filter("field:f1", "isNoneOf", "small", "large")],
+        context,
+      ),
+    ).toBe(false);
+    expect(
+      matchesFilters(
+        size("small"),
+        [filter("field:f1", "isNot", "large")],
+        context,
+      ),
+    ).toBe(true);
+  });
+
+  it("reads only the filtered Field's value", () => {
+    const other = task({ fieldValues: { f2: "large" } });
+    expect(
+      matchesFilters(other, [filter("field:f1", "is", "large")], context),
+    ).toBe(false);
+  });
+
+  it("has a No value choice that matches a missing key", () => {
+    const noValue = [filter("field:f1", "is", NO_FIELD_VALUE)];
+    expect(matchesFilters(size(), noValue, context)).toBe(true);
+    expect(matchesFilters(size("large"), noValue, context)).toBe(false);
+    expect(
+      matchesFilters(
+        size(),
+        [filter("field:f1", "isAnyOf", "large", NO_FIELD_VALUE)],
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      matchesFilters(
+        size("large"),
+        [filter("field:f1", "isNot", NO_FIELD_VALUE)],
+        context,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("negated No value filters", () => {
+  const held = task({ fieldValues: { f1: "large" } });
+  const unset = task();
+
+  it("is not No value keeps tasks that hold a value", () => {
+    const filters = [filter("field:f1", "isNot", NO_FIELD_VALUE)];
+    expect(matchesFilters(held, filters, context)).toBe(true);
+    expect(matchesFilters(unset, filters, context)).toBe(false);
+  });
+
+  it("is none of keeps tasks holding any value other than the listed ones", () => {
+    const filters = [filter("field:f1", "isNoneOf", NO_FIELD_VALUE, "small")];
+    expect(matchesFilters(held, filters, context)).toBe(true);
+    expect(matchesFilters(unset, filters, context)).toBe(false);
+    expect(
+      matchesFilters(task({ fieldValues: { f1: "small" } }), filters, context),
+    ).toBe(false);
+  });
+});
+
+describe("pruneFieldFilters", () => {
+  const fields = [{ id: "f1", options: [{ id: "small" }, { id: "large" }] }];
+
+  it("leaves built-in filters and live Field filters alone", () => {
+    const filters = [
+      filter("priority", "is", "high"),
+      filter("field:f1", "isAnyOf", "small", NO_FIELD_VALUE),
+    ];
+    expect(pruneFieldFilters(filters, fields)).toEqual(filters);
+  });
+
+  it("drops a filter whose Field is gone", () => {
+    expect(
+      pruneFieldFilters([filter("field:gone", "is", "small")], fields),
+    ).toEqual([]);
+  });
+
+  it("drops deleted options from a filter, and the filter when none is left", () => {
+    expect(
+      pruneFieldFilters(
+        [filter("field:f1", "isAnyOf", "small", "deleted")],
+        fields,
+      ),
+    ).toEqual([filter("field:f1", "is", "small")]);
+    expect(
+      pruneFieldFilters([filter("field:f1", "isNot", "deleted")], fields),
+    ).toEqual([]);
+  });
+
+  it("returns the same array when nothing changed, so a view does not re-render", () => {
+    const filters = [filter("field:f1", "is", "small")];
+    expect(pruneFieldFilters(filters, fields)).toBe(filters);
   });
 });

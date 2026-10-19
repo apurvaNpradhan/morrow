@@ -51,6 +51,7 @@ import { Route as LayoutAuthenticatedSlugSettingsWorkspaceLabelsRouteImport } fr
 import { Route as LayoutAuthenticatedSlugSettingsWorkspaceMembersRouteImport } from './routes/_layout/_authenticated/$slug/settings/workspace/members'
 import { Route as LayoutAuthenticatedSlugSettingsWorkspaceRolesRouteImport } from './routes/_layout/_authenticated/$slug/settings/workspace/roles'
 import { Route as LayoutAuthenticatedSlugSettingsProjectsKeyIndexRouteImport } from './routes/_layout/_authenticated/$slug/settings/projects/$key/index'
+import { Route as LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRouteImport } from './routes/_layout/_authenticated/$slug/settings/projects/$key/fields'
 import { Route as LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRouteImport } from './routes/_layout/_authenticated/$slug/settings/projects/$key/general'
 import { Route as LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRouteImport } from './routes/_layout/_authenticated/$slug/settings/projects/$key/workflow'
 
@@ -292,6 +293,12 @@ const LayoutAuthenticatedSlugSettingsProjectsKeyIndexRoute =
     path: '/$key/',
     getParentRoute: () => LayoutAuthenticatedSlugSettingsProjectsRoute,
   } as any)
+const LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRoute =
+  LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRouteImport.update({
+    id: '/$key/fields',
+    path: '/$key/fields',
+    getParentRoute: () => LayoutAuthenticatedSlugSettingsProjectsRoute,
+  } as any)
 const LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute =
   LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRouteImport.update({
     id: '/$key/general',
@@ -345,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
   '/$slug/projects/$key/': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
   '/$slug/settings/projects/': typeof LayoutAuthenticatedSlugSettingsProjectsIndexRoute
+  '/$slug/settings/projects/$key/fields': typeof LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRoute
   '/$slug/settings/projects/$key/general': typeof LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute
   '/$slug/settings/projects/$key/workflow': typeof LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute
   '/$slug/settings/projects/$key/': typeof LayoutAuthenticatedSlugSettingsProjectsKeyIndexRoute
@@ -385,6 +393,7 @@ export interface FileRoutesByTo {
   '/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
   '/$slug/projects/$key': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
   '/$slug/settings/projects': typeof LayoutAuthenticatedSlugSettingsProjectsIndexRoute
+  '/$slug/settings/projects/$key/fields': typeof LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRoute
   '/$slug/settings/projects/$key/general': typeof LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute
   '/$slug/settings/projects/$key/workflow': typeof LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute
   '/$slug/settings/projects/$key': typeof LayoutAuthenticatedSlugSettingsProjectsKeyIndexRoute
@@ -432,6 +441,7 @@ export interface FileRoutesById {
   '/_layout/_authenticated/$slug/settings/workspace/roles': typeof LayoutAuthenticatedSlugSettingsWorkspaceRolesRoute
   '/_layout/_authenticated/$slug/projects/$key/': typeof LayoutAuthenticatedSlugProjectsKeyIndexRoute
   '/_layout/_authenticated/$slug/settings/projects/': typeof LayoutAuthenticatedSlugSettingsProjectsIndexRoute
+  '/_layout/_authenticated/$slug/settings/projects/$key/fields': typeof LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRoute
   '/_layout/_authenticated/$slug/settings/projects/$key/general': typeof LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute
   '/_layout/_authenticated/$slug/settings/projects/$key/workflow': typeof LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute
   '/_layout/_authenticated/$slug/settings/projects/$key/': typeof LayoutAuthenticatedSlugSettingsProjectsKeyIndexRoute
@@ -478,6 +488,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/workspace/roles'
     | '/$slug/projects/$key/'
     | '/$slug/settings/projects/'
+    | '/$slug/settings/projects/$key/fields'
     | '/$slug/settings/projects/$key/general'
     | '/$slug/settings/projects/$key/workflow'
     | '/$slug/settings/projects/$key/'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/$slug/settings/workspace/roles'
     | '/$slug/projects/$key'
     | '/$slug/settings/projects'
+    | '/$slug/settings/projects/$key/fields'
     | '/$slug/settings/projects/$key/general'
     | '/$slug/settings/projects/$key/workflow'
     | '/$slug/settings/projects/$key'
@@ -564,6 +576,7 @@ export interface FileRouteTypes {
     | '/_layout/_authenticated/$slug/settings/workspace/roles'
     | '/_layout/_authenticated/$slug/projects/$key/'
     | '/_layout/_authenticated/$slug/settings/projects/'
+    | '/_layout/_authenticated/$slug/settings/projects/$key/fields'
     | '/_layout/_authenticated/$slug/settings/projects/$key/general'
     | '/_layout/_authenticated/$slug/settings/projects/$key/workflow'
     | '/_layout/_authenticated/$slug/settings/projects/$key/'
@@ -875,6 +888,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAuthenticatedSlugSettingsProjectsKeyIndexRouteImport
       parentRoute: typeof LayoutAuthenticatedSlugSettingsProjectsRoute
     }
+    '/_layout/_authenticated/$slug/settings/projects/$key/fields': {
+      id: '/_layout/_authenticated/$slug/settings/projects/$key/fields'
+      path: '/$key/fields'
+      fullPath: '/$slug/settings/projects/$key/fields'
+      preLoaderRoute: typeof LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRouteImport
+      parentRoute: typeof LayoutAuthenticatedSlugSettingsProjectsRoute
+    }
     '/_layout/_authenticated/$slug/settings/projects/$key/general': {
       id: '/_layout/_authenticated/$slug/settings/projects/$key/general'
       path: '/$key/general'
@@ -930,6 +950,7 @@ const LayoutAuthenticatedSlugSettingsAdminRouteWithChildren =
 
 interface LayoutAuthenticatedSlugSettingsProjectsRouteChildren {
   LayoutAuthenticatedSlugSettingsProjectsIndexRoute: typeof LayoutAuthenticatedSlugSettingsProjectsIndexRoute
+  LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRoute: typeof LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRoute
   LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute: typeof LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute
   LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute: typeof LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute
   LayoutAuthenticatedSlugSettingsProjectsKeyIndexRoute: typeof LayoutAuthenticatedSlugSettingsProjectsKeyIndexRoute
@@ -939,6 +960,8 @@ const LayoutAuthenticatedSlugSettingsProjectsRouteChildren: LayoutAuthenticatedS
   {
     LayoutAuthenticatedSlugSettingsProjectsIndexRoute:
       LayoutAuthenticatedSlugSettingsProjectsIndexRoute,
+    LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRoute:
+      LayoutAuthenticatedSlugSettingsProjectsKeyFieldsRoute,
     LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute:
       LayoutAuthenticatedSlugSettingsProjectsKeyGeneralRoute,
     LayoutAuthenticatedSlugSettingsProjectsKeyWorkflowRoute:
