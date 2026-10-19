@@ -264,6 +264,26 @@ describe("custom Field filters", () => {
   });
 });
 
+describe("negated No value filters", () => {
+  const held = task({ fieldValues: { f1: "large" } });
+  const unset = task();
+
+  it("is not No value keeps tasks that hold a value", () => {
+    const filters = [filter("field:f1", "isNot", NO_FIELD_VALUE)];
+    expect(matchesFilters(held, filters, context)).toBe(true);
+    expect(matchesFilters(unset, filters, context)).toBe(false);
+  });
+
+  it("is none of keeps tasks holding any value other than the listed ones", () => {
+    const filters = [filter("field:f1", "isNoneOf", NO_FIELD_VALUE, "small")];
+    expect(matchesFilters(held, filters, context)).toBe(true);
+    expect(matchesFilters(unset, filters, context)).toBe(false);
+    expect(
+      matchesFilters(task({ fieldValues: { f1: "small" } }), filters, context),
+    ).toBe(false);
+  });
+});
+
 describe("pruneFieldFilters", () => {
   const fields = [{ id: "f1", options: [{ id: "small" }, { id: "large" }] }];
 

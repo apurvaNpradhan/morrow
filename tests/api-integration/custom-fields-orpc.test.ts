@@ -650,6 +650,48 @@ describe("exporting and importing Fields", () => {
   });
 });
 
+describe("importing Fields without permission to define them", () => {
+  it("warns about a declared Field or option no Task uses, and about names too long to keep", async () => {
+    const { workspace, base } = await setup();
+    await db.insert(schema.workspaceRoleTable).values({
+      workspaceId: workspace.id,
+      role: "importer",
+      permission: JSON.stringify({
+        workspace: ["read"],
+        task: ["create"],
+        project: [],
+      }),
+    });
+    const importer = as(await addWorkspaceMember(workspace.id, "importer"));
+
+    const result = await importer.tasks.import({
+      ...base,
+      document: {
+        fields: [
+          { name: "Mood", options: [{ name: "Calm" }] },
+          { name: "size", options: [{ name: "Gigantic" }, { name: "Small" }] },
+          { name: "x".repeat(51), options: [] },
+        ],
+        tasks: [{ title: "A", column: "To Do", fields: { SIZE: "gigantic" } }],
+      },
+    });
+
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        { kind: "field_dropped", field: "Mood", count: 0 },
+        { kind: "field_dropped", field: "x".repeat(51), count: 0 },
+        {
+          kind: "option_dropped",
+          field: "Size",
+          option: "Gigantic",
+          count: 1,
+        },
+      ]),
+    );
+    expect(result.warnings).toHaveLength(3);
+  });
+});
+
 describe("the synced tables", () => {
   it("publishes project_field with full replica identity and an electric grant", async () => {
     const facts = await db.execute<{

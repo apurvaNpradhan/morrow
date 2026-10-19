@@ -202,12 +202,22 @@ function describeWarning(t: TFunction, warning: Warning) {
     case "field_dropped":
       return {
         key: `f:${warning.field}`,
-        text: t("import.warning.fieldDropped", warning),
+        text: t(
+          warning.count === 0
+            ? "import.warning.fieldDroppedUnused"
+            : "import.warning.fieldDropped",
+          warning,
+        ),
       };
     case "option_dropped":
       return {
         key: `o:${warning.field}:${warning.option}`,
-        text: t("import.warning.optionDropped", warning),
+        text: t(
+          warning.count === 0
+            ? "import.warning.optionDroppedUnused"
+            : "import.warning.optionDropped",
+          warning,
+        ),
       };
     case "comment_author_unknown":
       return {
