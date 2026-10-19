@@ -10,8 +10,11 @@
 // the last Task shape response that says "up to date".
 import { chromium } from "@playwright/test";
 
-const [statePath, path = "/demo-scale/projects/PLAT/board"] =
-  process.argv.slice(2);
+const args = process.argv.slice(2);
+const COLD = args.includes("--cold");
+const [statePath, path = "/demo-scale/projects/PLAT/board"] = args.filter(
+  (arg) => arg !== "--cold",
+);
 if (!statePath) {
   console.error("usage: measure-reload.mjs <storage-state.json> [board path]");
   process.exit(1);
@@ -46,6 +49,57 @@ async function reloadOnce(page) {
   return { firstPaint, upToDate: upToDateAt ?? Number.NaN };
 }
 
+async function coldOnce(browser, profile) {
+  const context = await browser.newContext({
+    storageState: statePath,
+    ignoreHTTPSErrors: true,
+    baseURL: BASE_URL,
+    viewport: { width: 1440, height: 1000 },
+  });
+  const page = await context.newPage();
+  if (profile) {
+    const client = await context.newCDPSession(page);
+    await client.send("Network.enable");
+    await client.send("Network.emulateNetworkConditions", profile);
+  }
+  let jsBytes = 0;
+  page.on("response", async (response) => {
+    if (!response.url().endsWith(".js")) return;
+    const length = Number(response.headers()["content-length"]);
+    jsBytes += Number.isFinite(length) ? length : 0;
+  });
+  const started = performance.now();
+  await page.goto(path, { waitUntil: "commit" });
+  await page.locator('[data-lane] [role="button"]').first().waitFor({
+    timeout: 300_000,
+  });
+  const firstPaint = performance.now() - started;
+  const fcp = await page.evaluate(
+    () =>
+      performance
+        .getEntriesByType("paint")
+        .find((entry) => entry.name === "first-contentful-paint")?.startTime ??
+      Number.NaN,
+  );
+  await page.waitForLoadState("networkidle").catch(() => {});
+  await context.close();
+  return { firstPaint, fcp, jsBytes };
+}
+
+async function measureCold(profile) {
+  const browser = await chromium.launch();
+  const results = [];
+  for (let run = 0; run < RUNS; run++) {
+    results.push(await coldOnce(browser, profile));
+  }
+  await browser.close();
+  return {
+    fcpMs: Math.round(median(results.map((r) => r.fcp))),
+    firstTaskCardMs: Math.round(median(results.map((r) => r.firstPaint))),
+    jsKbTransferred: Math.round(median(results.map((r) => r.jsBytes)) / 1024),
+  };
+}
+
 async function measure(profile) {
   const browser = await chromium.launch();
   const context = await browser.newContext({
@@ -75,5 +129,6 @@ async function measure(profile) {
   };
 }
 
-console.log("no throttling:", await measure(undefined));
-console.log("Fast 4G:      ", await measure(FAST_4G));
+const run = COLD ? measureCold : measure;
+console.log("no throttling:", await run(undefined));
+console.log("Fast 4G:      ", await run(FAST_4G));
