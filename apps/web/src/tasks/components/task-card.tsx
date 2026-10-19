@@ -16,6 +16,7 @@ import { PersonAvatar } from "./person-avatar";
 import { TaskChip } from "./task-chip";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { TaskStructureChips } from "./task-structure-chips";
+import { preloadTaskDescriptionEditor } from "./task-description-editor";
 import { useTaskView } from "./task-view-context";
 
 /**
@@ -97,6 +98,8 @@ export function TaskCard({
         if (selectable && selectByClick(project.id, task.id, event)) return;
         view.openTask(task);
       }}
+      onPointerEnter={preloadTaskDescriptionEditor}
+      onFocus={preloadTaskDescriptionEditor}
       onPointerDown={() => setPressed(true)}
       onPointerUp={() => setPressed(false)}
       onPointerCancel={() => setPressed(false)}

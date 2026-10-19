@@ -1,10 +1,13 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { beforeAll, afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { TaskDescriptionEditor } from "./task-description-editor";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
+
+// The editor loads on demand; the first import transforms Tiptap and is slow.
+beforeAll(() => import("./description-markdown-editor"), 60_000);
 
 afterEach(cleanup);
 

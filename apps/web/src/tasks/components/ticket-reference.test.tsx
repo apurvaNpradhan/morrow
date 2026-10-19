@@ -6,7 +6,7 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 
 const lookups = vi.hoisted(() => ({
   current: {} as Record<string, unknown>,
@@ -22,6 +22,9 @@ vi.mock("../queries/use-ticket-lookup", () => ({
 
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TicketWorkspaceProvider } from "./ticket-workspace-context";
+
+// The editor loads on demand; the first import transforms Tiptap and is slow.
+beforeAll(() => import("./description-markdown-editor"), 60_000);
 
 afterEach(() => {
   cleanup();
