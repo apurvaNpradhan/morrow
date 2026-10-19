@@ -1,5 +1,4 @@
 import type { TaskRow } from "@morrow/sync-schemas";
-import type { TaskPriority } from "@morrow/sync-schemas";
 import { Menu, MenuItem, MenuPopup } from "@/design-system/ui/menu";
 import { Popover, PopoverPopup } from "@/design-system/ui/popover";
 import { useBulkActions } from "../actions/use-bulk-actions";
@@ -33,7 +32,7 @@ export function TaskFieldPicker() {
   const actions = useTaskActions();
   const bulk = useBulkActions();
   const { project, columns, fields, people, meId, today, can } = useTaskView();
-  // The selection picks for several tasks; a value shows only where they agree.
+  // The selection picks for several tasks, so no value is shown as current.
   const forSelection = picker?.taskId === SELECTION;
   const selected = useSelectedTasks(project.id);
   const task: TaskRow | undefined = forSelection
@@ -41,13 +40,6 @@ export function TaskFieldPicker() {
     : picker
       ? taskCollection.get(picker.taskId)
       : undefined;
-  function shared<T>(read: (task: TaskRow) => T): T | undefined {
-    if (!forSelection) return task ? read(task) : undefined;
-    const [first, ...rest] = selected;
-    if (!first) return undefined;
-    const value = read(first);
-    return rest.every((other) => read(other) === value) ? value : undefined;
-  }
 
   function choose(apply: () => unknown) {
     const anchor = picker?.anchor;
@@ -108,7 +100,7 @@ export function TaskFieldPicker() {
           <>
             {picker.field === "priority" ? (
               <PriorityItems
-                value={shared((t) => t.priority) as TaskPriority}
+                value={forSelection ? undefined : task.priority}
                 onSelect={(priority) =>
                   choose(() =>
                     forSelection
@@ -121,7 +113,7 @@ export function TaskFieldPicker() {
             {picker.field === "column" ? (
               <ColumnItems
                 columns={columns}
-                value={shared((t) => t.columnId) ?? ""}
+                value={forSelection ? undefined : task.columnId}
                 onSelect={(columnId) =>
                   choose(() =>
                     forSelection
@@ -136,7 +128,7 @@ export function TaskFieldPicker() {
                 people={people}
                 meId={meId}
                 canAssign={can.assign}
-                value={shared((t) => t.assigneeId) ?? null}
+                value={forSelection ? undefined : task.assigneeId}
                 onSelect={(assigneeId) =>
                   choose(() =>
                     forSelection

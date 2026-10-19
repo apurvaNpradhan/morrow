@@ -8,6 +8,7 @@ import { generateNKeysBetween } from "fractional-indexing";
 import { rpc } from "@/app/lib/orpc";
 import { taskCollection } from "../collections/task-collection";
 import { workspaceOf } from "../collections/task-writes";
+import { columnTasks } from "../queries/task-queries";
 
 export type BulkChange = Parameters<typeof rpc.tasks.bulkUpdate>[0]["change"];
 
@@ -90,17 +91,21 @@ const bulkUpdateAction = createOptimisticAction<Batch & { change: BulkChange }>(
   },
 );
 
-const bulkRemoveAction = createOptimisticAction<Batch>({
+/** Filled in by the server: how many ids were already gone. */
+type Removed = { skipped: number };
+
+const bulkRemoveAction = createOptimisticAction<Batch & { result: Removed }>({
   onMutate: (batch) => {
     const keys = batch.taskIds.filter((id) => taskCollection.has(id));
     if (keys.length > 0) taskCollection.delete(keys);
   },
   mutationFn: async (batch) => {
-    const { txid } = await rpc.tasks.bulkRemove({
+    const { txid, skipped } = await rpc.tasks.bulkRemove({
       workspaceId: workspaceOf(batch.projectId),
       projectId: batch.projectId,
       taskIds: batch.taskIds,
     });
+    batch.result.skipped = skipped;
     await taskCollection.utils.awaitTxId(txid);
   },
 });
@@ -114,10 +119,17 @@ export async function bulkUpdateTasks(
   batch: Batch,
   change: BulkChange,
 ): Promise<void> {
+  // A move lands after the last task of the column, so load what it holds.
+  if (change.type === "move") await columnTasks(change.columnId).preload();
   await bulkUpdateAction({ ...batch, change }).isPersisted.promise;
 }
 
-/** Deletes many tasks as one write, with the same all-or-nothing outcome. */
-export async function bulkRemoveTasks(batch: Batch): Promise<void> {
-  await bulkRemoveAction(batch).isPersisted.promise;
+/**
+ * Deletes many tasks as one write, with the same all-or-nothing outcome.
+ * Resolves with how many were really deleted; someone else may have got there.
+ */
+export async function bulkRemoveTasks(batch: Batch): Promise<number> {
+  const result: Removed = { skipped: 0 };
+  await bulkRemoveAction({ ...batch, result }).isPersisted.promise;
+  return batch.taskIds.length - result.skipped;
 }

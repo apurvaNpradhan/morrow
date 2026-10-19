@@ -29,6 +29,8 @@ export function useTaskFieldHotkeys() {
   const actions = useTaskActions();
   const bulk = useBulkActions();
   const editable = can.edit && !frozen;
+  // Viewers are offered no selection actions, so they get no selection.
+  const canSelect = (can.edit || can.delete) && !frozen;
 
   function currentTask() {
     const id = focusedTaskId() ?? getActiveTaskId();
@@ -45,12 +47,20 @@ export function useTaskFieldHotkeys() {
     return selectedTasks(project.id);
   }
 
+  /** Whether the selection is the target and small enough; over the cap it says so. */
+  function selectionReady(tasks: unknown[]) {
+    return tasks.length > 0 && bulk.allowed(tasks.length);
+  }
+
   function pick(field: PickerField, sheetField: string) {
     return guarded(() => {
       if (!editable) return;
-      if (selectionTarget().length > 0) {
+      const selection = selectionTarget();
+      if (selection.length > 0) {
         const bar = document.querySelector("[data-selection-bar]");
-        if (bar) openFieldPicker(SELECTION, field, bar);
+        if (bar && selectionReady(selection)) {
+          openFieldPicker(SELECTION, field, bar);
+        }
         return;
       }
       const sheetChip = document.querySelector<HTMLElement>(
@@ -101,7 +111,7 @@ export function useTaskFieldHotkeys() {
         if (!can.delete || frozen) return;
         const selection = selectionTarget();
         if (selection.length > 0) {
-          requestDeleteTasks(selection);
+          if (selectionReady(selection)) requestDeleteTasks(selection);
           return;
         }
         const task = currentTask();
@@ -112,13 +122,13 @@ export function useTaskFieldHotkeys() {
       hotkey: hotkeys.toggleTaskSelection,
       callback: guarded(() => {
         const id = focusedTaskId();
-        if (id && !sheetIsOpen()) toggleSelected(project.id, id);
+        if (id && canSelect && !sheetIsOpen()) toggleSelected(project.id, id);
       }),
     },
     {
       hotkey: hotkeys.selectAllTasks,
       callback: (event) => {
-        if (!taskHotkeysAllowed() || sheetIsOpen()) return;
+        if (!canSelect || !taskHotkeysAllowed() || sheetIsOpen()) return;
         const view = currentView();
         event.preventDefault();
         setSelection(

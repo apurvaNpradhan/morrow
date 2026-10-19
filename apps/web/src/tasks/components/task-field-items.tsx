@@ -28,13 +28,14 @@ export function PriorityItems({
   value,
   onSelect,
 }: {
-  value: TaskPriority;
+  /** Left out where several tasks are edited at once and none is current. */
+  value?: TaskPriority;
   onSelect: (priority: TaskPriority) => void;
 }) {
   const { t } = useTranslation("tasks");
   return (
     <MenuRadioGroup
-      value={value}
+      value={value ?? ""}
       onValueChange={(next) => onSelect(next as TaskPriority)}
     >
       <DigitKeys />
@@ -61,11 +62,11 @@ export function ColumnItems({
   onSelect,
 }: {
   columns: readonly ProjectColumnRow[];
-  value: string;
+  value?: string;
   onSelect: (columnId: string) => void;
 }) {
   return (
-    <MenuRadioGroup value={value} onValueChange={onSelect}>
+    <MenuRadioGroup value={value ?? ""} onValueChange={onSelect}>
       <DigitKeys />
       {columns.map((column, index) => (
         <MenuRadioItem
@@ -100,14 +101,14 @@ export function AssigneeItems({
   people: readonly Person[];
   meId: string;
   canAssign: boolean;
-  value: string | null;
+  value?: string | null;
   onSelect: (assigneeId: string | null) => void;
 }) {
   const { t } = useTranslation("tasks");
   const choices = people.filter((person) => canAssign || person.id === meId);
   return (
     <MenuRadioGroup
-      value={value ?? NOBODY}
+      value={value === undefined ? "\0" : (value ?? NOBODY)}
       onValueChange={(next) => onSelect(next === NOBODY ? null : next)}
     >
       <DigitKeys />

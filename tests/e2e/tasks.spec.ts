@@ -366,3 +366,46 @@ test("select all in the list and Mod+Backspace delete them for everyone", async 
   await expect(member.getByText("0 tasks")).toBeVisible();
   await close();
 });
+
+test("a bulk move reaches another tab, and the selection yields to the sheet and to focus rules", async ({
+  browser,
+}) => {
+  const { admin, member, slug, close } = await twoPeople(browser, "BulkKeys");
+  await createProject(admin, slug, "Bulk keys", "BKY");
+  await admin.goto(`/${slug}/projects/BKY/board`);
+  await createTasks(admin, "To Do", ["Red", "Green", "Blue"]);
+  await member.goto(`/${slug}/projects/BKY/board`);
+  await expect(card(lane(member, "To Do"), "BKY-3", "Blue")).toBeVisible();
+
+  const todo = lane(admin, "To Do");
+  await card(todo, "BKY-1", "Red").click({ modifiers: ["ControlOrMeta"] });
+  await card(todo, "BKY-2", "Green").click({ modifiers: ["ControlOrMeta"] });
+  await expect(admin.getByText("2 selected")).toBeVisible();
+
+  // Right-click on an unselected card acts on it alone and keeps the selection.
+  await card(todo, "BKY-3", "Blue").click({ button: "right" });
+  await expect(admin.getByRole("menuitem", { name: "Archive" })).toBeVisible();
+  await admin.keyboard.press("Escape");
+  await expect(admin.getByText("2 selected")).toBeVisible();
+
+  // Selection beats focus: S moves both, though Blue has focus.
+  await card(todo, "BKY-3", "Blue").focus();
+  await admin.keyboard.press("s");
+  await admin.getByRole("menuitemradio", { name: "In Progress" }).click();
+  for (const page of [admin, member]) {
+    const doing = lane(page, "In Progress");
+    await expect(card(doing, "BKY-1", "Red")).toBeVisible();
+    await expect(card(doing, "BKY-2", "Green")).toBeVisible();
+    await expect(card(lane(page, "To Do"), "BKY-3", "Blue")).toBeVisible();
+  }
+
+  // Escape closes the sheet first; the selection goes on the second press.
+  await card(lane(admin, "In Progress"), "BKY-1", "Red").click();
+  await expect(sheetOf(admin)).toBeVisible();
+  await admin.keyboard.press("Escape");
+  await expect(sheetOf(admin)).toBeHidden();
+  await expect(admin.getByText("2 selected")).toBeVisible();
+  await admin.keyboard.press("Escape");
+  await expect(admin.getByText("2 selected")).toBeHidden();
+  await close();
+});

@@ -47,12 +47,16 @@ import { useTaskView } from "./task-view-context";
  * may do.
  */
 export function TaskContextMenu({ children }: { children: ReactNode }) {
-  const { project } = useTaskView();
+  const { project, can, frozen } = useTaskView();
   const [taskId, setTaskId] = useState<string | null>(null);
   const task = taskId ? taskCollection.get(taskId) : undefined;
   // A task inside the selection acts for all of it; any other acts alone and leaves the selection be.
   const selection = useSelectedIds(project.id);
-  const forSelection = taskId !== null && selection.has(taskId);
+  const forSelection =
+    taskId !== null &&
+    selection.has(taskId) &&
+    (can.edit || can.delete) &&
+    !frozen;
   return (
     <ContextMenu>
       <ContextMenuTrigger
