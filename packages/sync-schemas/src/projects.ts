@@ -50,10 +50,11 @@ type ColumnColorHex = (typeof COLUMN_COLOR_BY_NAME)[ColumnColorName];
 export const COLUMN_COLORS = Object.values(
   COLUMN_COLOR_BY_NAME,
 ) as readonly ColumnColorHex[];
-export type ColumnColor = (typeof COLUMN_COLORS)[number];
 
 /** A colour as stored and sent: `#` and six lower-case hex digits. */
 export const colorHex = z.string().regex(/^#[0-9a-f]{6}$/);
+/** Any stored colour. `COLUMN_COLORS` is only the palette offered by pickers. */
+export type ColumnColor = z.infer<typeof colorHex>;
 
 /** The name of each palette colour, by its hex value, for i18n keys. */
 export const COLUMN_COLOR_NAMES = Object.fromEntries(
