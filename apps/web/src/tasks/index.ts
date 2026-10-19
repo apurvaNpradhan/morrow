@@ -7,3 +7,4 @@ export { TicketWorkspaceProvider } from "./components/ticket-workspace-context";
 export { openCreateTask } from "./lib/create-task-store";
 export { preloadProjectTasks } from "./lib/preload-project-tasks";
 export { preloadTicketTask } from "./lib/preload-ticket-task";
+export { preloadTaskDescriptionEditor } from "./components/task-description-editor";

@@ -33,6 +33,9 @@ afterAll(() => {
   Reflect.deleteProperty(Range.prototype, "getBoundingClientRect");
 });
 
+// The editor loads on demand; the first import transforms Tiptap and is slow.
+beforeAll(() => import("./description-markdown-editor"), 60_000);
+
 afterEach(cleanup);
 
 /** The last text node under `root`, where the caret of a typed run of text sits. */

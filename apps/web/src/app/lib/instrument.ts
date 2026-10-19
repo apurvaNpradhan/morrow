@@ -1,10 +1,10 @@
-import * as Sentry from "@sentry/react";
+import { browserTracingIntegration, init } from "@sentry/react";
 import { env } from "./env";
 
 const dsn = env.sentryDsn;
 
 if (dsn) {
-  Sentry.init({
+  init({
     dsn,
     environment: import.meta.env.MODE,
     release: __APP_VERSION__,
@@ -40,12 +40,19 @@ if (dsn) {
       if (event.tags?.area === "auth.session") return null;
       return event;
     },
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
-    ],
+    integrations: [browserTracingIntegration()],
     tracesSampleRate: 0.1,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
   });
+
+  // Session replay is a large chunk and is not needed to paint, so it joins
+  // once the browser is idle after the first paint.
+  const startReplay = () =>
+    void import("./start-session-replay").then((m) => m.startSessionReplay());
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(startReplay, { timeout: 5000 });
+  } else {
+    setTimeout(startReplay, 2000);
+  }
 }

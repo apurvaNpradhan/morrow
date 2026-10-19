@@ -19,6 +19,7 @@ import { ErrorBoundary } from "./design-system/ui/error-boundary";
 import { AppHotkeysProvider } from "./app/commands";
 import { AppI18nProvider } from "./app/i18n/provider";
 import { routeTree } from "./routeTree.gen";
+import { preloadTaskDescriptionEditor } from "./tasks";
 
 console.log(`
                               ////
@@ -111,6 +112,14 @@ applyTheme(readDevicePreferences().theme);
 // session is confirmed.
 seedSessionFromOwnerStamp();
 watchLocalDatabaseLifecycle();
+
+// The description editor is big and most loads never open it: fetch it once
+// the browser is idle after the first paint, so a Task opens with it ready.
+if ("requestIdleCallback" in window) {
+  requestIdleCallback(preloadTaskDescriptionEditor, { timeout: 5000 });
+} else {
+  setTimeout(preloadTaskDescriptionEditor, 2000);
+}
 
 const rootElement = document.getElementById("root") as HTMLElement;
 if (!rootElement.innerHTML) {
