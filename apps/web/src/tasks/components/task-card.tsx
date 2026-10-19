@@ -5,7 +5,10 @@ import { type Ref, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
 import { isOverdue } from "../lib/due-date";
-import { selectByClick } from "../lib/select-gesture";
+import {
+  keepTextUnselectedOnShiftClick,
+  selectByClick,
+} from "../lib/select-gesture";
 import { useIsSelected } from "../lib/selection-store";
 import { TaskSelectBox } from "./task-select-box";
 import { openFieldPicker } from "../lib/field-picker-store";
@@ -99,6 +102,7 @@ export function TaskCard({
         view.openTask(task);
       }}
       onPointerEnter={preloadTaskDescriptionEditor}
+      onMouseDown={keepTextUnselectedOnShiftClick}
       onFocus={preloadTaskDescriptionEditor}
       onPointerDown={() => setPressed(true)}
       onPointerUp={() => setPressed(false)}

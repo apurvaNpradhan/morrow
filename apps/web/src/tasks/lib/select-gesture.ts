@@ -33,3 +33,15 @@ export function selectByClick(
   setSelection(projectId, extendRange(ids, order, anchor, taskId), taskId);
   return true;
 }
+
+/**
+ * Shift-click extends a range of tasks, but the browser also reads it as
+ * "extend the text selection" and highlights everything between the two
+ * clicks. Cancel that on mousedown; other clicks are left alone.
+ */
+export function keepTextUnselectedOnShiftClick(event: {
+  shiftKey: boolean;
+  preventDefault: () => void;
+}) {
+  if (event.shiftKey) event.preventDefault();
+}
