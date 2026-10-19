@@ -1,6 +1,7 @@
 import {
   COLUMN_CATEGORIES,
   colorHex,
+  isProjectEmoji,
   PROJECT_ICONS,
   PROJECT_KEY_PATTERN,
 } from "@morrow/sync-schemas";
@@ -21,7 +22,11 @@ export const projectKey = z
 
 export const projectName = z.string().trim().min(1).max(100);
 export const projectDescription = z.string().trim().max(2000);
-export const projectIcon = z.enum(PROJECT_ICONS);
+/** A Lucide icon name from the list, or a single emoji. */
+export const projectIcon = z.union([
+  z.enum(PROJECT_ICONS),
+  z.string().refine(isProjectEmoji),
+]);
 /** A project's colour: `#rrggbb`. */
 export const projectColor = colorHex;
 

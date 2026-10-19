@@ -388,6 +388,14 @@ export const PROJECT_ICONS = [
 ] as const;
 export type ProjectIcon = (typeof PROJECT_ICONS)[number];
 
+// Built from a string: the `v` flag needs an ES2024 target.
+const PROJECT_EMOJI = new RegExp("^\\p{RGI_Emoji}$", "v");
+
+/** True for exactly one emoji, including flags, skin tones and joined sequences. A Project may use one instead of a Lucide icon. */
+export function isProjectEmoji(value: string): boolean {
+  return PROJECT_EMOJI.test(value);
+}
+
 /** 2–6 characters, upper-case letters and digits, starting with a letter. */
 export const PROJECT_KEY_PATTERN = /^[A-Z][A-Z0-9]{1,5}$/;
 

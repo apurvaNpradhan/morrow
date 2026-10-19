@@ -45,7 +45,7 @@ export function CreateProjectDialog({
   );
   const [name, setName] = useState("");
   const [typedKey, setTypedKey] = useState<string | null>(null);
-  const [icon, setIcon] = useState<ProjectIcon | null>(DEFAULT_ICON);
+  const [icon, setIcon] = useState<string | null>(DEFAULT_ICON);
   const [color, setColor] = useState<ColumnColor | null>(null);
   const [submitting, setSubmitting] = useState(false);
 

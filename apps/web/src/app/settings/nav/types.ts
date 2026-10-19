@@ -1,5 +1,11 @@
-import type { LucideIcon } from "lucide-react";
-import type { CSSProperties } from "react";
+import type { ComponentType, CSSProperties } from "react";
+
+/** A Lucide icon, or a component that draws an emoji in its place. */
+export type NavIcon = ComponentType<{
+  className?: string;
+  style?: CSSProperties;
+  "aria-hidden"?: boolean | "true" | "false";
+}>;
 
 export type SettingsNavSubLink = {
   id: string;
@@ -8,7 +14,7 @@ export type SettingsNavSubLink = {
 };
 
 export type SettingsNavLink = SettingsNavSubLink & {
-  icon: LucideIcon;
+  icon: NavIcon;
   iconStyle?: CSSProperties;
   /** A path whose pages all belong to this link, e.g. a project's General and Workflow pages. */
   matchPrefix?: string;

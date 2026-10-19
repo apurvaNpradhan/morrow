@@ -9,8 +9,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import type { SettingsNav } from "./types";
+import type { NavIcon, SettingsNav } from "./types";
 import type { CSSProperties } from "react";
 
 type Translate = (key: string) => string;
@@ -19,7 +18,7 @@ type Translate = (key: string) => string;
 export type SettingsNavProject = {
   key: string;
   name: string;
-  icon: LucideIcon;
+  icon: NavIcon;
   iconStyle?: CSSProperties;
 };
 
