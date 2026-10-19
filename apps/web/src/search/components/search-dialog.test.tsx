@@ -257,7 +257,7 @@ describe("choosing a result", () => {
 
   it("opens a task on its own page", async () => {
     await results();
-    fireEvent.click(rowNow(/Login task/));
+    fireEvent.click(await row(/Login task/));
     expect(navigate).toHaveBeenCalledWith({
       to: "/$slug/tasks/$ticketId",
       params: { slug: "acme", ticketId: "BIL-1" },
@@ -267,7 +267,7 @@ describe("choosing a result", () => {
 
   it("opens a comment's task with the comment to show", async () => {
     await results();
-    fireEvent.click(rowNow(/the login failed/));
+    fireEvent.click(await row(/the login failed/));
     expect(navigate).toHaveBeenCalledWith({
       to: "/$slug/tasks/$ticketId",
       params: { slug: "acme", ticketId: "BIL-1" },
