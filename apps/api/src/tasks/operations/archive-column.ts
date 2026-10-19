@@ -2,6 +2,8 @@ import { isClosedCategory } from "@morrow/sync-schemas";
 import { and, eq, isNull } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { findColumn, lockProject } from "#api/projects/index";
+import { refreshBlockedCounts } from "#api/tasks/lib/open-blocker-counts";
+import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { taskError } from "#api/tasks/errors";
 import { taskTable } from "#api/tasks/tables";
 
@@ -26,7 +28,15 @@ export async function archiveColumn(
       .where(
         and(eq(taskTable.columnId, columnId), isNull(taskTable.archivedAt)),
       )
-      .returning({ id: taskTable.id });
+      .returning({ id: taskTable.id, parentId: taskTable.parentId });
+    await refreshSubtaskCounts(
+      tx,
+      archived.map((task) => task.parentId),
+    );
+    await refreshBlockedCounts(
+      tx,
+      archived.map((task) => task.id),
+    );
     return archived.length;
   });
   return { count, txid: count > 0 ? txid : null };

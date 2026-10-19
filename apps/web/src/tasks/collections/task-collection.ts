@@ -48,6 +48,7 @@ export const taskCollection = registerSyncedCollection(
               assigneeId: modified.assigneeId,
               dueDate: modified.dueDate,
               labelIds: modified.labelIds,
+              parentId: modified.parentId,
               fieldValues: modified.fieldValues,
             });
         await collection.utils.awaitTxId(txid);

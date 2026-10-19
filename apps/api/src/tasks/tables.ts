@@ -1,9 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TASK_PRIORITIES } from "@morrow/sync-schemas";
+import { RELATION_TYPES, TASK_PRIORITIES } from "@morrow/sync-schemas";
 import { sql } from "drizzle-orm";
 import {
   check,
   date,
+  type AnyPgColumn,
   index,
   integer,
   jsonb,
@@ -15,6 +16,7 @@ import {
 import { userTable } from "#api/auth/tables";
 import { utcNow } from "#api/platform/database/column-types";
 import { projectColumnTable, projectTable } from "#api/projects/tables";
+import { workspaceTable } from "#api/workspace/tables";
 
 /*
  * `position` is a fractional-index key and is `COLLATE "C"` (set in the
@@ -36,12 +38,24 @@ export const taskTable = pgTable(
     columnId: text("column_id")
       .notNull()
       .references(() => projectColumnTable.id),
+    // A subtask's parent, in the same Project (Tasks never change Project).
+    // Deleting the parent keeps its subtasks as top-level tasks.
+    parentId: text("parent_id").references((): AnyPgColumn => taskTable.id, {
+      onDelete: "set null",
+    }),
     number: integer("number").notNull(),
     title: text("title").notNull(),
     // Counted from the description whenever it is written, so a card shows
     // progress without the description (see `taskDescriptionTable`).
     checklistDone: integer("checklist_done").notNull().default(0),
     checklistTotal: integer("checklist_total").notNull().default(0),
+    // Recomputed from the rows of the direct subtasks (see
+    // `refreshSubtaskCounts`): those not archived, and those of them closed.
+    subtaskDone: integer("subtask_done").notNull().default(0),
+    subtaskTotal: integer("subtask_total").notNull().default(0),
+    // Recomputed from the `blocks` relations targeting the task whose source is
+    // open (see `refreshBlockedCounts`); a card shows "blocked" above 0.
+    openBlockerCount: integer("open_blocker_count").notNull().default(0),
     // Kept by the Procedures that create and delete comments, so a card shows
     // a badge without the comments themselves.
     commentCount: integer("comment_count").notNull().default(0),
@@ -89,6 +103,7 @@ export const taskTable = pgTable(
     index("task_title_trgm_idx").using("gin", sql`${table.title} gin_trgm_ops`),
     index("task_columnId_idx").on(table.columnId),
     index("task_assigneeId_idx").on(table.assigneeId),
+    index("task_parentId_idx").on(table.parentId),
     uniqueIndex("task_project_number_uidx").on(table.projectId, table.number),
     uniqueIndex("task_column_position_uidx").on(table.columnId, table.position),
     check(
@@ -232,5 +247,54 @@ export const taskEventTable = pgTable(
   (table) => [
     index("task_event_task_created_idx").on(table.taskId, table.createdAt),
     index("task_event_projectId_idx").on(table.projectId),
+  ],
+);
+
+/*
+ * A relation between two tasks of a Workspace, which may be in different
+ * Projects. `blocks`: the source blocks the target; `duplicate`: the source is
+ * a duplicate of the target; `related`: the ids are stored in sorted order, so
+ * a pair has one row. `workspace_id` is there for shape scoping.
+ */
+export const taskRelationTable = pgTable(
+  "task_relation",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaceTable.id, { onDelete: "cascade" }),
+    type: text("type", { enum: RELATION_TYPES }).notNull(),
+    sourceTaskId: text("source_task_id")
+      .notNull()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+    targetTaskId: text("target_task_id")
+      .notNull()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+    createdBy: text("created_by").references(() => userTable.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { mode: "date" })
+      .default(utcNow)
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("task_relation_type_source_target_uidx").on(
+      table.type,
+      table.sourceTaskId,
+      table.targetTaskId,
+    ),
+    index("task_relation_sourceTaskId_idx").on(table.sourceTaskId),
+    index("task_relation_targetTaskId_idx").on(table.targetTaskId),
+    index("task_relation_workspaceId_idx").on(table.workspaceId),
+    check(
+      "task_relation_type_check",
+      sql`${table.type} IN ('blocks', 'related', 'duplicate')`,
+    ),
+    check(
+      "task_relation_distinct_check",
+      sql`${table.sourceTaskId} <> ${table.targetTaskId}`,
+    ),
   ],
 );

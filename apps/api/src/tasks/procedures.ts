@@ -17,6 +17,7 @@ import { importTasks } from "./operations/import-tasks";
 import { listTasks } from "./operations/list-tasks";
 import { moveTask } from "./operations/move-task";
 import { searchTasks, SEARCH_TASKS_MAX } from "./operations/search-tasks";
+import { setTaskParent } from "./operations/set-task-parent";
 import { setFieldValue } from "./operations/set-field-value";
 import { setTaskLabel } from "./operations/set-task-label";
 import { setTaskArchived } from "./operations/set-task-archived";
@@ -140,6 +141,7 @@ const create = authed
       assigneeId: assigneeId.nullable().optional(),
       dueDate: dueDate.nullable().optional(),
       labelIds: z.array(labelId).max(MAX_TASK_LABELS).optional(),
+      parentId: taskId.nullable().optional(),
       fieldValues: fieldValues.optional(),
     }),
   )
@@ -222,6 +224,19 @@ const updateAssignee = authed
       input.taskId,
       await actorOf(context, input.workspaceId),
       { assigneeId: input.assigneeId },
+    ),
+  );
+
+const updateParent = authed
+  .input(forTask.extend({ parentId: taskId.nullable() }))
+  .use(canUpdate)
+  .output(txidResult)
+  .handler(({ input }) =>
+    setTaskParent(
+      input.workspaceId,
+      input.projectId,
+      input.taskId,
+      input.parentId,
     ),
   );
 
@@ -383,6 +398,7 @@ export const tasksRouter = {
   updatePriority,
   updateDueDate,
   updateAssignee,
+  updateParent,
   addLabel,
   removeLabel,
   setFieldValue: updateFieldValue,

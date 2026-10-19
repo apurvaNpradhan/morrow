@@ -47,6 +47,11 @@ export async function writeTaskChanges({ original, changes }: TaskMutation) {
       rpc.tasks.updateAssignee({ ...target, assigneeId: changes.assigneeId }),
     );
   }
+  if (changes.parentId !== undefined) {
+    await keep(
+      rpc.tasks.updateParent({ ...target, parentId: changes.parentId }),
+    );
+  }
   if (changes.labelIds !== undefined) {
     // Adding and removing are separate writes, so two people labelling one
     // task at once both land.

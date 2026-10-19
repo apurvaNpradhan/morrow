@@ -5,12 +5,14 @@ import {
   inArray,
   isNull,
   not,
+  or,
   useLiveQuery,
   useLiveSuspenseQuery,
 } from "@tanstack/react-db";
 import { useMemo } from "react";
 import { taskCollection } from "../collections/task-collection";
 import { taskCommentCollection } from "../collections/task-comment-collection";
+import { taskRelationCollection } from "../collections/task-relation-collection";
 import { taskLinkCollection } from "../collections/task-link-collection";
 import { taskEventCollection } from "../collections/task-event-collection";
 import { parseEvents } from "../lib/timeline";
@@ -148,6 +150,48 @@ export function useTaskLinks(taskId: string) {
         .from({ link: taskLinkCollection })
         .where(({ link }) => eq(link.taskId, taskId))
         .orderBy(({ link }) => link.createdAt, "asc"),
+  });
+  return data ?? [];
+}
+
+/** A task's direct subtasks in ticket order; loaded when the task is opened. */
+export function useSubtasks(taskId: string) {
+  const { data } = useLiveQuery({
+    query: (q) =>
+      q
+        .from({ task: taskCollection })
+        .where(({ task }) => eq(task.parentId, taskId))
+        .orderBy(({ task }) => task.number, "asc"),
+  });
+  return data ?? [];
+}
+
+/** The relations a task is on either end of; loaded when the task is opened. */
+export function useTaskRelations(taskId: string) {
+  const { data } = useLiveQuery({
+    query: (q) =>
+      q
+        .from({ relation: taskRelationCollection })
+        .where(({ relation }) =>
+          or(
+            eq(relation.sourceTaskId, taskId),
+            eq(relation.targetTaskId, taskId),
+          ),
+        )
+        .orderBy(({ relation }) => relation.createdAt, "asc"),
+  });
+  return data ?? [];
+}
+
+/** Tasks by id, wherever their Project; loads the ones not in memory yet. */
+export function useTasksByIds(taskIds: readonly string[]) {
+  const { data } = useLiveQuery({
+    query: (q) =>
+      taskIds.length === 0
+        ? undefined
+        : q
+            .from({ task: taskCollection })
+            .where(({ task }) => inArray(task.id, [...taskIds])),
   });
   return data ?? [];
 }

@@ -14,6 +14,9 @@ import { toast } from "@/design-system/toast";
 import { Textarea } from "@/design-system/ui/textarea";
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TaskLinks } from "./task-links";
+import { TaskParentLink } from "./task-parent-link";
+import { TaskRelations } from "./task-relations";
+import { TaskSubtasks } from "./task-subtasks";
 import { TaskProperties } from "./task-properties";
 import { TaskTimeline } from "./task-timeline";
 import { displayTicketId } from "../lib/task-links";
@@ -89,6 +92,7 @@ export function TaskDetails({
           )}
         >
           <div className="order-2 min-w-0 flex-1 space-y-4 @min-[720px]:order-1">
+            <TaskParentLink task={task} />
             <Textarea
               unstyled
               rows={1}
@@ -125,6 +129,8 @@ export function TaskDetails({
                 limit={TASK_DESCRIPTION_MAX}
               />
             )}
+            <TaskSubtasks task={task} />
+            <TaskRelations task={task} />
             <TaskLinks task={task} />
             <TaskTimeline task={task} />
           </div>

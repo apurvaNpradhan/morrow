@@ -30,7 +30,9 @@ export function ColumnMarker({
   fraction = 0.5,
   className,
 }: {
-  column: Pick<ProjectColumnRow, "category" | "color">;
+  /** Without a colour the icon takes the text colour around it. */
+  column: Pick<ProjectColumnRow, "category"> &
+    Partial<Pick<ProjectColumnRow, "color">>;
   fraction?: number;
   className?: string;
 }) {
@@ -39,7 +41,7 @@ export function ColumnMarker({
       aria-hidden="true"
       viewBox="0 0 14 14"
       className={cn("size-4 shrink-0", className)}
-      style={colorTextStyle(column.color)}
+      style={column.color ? colorTextStyle(column.color) : undefined}
     >
       {column.category === "done" ? (
         <path fill="currentColor" fillRule="evenodd" d={CHECK} />
