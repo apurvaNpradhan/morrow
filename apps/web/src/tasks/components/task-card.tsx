@@ -11,6 +11,7 @@ import { DueDateText } from "./due-date-chip-text";
 import { PersonAvatar } from "./person-avatar";
 import { TaskChip } from "./task-chip";
 import { TaskPriorityIcon } from "./task-priority-icon";
+import { TaskStructureChips } from "./task-structure-chips";
 import { useTaskView } from "./task-view-context";
 
 /**
@@ -64,7 +65,12 @@ export function TaskCard({
   const showDue = display.dueDates && task.dueDate !== null && !closed;
   const showProgress = display.checklist && progress !== null;
   const showComments = task.commentCount > 0;
-  const showChips = showPriority || showDue || showProgress || showComments;
+  const showStructure =
+    task.parentId !== null ||
+    task.subtaskTotal > 0 ||
+    (task.openBlockerCount > 0 && !closed);
+  const showChips =
+    showPriority || showDue || showProgress || showComments || showStructure;
   const ticket = displayTicketId(project.key, task.number);
 
   return (
@@ -133,6 +139,7 @@ export function TaskCard({
               <DueDateText dueDate={task.dueDate} today={today} />
             </TaskChip>
           ) : null}
+          <TaskStructureChips task={task} closed={closed} />
           {showComments ? (
             <TaskChip label={t("card.comments", { count: task.commentCount })}>
               <MessageSquare aria-hidden="true" className="size-3" />

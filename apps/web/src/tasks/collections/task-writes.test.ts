@@ -10,6 +10,7 @@ const rpc = vi.hoisted(() => {
       updatePriority: call(3),
       updateDueDate: call(4),
       updateAssignee: call(5),
+      updateParent: call(9),
       move: call(6),
       archive: call(7),
       unarchive: call(8),
@@ -54,6 +55,24 @@ describe("writeTaskChanges", () => {
     expect(rpc.tasks.updateDescription).not.toHaveBeenCalled();
     expect(rpc.tasks.move).not.toHaveBeenCalled();
     expect(txids).toEqual([1, 3]);
+  });
+
+  it("sends a parent change, and a cleared parent as null", async () => {
+    await writeTaskChanges({ original, changes: { parentId: "t0" } });
+    await writeTaskChanges({ original, changes: { parentId: null } });
+
+    expect(rpc.tasks.updateParent).toHaveBeenNthCalledWith(1, {
+      workspaceId: "w1",
+      projectId: "p1",
+      taskId: "t1",
+      parentId: "t0",
+    });
+    expect(rpc.tasks.updateParent).toHaveBeenNthCalledWith(2, {
+      workspaceId: "w1",
+      projectId: "p1",
+      taskId: "t1",
+      parentId: null,
+    });
   });
 
   it("sends a move with the Column and position, filling in whichever did not change", async () => {

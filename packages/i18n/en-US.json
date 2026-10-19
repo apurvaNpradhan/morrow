@@ -114,7 +114,13 @@
 			"labelLimitReached": "A task can have at most 20 labels.",
 			"commentInvalidId": "That comment id isn't valid. Try again.",
 			"commentIdTaken": "That comment already exists. Try again.",
-			"commentNotYours": "You can only change your own comments."
+			"commentNotYours": "You can only change your own comments.",
+			"taskParentCycle": "A task can't be under itself or one of its own subtasks.",
+			"taskParentNotInProject": "A parent has to be in the same project.",
+			"relationExists": "Those tasks are already linked that way.",
+			"relationSelf": "A task can't be linked to itself.",
+			"relationCycle": "That would make a task wait on itself.",
+			"relationTaskNotInWorkspace": "That task isn't in this workspace."
 		}
 	},
 	"auth": {
@@ -1329,6 +1335,11 @@
 		"card": {
 			"label": "{{id}}: {{title}}",
 			"checklist": "Checklist progress",
+			"subtasks": "Subtasks done",
+			"parent": "Subtask of {{id}}",
+			"blockedMark": "Blocked",
+			"blocked_one": "Blocked by {{count}} open task",
+			"blocked_other": "Blocked by {{count}} open tasks",
 			"comments_one": "{{count}} comment",
 			"comments_other": "{{count}} comments"
 		},
@@ -1459,6 +1470,31 @@
 			"copyMarkdown": "Copy as Markdown",
 			"more": "More actions",
 			"unknownUser": "Former member"
+		},
+		"parent": {
+			"field": "Parent",
+			"set": "Set parent",
+			"remove": "Remove parent",
+			"open": "Open the parent {{id}}"
+		},
+		"subtasks": {
+			"title": "Sub-tasks",
+			"add": "Add a sub-task",
+			"placeholder": "Add a sub-task…",
+			"error": "Couldn't add the sub-task"
+		},
+		"relations": {
+			"title": "Relations",
+			"add": "Add relation",
+			"remove": "Remove the relation with {{id}}",
+			"error": "Couldn't change the relation",
+			"kinds": {
+				"blocked_by": "Blocked by",
+				"blocks": "Blocks",
+				"related": "Related to",
+				"duplicate_of": "Duplicate of",
+				"duplicated_by": "Duplicated by"
+			}
 		},
 		"links": {
 			"title": "Links",

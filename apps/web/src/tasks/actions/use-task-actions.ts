@@ -46,6 +46,9 @@ export function useTaskActions() {
         attempt(() => updateTask(task.id, { dueDate })),
       setAssignee: (task: TaskRow, assigneeId: string | null) =>
         attempt(() => updateTask(task.id, { assigneeId })),
+      /** `null` makes the task a top-level one again. */
+      setParent: (task: TaskRow, parentId: string | null) =>
+        attempt(() => updateTask(task.id, { parentId })),
       toggleLabel: (task: TaskRow, labelId: string) =>
         attempt(() => toggleTaskLabel(task.id, labelId)),
       setColumn: (task: TaskRow, columnId: string) => {
