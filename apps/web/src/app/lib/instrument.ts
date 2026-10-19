@@ -1,5 +1,6 @@
 import { browserTracingIntegration, init } from "@sentry/react";
 import { env } from "./env";
+import { whenIdle } from "./when-idle";
 
 const dsn = env.sentryDsn;
 
@@ -48,11 +49,7 @@ if (dsn) {
 
   // Session replay is a large chunk and is not needed to paint, so it joins
   // once the browser is idle after the first paint.
-  const startReplay = () =>
+  whenIdle(() => {
     void import("./start-session-replay").then((m) => m.startSessionReplay());
-  if ("requestIdleCallback" in window) {
-    requestIdleCallback(startReplay, { timeout: 5000 });
-  } else {
-    setTimeout(startReplay, 2000);
-  }
+  });
 }
