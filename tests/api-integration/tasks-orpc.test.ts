@@ -10,6 +10,7 @@ import {
   newTaskId,
   positionAt,
   setupTasks,
+  taskDescription,
   taskRow,
   xminOfTask,
 } from "./helpers/tasks";
@@ -71,7 +72,6 @@ describe("creating a task", () => {
     expect(await taskRow(id)).toMatchObject({
       columnId: byName("In Progress").id,
       title: "Ship it",
-      description: "## Plan",
       priority: "high",
       dueDate: "2026-12-31",
       assigneeId: null,
@@ -79,6 +79,7 @@ describe("creating a task", () => {
       archivedAt: null,
       createdBy: owner.id,
     });
+    expect(await taskDescription(id)).toBe("## Plan");
   });
 
   it("starts a task created in a done column as completed", async () => {
@@ -237,9 +238,9 @@ describe("field rules", () => {
 
     expect(await taskRow(id)).toMatchObject({
       title: "After",
-      description: "Notes",
       priority: "urgent",
     });
+    expect(await taskDescription(id)).toBe("Notes");
     expect(txid).toBe(await xminOfTask(id));
   });
 
@@ -701,13 +702,13 @@ describe("duplicating", () => {
     expect(copy.number).toBe(2);
     expect(await taskRow(copyId)).toMatchObject({
       title: "Original (copy)",
-      description: "Body",
       priority: "high",
       dueDate: "2026-05-05",
       assigneeId: colleague.id,
       columnId: byName("In Progress").id,
       archivedAt: null,
     });
+    expect(await taskDescription(copyId)).toBe("Body");
   });
 
   it("drops an assignee the member could not assign", async () => {
