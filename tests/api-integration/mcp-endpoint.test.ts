@@ -272,27 +272,27 @@ describe("MCP endpoint", () => {
     const { commentId } = await run("comment_task", {
       projectId,
       ticketId: "MOR-1",
-      action: "add",
+      action: "create",
       body: "Looks good",
     });
     await run("comment_task", {
       projectId,
       ticketId: "MOR-1",
-      action: "edit",
+      action: "update",
       commentId,
       body: "Looks great",
     });
     const { linkId } = await run("manage_link", {
       projectId,
       ticketId: "MOR-1",
-      action: "add",
+      action: "create",
       url: "https://github.com/acme/app/pull/7",
       title: "PR 7",
     });
     await run("manage_link", {
       projectId,
       ticketId: "MOR-1",
-      action: "edit",
+      action: "update",
       linkId,
       title: "Pull request 7",
     });
@@ -538,12 +538,13 @@ describe("MCP endpoint", () => {
       ],
     });
     expect(created[0]).toEqual({
+      index: 0,
       ticketId: "MOR-1",
       createdLabels: ["Fresh"],
     });
     expect(created[1]).toMatchObject({ index: 1 });
     expect(created[1].error).toContain("Nowhere");
-    expect(created[2]).toEqual({ ticketId: "MOR-2" });
+    expect(created[2]).toEqual({ index: 2, ticketId: "MOR-2" });
 
     const updated = await run("update_tasks", {
       projectId,
@@ -553,6 +554,7 @@ describe("MCP endpoint", () => {
       ],
     });
     expect(updated[0]).toEqual({
+      index: 0,
       ticketId: "MOR-1",
       changed: ["priority", "addLabels"],
       createdLabels: ["Second"],
