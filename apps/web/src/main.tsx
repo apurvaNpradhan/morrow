@@ -6,6 +6,7 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { lazy, StrictMode, Suspense, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { useTranslation } from "react-i18next";
+import { whenIdle } from "./app/lib/when-idle";
 import { queryClient } from "./app/query-client";
 import "@/index.css";
 import { useAuth, seedSessionFromOwnerStamp } from "./auth";
@@ -124,11 +125,7 @@ watchLocalDatabaseLifecycle();
 
 // The description editor is big and most loads never open it: fetch it once
 // the browser is idle after the first paint, so a Task opens with it ready.
-if ("requestIdleCallback" in window) {
-  requestIdleCallback(preloadTaskDescriptionEditor, { timeout: 5000 });
-} else {
-  setTimeout(preloadTaskDescriptionEditor, 2000);
-}
+whenIdle(preloadTaskDescriptionEditor);
 
 const rootElement = document.getElementById("root") as HTMLElement;
 if (!rootElement.innerHTML) {
