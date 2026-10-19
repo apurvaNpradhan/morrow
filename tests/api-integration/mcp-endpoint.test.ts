@@ -239,7 +239,10 @@ describe("MCP endpoint", () => {
         { title: "Second", column: "review", assignee: owner.user.email },
       ],
     });
-    expect(created).toEqual([{ ticketId: "MOR-1" }, { ticketId: "MOR-2" }]);
+    expect(created).toEqual([
+      { index: 0, ticketId: "MOR-1" },
+      { index: 1, ticketId: "MOR-2" },
+    ]);
 
     expect(
       await run("update_tasks", {
@@ -254,7 +257,11 @@ describe("MCP endpoint", () => {
         ],
       }),
     ).toEqual([
-      { ticketId: "MOR-1", changed: ["title", "priority", "removeLabels"] },
+      {
+        index: 0,
+        ticketId: "MOR-1",
+        changed: ["title", "priority", "removeLabels"],
+      },
     ]);
     await run("move_task", {
       projectId,
@@ -659,6 +666,7 @@ describe("MCP endpoint", () => {
 
     const response = await call(owner.token, "list_tasks", {
       workspaceId: workspace.id,
+      limit: 200,
     });
     const listed = JSON.parse(response.result!.content[0].text);
     expect(listed.tasks).toHaveLength(200);

@@ -402,9 +402,12 @@ describe("shape proxy", () => {
       }),
     );
 
-    const response = await app.request("/api/shapes/workspace-members", {
-      headers: { "accept-encoding": "gzip, br" },
-    });
+    const response = await app.request(
+      "/api/shapes/workspace-members?offset=0_0&handle=h-1&live=true",
+      {
+        headers: { "accept-encoding": "gzip, br" },
+      },
+    );
 
     expect(response.headers.get("content-encoding")).toBeNull();
     expect(response.headers.get("content-length")).toBeNull();

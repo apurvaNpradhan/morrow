@@ -72,6 +72,15 @@ export async function taskRow(id: string) {
   return row;
 }
 
+/** A task's description, which lives in its own table apart from the row. */
+export async function taskDescription(id: string) {
+  const [row] = await db
+    .select({ description: schema.taskDescriptionTable.description })
+    .from(schema.taskDescriptionTable)
+    .where(eq(schema.taskDescriptionTable.taskId, id));
+  return row?.description;
+}
+
 /** The transaction that last wrote a task row, as Electric would report it. */
 export async function xminOfTask(id: string) {
   const rows = await db.execute<{ xmin: string }>(
