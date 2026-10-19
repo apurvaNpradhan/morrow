@@ -14,7 +14,6 @@ export type TaskDisplay = {
   assignees: boolean;
   dueDates: boolean;
   priority: boolean;
-  checklist: boolean;
 };
 
 /** What the signed-in user may do with this Project's tasks. */

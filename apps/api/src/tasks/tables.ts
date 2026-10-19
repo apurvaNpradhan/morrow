@@ -45,10 +45,6 @@ export const taskTable = pgTable(
     }),
     number: integer("number").notNull(),
     title: text("title").notNull(),
-    // Counted from the description whenever it is written, so a card shows
-    // progress without the description (see `taskDescriptionTable`).
-    checklistDone: integer("checklist_done").notNull().default(0),
-    checklistTotal: integer("checklist_total").notNull().default(0),
     // Recomputed from the rows of the direct subtasks (see
     // `refreshSubtaskCounts`): those not archived, and those of them closed.
     subtaskDone: integer("subtask_done").notNull().default(0),

@@ -69,9 +69,9 @@ export const slashCommands: SlashCommand[] = [
   },
   {
     id: "task-list",
-    label: "Task list",
+    label: "Checklist",
     group: "lists",
-    search: "todo to-do checklist checkbox task",
+    search: "checklist checkbox task list",
     run: (editor, range) => {
       editor.chain().focus().deleteRange(range).toggleTaskList().run();
     },

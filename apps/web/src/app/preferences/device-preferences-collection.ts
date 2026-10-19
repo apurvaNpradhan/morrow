@@ -30,7 +30,6 @@ export const devicePreferencesSchema = z.object({
   showTaskAssignees: z.boolean().default(true),
   showTaskDueDates: z.boolean().default(true),
   showTaskPriority: z.boolean().default(true),
-  showTaskChecklist: z.boolean().default(true),
   /** Whether cards and rows show a custom Field's value, by Field id; on unless switched off. */
   showTaskFields: z.record(z.string(), z.boolean()).default({}),
   /** Filters and sort of each Project's board and list, by Project id. */

@@ -17,7 +17,6 @@ const DISPLAY_KEYS = {
   assignees: "showTaskAssignees",
   dueDates: "showTaskDueDates",
   priority: "showTaskPriority",
-  checklist: "showTaskChecklist",
 } as const satisfies Record<keyof TaskDisplay, string>;
 
 /** What the device remembers about how a Project's tasks are shown. */
@@ -42,7 +41,6 @@ export function useTaskViewPreferences(projectId: string) {
     assignees: preferences.showTaskAssignees,
     dueDates: preferences.showTaskDueDates,
     priority: preferences.showTaskPriority,
-    checklist: preferences.showTaskChecklist,
   };
 
   return {
@@ -89,7 +87,6 @@ export function useTaskViewPreferences(projectId: string) {
         showTaskAssignees: true,
         showTaskDueDates: true,
         showTaskPriority: true,
-        showTaskChecklist: true,
         showTaskFields: {},
         taskSorts: others,
       });
