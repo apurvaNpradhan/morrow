@@ -62,11 +62,17 @@ async function coldOnce(browser, profile) {
     await client.send("Network.enable");
     await client.send("Network.emulateNetworkConditions", profile);
   }
-  let jsBytes = 0;
-  page.on("response", async (response) => {
+  // Bytes on the wire (compressed), read once each response has finished.
+  const transfers = [];
+  page.on("response", (response) => {
     if (!response.url().endsWith(".js")) return;
-    const length = Number(response.headers()["content-length"]);
-    jsBytes += Number.isFinite(length) ? length : 0;
+    transfers.push(
+      response
+        .finished()
+        .then(() => response.request().sizes())
+        .then((sizes) => sizes.responseBodySize)
+        .catch(() => 0),
+    );
   });
   const started = performance.now();
   await page.goto(path, { waitUntil: "commit" });
@@ -82,6 +88,7 @@ async function coldOnce(browser, profile) {
       Number.NaN,
   );
   await page.waitForLoadState("networkidle").catch(() => {});
+  const jsBytes = (await Promise.all(transfers)).reduce((a, b) => a + b, 0);
   await context.close();
   return { firstPaint, fcp, jsBytes };
 }

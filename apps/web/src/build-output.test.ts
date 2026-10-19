@@ -75,6 +75,14 @@ describe("production build", () => {
     expect(readFileSync(join(outDir, stylesheet), "utf8")).toContain(href);
   });
 
+  it("does not let the stylesheet block the first paint", () => {
+    const tag = html.match(/<link rel="stylesheet"[^>]*>/)![0];
+
+    expect(tag).toContain('media="print"');
+    expect(tag).toContain("onload=");
+    expect(html).toMatch(/<noscript><link rel="stylesheet"[^>]*><\/noscript>/);
+  });
+
   it("paints the splash beside the app root", () => {
     expect(html).toMatch(
       /<div id="splash"[^>]*>[\s\S]*?<\/div>\s*<div id="root"><\/div>/,
