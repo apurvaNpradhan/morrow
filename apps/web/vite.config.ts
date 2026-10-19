@@ -47,6 +47,27 @@ function preloadBodyFont(): Plugin {
   };
 }
 
+/**
+ * Loads the app stylesheet without blocking the first paint. The splash has
+ * its own inline CSS and covers the page until the router resolves, so the
+ * app never shows unstyled; the `noscript` copy keeps the page usable without
+ * script.
+ */
+function loadStylesheetWithoutBlocking(): Plugin {
+  return {
+    name: "morrow:non-blocking-stylesheet",
+    transformIndexHtml: {
+      order: "post",
+      handler: (html) =>
+        html.replace(
+          /<link rel="stylesheet"([^>]*)>/,
+          (_tag, attrs) =>
+            `<link rel="stylesheet"${attrs} media="print" onload="this.media='all'">\n    <noscript><link rel="stylesheet"${attrs}></noscript>`,
+        ),
+    },
+  };
+}
+
 export default defineConfig({
   run: {
     tasks: {
@@ -100,6 +121,7 @@ export default defineConfig({
     }),
     tailwindcss(),
     preloadBodyFont(),
+    loadStylesheetWithoutBlocking(),
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     // Hidden when Sentry env vars are absent so local dev does not depend on it.
