@@ -10,6 +10,8 @@ export type TaskDraft = {
   assigneeId: string | null;
   dueDate: string | null;
   labelIds: string[];
+  /** Custom Field values by Field id, for the chosen Project. */
+  fieldValues: Record<string, string>;
 };
 
 export const EMPTY_DRAFT: TaskDraft = {
@@ -21,6 +23,7 @@ export const EMPTY_DRAFT: TaskDraft = {
   assigneeId: null,
   dueDate: null,
   labelIds: [],
+  fieldValues: {},
 };
 
 /** Whether closing would throw away something the user typed or chose. */
@@ -31,6 +34,7 @@ export function isDirty(draft: TaskDraft) {
     draft.priority !== "none" ||
     draft.assigneeId !== null ||
     draft.dueDate !== null ||
-    draft.labelIds.length > 0
+    draft.labelIds.length > 0 ||
+    Object.keys(draft.fieldValues).length > 0
   );
 }

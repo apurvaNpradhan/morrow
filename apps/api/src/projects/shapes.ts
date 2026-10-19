@@ -1,6 +1,10 @@
-import { projectColumnsShape, projectsShape } from "@morrow/sync-schemas";
+import {
+  projectColumnsShape,
+  projectFieldsShape,
+  projectsShape,
+} from "@morrow/sync-schemas";
 import { defineShape } from "#api/platform/sync/define-shape";
-import { projectColumnTable, projectTable } from "./tables";
+import { projectColumnTable, projectFieldTable, projectTable } from "./tables";
 
 /**
  * Both shapes cover every Workspace the user belongs to, like the members
@@ -31,4 +35,14 @@ const projectColumns = defineShape({
   }),
 });
 
-export const projectsShapes = [projects, projectColumns];
+/** The custom Fields of those Projects. */
+const projectFields = defineShape({
+  shape: projectFieldsShape,
+  table: projectFieldTable,
+  where: ({ userId }) => ({
+    sql: `project_id IN (SELECT id FROM project WHERE workspace_id IN (${MEMBER_WORKSPACES}))`,
+    params: [userId],
+  }),
+});
+
+export const projectsShapes = [projects, projectColumns, projectFields];

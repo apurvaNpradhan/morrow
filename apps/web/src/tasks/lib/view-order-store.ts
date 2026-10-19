@@ -8,6 +8,11 @@ import type { TaskRow } from "@morrow/sync-schemas";
 export type PublishedView = {
   /** Every task shown, in reading order: Columns in board order, each as sorted. */
   tasks: readonly TaskRow[];
+  /**
+   * Every task that can be selected, in view order: `tasks` plus the list's
+   * archived group when it is expanded. Defaults to `tasks`.
+   */
+  selectable?: readonly TaskRow[];
   /** The board's lanes, each as its tasks top to bottom; null in the list. */
   lanes: readonly (readonly TaskRow[])[] | null;
   /** Scrolls the task into view, so that its card or row exists. */

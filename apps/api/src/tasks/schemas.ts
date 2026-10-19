@@ -1,5 +1,6 @@
 import {
   COMMENT_BODY_MAX,
+  MAX_BULK_TASKS,
   isCalendarDate,
   isHttpUrl,
   LINK_TITLE_MAX,
@@ -25,6 +26,11 @@ export const description = z.string().max(TASK_DESCRIPTION_MAX);
 export const priority = z.enum(TASK_PRIORITIES);
 export const assigneeId = z.string().min(1);
 export const labelId = z.string().min(1);
+export const fieldId = z.string().min(1);
+/** A custom Field value of any type; `null` clears it. The operation checks it against the Field. */
+export const fieldValue = z.json();
+/** Values for a new Task, by Field id; the operation checks every one. */
+export const fieldValues = z.record(fieldId, z.string());
 export const commentId = z.string().min(1);
 
 /** A client-chosen id; its format is checked by the operation (INVALID_COMMENT_ID). */
@@ -58,3 +64,17 @@ export const dueDate = z
 
 /** A fractional-index key; its format is checked by the operation. */
 export const position = z.string().min(1).max(64);
+
+/** The Tasks of one bulk action, in view order; repeats are dropped by the operation. */
+export const bulkTaskIds = z.array(taskId).min(1).max(MAX_BULK_TASKS);
+
+/** What a bulk action does to every Task it names. */
+export const bulkChange = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("move"), columnId }),
+  z.object({ type: z.literal("priority"), priority }),
+  z.object({ type: z.literal("assignee"), assigneeId: assigneeId.nullable() }),
+  z.object({ type: z.literal("dueDate"), dueDate: dueDate.nullable() }),
+  z.object({ type: z.literal("addLabel"), labelId }),
+  z.object({ type: z.literal("removeLabel"), labelId }),
+  z.object({ type: z.literal("archive"), archived: z.boolean() }),
+]);

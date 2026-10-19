@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { useTranslation } from "react-i18next";
 import type { FilterSubject } from "@/app/preferences/task-view-options";
 import {
   Popover,
@@ -25,8 +24,7 @@ export function FilterValuePopover({
   onToggle: (value: string) => void;
   trigger: ReactElement;
 }) {
-  const { t } = useTranslation("tasks");
-  const { optionsFor } = useFilterOptions();
+  const { optionsFor, subjectLabel } = useFilterOptions();
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger render={trigger} />
@@ -34,7 +32,7 @@ export function FilterValuePopover({
         <FilterOptionList
           options={optionsFor(subject)}
           selected={new Set(values)}
-          label={t(`filter.subject.${subject}`)}
+          label={subjectLabel(subject)}
           onPick={onToggle}
         />
       </PopoverPopup>

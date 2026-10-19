@@ -14,7 +14,7 @@ import {
 import type { CSSProperties } from "react";
 
 /** A colour as a dot: a filled circle in the colour itself. */
-export function colorDotStyle(color: ColumnColor): CSSProperties {
+export function colorDotStyle(color: string): CSSProperties {
   return { backgroundColor: color };
 }
 

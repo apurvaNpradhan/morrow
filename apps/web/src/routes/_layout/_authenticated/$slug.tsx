@@ -10,7 +10,11 @@ import {
   workspaceMemberUserCollection,
 } from "@/members";
 import { labelCollection } from "@/labels";
-import { projectCollection, projectColumnCollection } from "@/projects";
+import {
+  projectCollection,
+  projectColumnCollection,
+  projectFieldCollection,
+} from "@/projects";
 import { useCanonicalWorkspaceUrl } from "@/workspace";
 import { useRememberLastWorkspace } from "@/workspace";
 import { resolveWorkspaceBySlug, useActiveWorkspace } from "@/workspace";
@@ -57,6 +61,7 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
       workspaceInvitationCollection.preload(),
       projectCollection.preload(),
       projectColumnCollection.preload(),
+      projectFieldCollection.preload(),
       labelCollection.preload(),
     ]);
   },

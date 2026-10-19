@@ -9,6 +9,7 @@ function task(id: string, overrides: Record<string, unknown> = {}) {
     position: `a${id.slice(1)}`,
     priority: "none" as const,
     dueDate: null as string | null,
+    fieldValues: {} as Record<string, string>,
     createdAt: new Date(2026, 0, Number(id.slice(1))),
     ...overrides,
   };
@@ -74,5 +75,41 @@ describe("sortTasks", () => {
     expect(defaultDirection("priority")).toBe("desc");
     expect(defaultDirection("dueDate")).toBe("asc");
     expect(defaultDirection("title")).toBe("asc");
+  });
+});
+
+describe("sorting by a choice Field", () => {
+  // Options in this order: Small, Medium, Large; their ids sort differently.
+  const fields = [
+    {
+      id: "f1",
+      options: [
+        { id: "z-large", position: "a2" },
+        { id: "a-small", position: "a0" },
+        { id: "m-medium", position: "a1" },
+      ],
+    },
+  ];
+  const sized = (id: string, option?: string) =>
+    task(id, { fieldValues: option ? { f1: option } : {} });
+  const tasks = [
+    sized("t1", "z-large"),
+    sized("t2"),
+    sized("t3", "a-small"),
+    sized("t4", "m-medium"),
+    sized("t5", "a-small"),
+    sized("t6", "ghost"),
+  ];
+
+  it("follows the option order, not the ids or names, ties by number", () => {
+    expect(
+      ids(sortTasks(tasks, { field: "field:f1", direction: "asc" }, fields)),
+    ).toEqual(["t3", "t5", "t4", "t1", "t2", "t6"]);
+  });
+
+  it("reverses the options but keeps tasks without a value last", () => {
+    expect(
+      ids(sortTasks(tasks, { field: "field:f1", direction: "desc" }, fields)),
+    ).toEqual(["t1", "t4", "t3", "t5", "t2", "t6"]);
   });
 });

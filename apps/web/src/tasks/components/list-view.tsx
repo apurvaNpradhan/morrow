@@ -36,6 +36,7 @@ export function ListView({
   const model = useTaskViewModel({
     projectKey: project.key,
     columns,
+    fields: preferences.fields,
     tasks: [...openTasks, ...closed.tasks],
     filters: preferences.filters,
     search: toolbar.search,
@@ -46,6 +47,7 @@ export function ListView({
   const archivedModel = useTaskViewModel({
     projectKey: project.key,
     columns,
+    fields: preferences.fields,
     tasks: archived.tasks,
     filters: preferences.filters,
     search: toolbar.search,

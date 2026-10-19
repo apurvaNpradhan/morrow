@@ -14,6 +14,7 @@ const rpc = vi.hoisted(() => {
       move: call(6),
       archive: call(7),
       unarchive: call(8),
+      setFieldValue: call(9),
     },
   };
 });
@@ -116,6 +117,39 @@ describe("writeTaskChanges", () => {
 
     expect(rpc.tasks.archive).toHaveBeenCalledTimes(1);
     expect(rpc.tasks.unarchive).toHaveBeenCalledTimes(1);
+  });
+
+  it("sets, changes and clears Field values one Field at a time, leaving the others alone", async () => {
+    const holding = {
+      ...original,
+      fieldValues: { size: "small", customer: "acme", kept: "x" },
+    } as TaskRow;
+
+    const txids = await writeTaskChanges({
+      original: holding,
+      changes: {
+        fieldValues: { size: "large", kept: "x", team: "red" },
+      },
+    });
+
+    const target = { workspaceId: "w1", projectId: "p1", taskId: "t1" };
+    expect(rpc.tasks.setFieldValue).toHaveBeenCalledTimes(3);
+    expect(rpc.tasks.setFieldValue).toHaveBeenCalledWith({
+      ...target,
+      fieldId: "size",
+      value: "large",
+    });
+    expect(rpc.tasks.setFieldValue).toHaveBeenCalledWith({
+      ...target,
+      fieldId: "team",
+      value: "red",
+    });
+    expect(rpc.tasks.setFieldValue).toHaveBeenCalledWith({
+      ...target,
+      fieldId: "customer",
+      value: null,
+    });
+    expect(txids).toEqual([9, 9, 9]);
   });
 
   it("skips a txid the server did not give", async () => {

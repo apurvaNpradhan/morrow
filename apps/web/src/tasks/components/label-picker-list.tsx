@@ -14,12 +14,15 @@ export function LabelPickerList({
   workspaceId,
   labels,
   selected,
+  indeterminate,
   canCreate,
   onToggle,
 }: {
   workspaceId: string;
   labels: readonly LabelRow[];
   selected: readonly string[];
+  /** Labels some but not all of a batch of tasks have. */
+  indeterminate?: readonly string[];
   canCreate: boolean;
   onToggle: (labelId: string) => void;
 }) {
@@ -42,6 +45,7 @@ export function LabelPickerList({
         glyph: <LabelDot color={label.color} />,
       }))}
       selected={new Set(selected)}
+      indeterminate={indeterminate ? new Set(indeterminate) : undefined}
       label={t("fields.labels")}
       onPick={onToggle}
       create={

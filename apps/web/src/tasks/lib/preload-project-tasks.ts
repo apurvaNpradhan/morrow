@@ -3,7 +3,11 @@ import {
   isClosedCategory,
   type ProjectColumnRow,
 } from "@morrow/sync-schemas";
-import { projectCollection, projectColumnCollection } from "@/projects";
+import {
+  projectCollection,
+  projectColumnCollection,
+  projectFieldCollection,
+} from "@/projects";
 import { columnsTasks } from "../queries/task-queries";
 
 /** The ids of a Project's columns that are not done or canceled, in board order. */
@@ -27,6 +31,7 @@ export async function preloadProjectTasks(
   await Promise.all([
     projectCollection.preload(),
     projectColumnCollection.preload(),
+    projectFieldCollection.preload(),
   ]);
   const project = projectCollection.toArray.find(
     (candidate) =>

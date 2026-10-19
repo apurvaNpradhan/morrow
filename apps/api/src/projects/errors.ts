@@ -11,6 +11,10 @@ const CODES = {
   PROJECT_NOT_ARCHIVED: "CONFLICT",
   COLUMN_NAME_TAKEN: "CONFLICT",
   LAST_REQUIRED_COLUMN: "CONFLICT",
+  FIELD_NAME_TAKEN: "CONFLICT",
+  OPTION_NAME_TAKEN: "CONFLICT",
+  FIELD_LIMIT_REACHED: "CONFLICT",
+  OPTION_LIMIT_REACHED: "CONFLICT",
   INVALID_POSITION: "BAD_REQUEST",
   INVALID_TARGET_COLUMN: "BAD_REQUEST",
 } as const;
@@ -26,6 +30,12 @@ export const projectNotFound = () =>
 
 export const columnNotFound = () =>
   new ORPCError("NOT_FOUND", { message: "Column not found" });
+
+export const fieldNotFound = () =>
+  new ORPCError("NOT_FOUND", { message: "Field not found" });
+
+export const optionNotFound = () =>
+  new ORPCError("NOT_FOUND", { message: "Option not found" });
 
 const UNIQUE_VIOLATION = "23505";
 
