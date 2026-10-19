@@ -13,9 +13,11 @@ const iconName = z
   .string()
   .refine(
     (name) => projectIcon.safeParse(name).success,
-    "Unknown icon name. Use a Lucide icon name like Rocket or Bug, or omit it.",
+    "Unknown icon. Use a Lucide icon name like Rocket or Bug, a single emoji, or omit it.",
   )
-  .describe("A Lucide icon name, for example Rocket, Bug or Database.");
+  .describe(
+    "A Lucide icon name, for example Rocket, Bug or Database, or a single emoji such as 🚀.",
+  );
 
 const workspace = z.object({ workspaceId: z.string().trim().min(1) });
 const project = workspace.extend({ projectId: z.string().trim().min(1) });

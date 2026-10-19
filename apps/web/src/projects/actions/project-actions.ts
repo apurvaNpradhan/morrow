@@ -1,4 +1,4 @@
-import type { ColumnColor, ProjectIcon } from "@morrow/sync-schemas";
+import type { ColumnColor } from "@morrow/sync-schemas";
 import { rpc } from "@/app/lib/orpc";
 import { projectColumnCollection } from "../collections/project-column-collection";
 import { projectCollection } from "../collections/project-collection";
@@ -7,7 +7,7 @@ type NewProject = {
   workspaceId: string;
   name: string;
   key: string;
-  icon?: ProjectIcon;
+  icon?: string;
   color?: ColumnColor;
 };
 
@@ -34,7 +34,7 @@ export async function createProject(input: NewProject) {
 type ProjectPatch = {
   name?: string;
   description?: string | null;
-  icon?: ProjectIcon | null;
+  icon?: string | null;
   color?: ColumnColor | null;
   key?: string;
   position?: string;

@@ -13,13 +13,15 @@ import {
   PopoverTrigger,
 } from "@/design-system/ui/popover";
 import { filterProjectIcons } from "../lib/filter-project-icons";
+import { emojiOfIcon } from "../lib/project-emojis";
 import { PROJECT_ICON_COMPONENTS } from "../lib/project-icons";
 import { projectColorStyle } from "../lib/column-style";
 import { ProjectColorSwatches } from "./project-color-swatches";
+import { ProjectEmojiGrid } from "./project-emoji-grid";
 
 type ProjectIconPickerProps = {
   value: string | null;
-  onChange: (icon: ProjectIconName | null) => void;
+  onChange: (icon: string | null) => void;
   color: string | null;
   onColorChange: (color: ColumnColor | null) => void;
   disabled?: boolean;
@@ -63,13 +65,17 @@ export function ProjectIconPicker({
   const { t } = useTranslation("projects");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"icons" | "emoji">(
+    emojiOfIcon(value) ? "emoji" : "icons",
+  );
+  const emoji = emojiOfIcon(value);
   const icons = useMemo(() => filterProjectIcons(query), [query]);
   const Selected =
     value && value in PROJECT_ICON_COMPONENTS
       ? PROJECT_ICON_COMPONENTS[value as ProjectIconName]
       : null;
 
-  function pick(icon: ProjectIconName | null) {
+  function pick(icon: string | null) {
     onChange(icon);
     setOpen(false);
   }
@@ -90,7 +96,11 @@ export function ProjectIconPicker({
         )}
         style={projectColorStyle(color)}
       >
-        {Selected ? (
+        {emoji ? (
+          <span aria-hidden="true" className="text-base leading-none">
+            {emoji}
+          </span>
+        ) : Selected ? (
           <Selected aria-hidden="true" className="size-4" />
         ) : (
           (fallbackLetter || "?").toUpperCase()
@@ -116,7 +126,23 @@ export function ProjectIconPicker({
             {t("icon.clear")}
           </Button>
         </div>
-        {icons.length === 0 ? (
+        <div role="tablist" className="flex gap-1">
+          {(["icons", "emoji"] as const).map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="tab"
+              aria-selected={tab === name}
+              onClick={() => setTab(name)}
+              className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-accent aria-selected:text-foreground"
+            >
+              {t(`icon.tab.${name}`)}
+            </button>
+          ))}
+        </div>
+        {tab === "emoji" ? (
+          <ProjectEmojiGrid value={value} query={query} onPick={pick} />
+        ) : icons.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
             {t("icon.empty")}
           </p>

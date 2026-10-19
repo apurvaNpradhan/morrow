@@ -1,8 +1,4 @@
-import {
-  type ColumnColor,
-  type ProjectIcon,
-  projectsShape,
-} from "@morrow/sync-schemas";
+import { type ColumnColor, projectsShape } from "@morrow/sync-schemas";
 import { electricCollectionOptions } from "@tanstack/electric-db-collection";
 import { BasicIndex, createCollection } from "@tanstack/react-db";
 import { rpc } from "@/app/lib/orpc";
@@ -56,7 +52,7 @@ export const projectCollection = registerSyncedCollection(
                 description: changes.description ?? "",
               }),
               ...(changes.icon !== undefined && {
-                icon: changes.icon as ProjectIcon | null,
+                icon: changes.icon,
               }),
               ...(changes.color !== undefined && {
                 color: changes.color as ColumnColor | null,
