@@ -6,7 +6,11 @@ import { accountMcpTools } from "#api/account/index";
 import { activityMcpTools } from "#api/activity/index";
 import { labelsMcpTools } from "#api/labels/index";
 import { membersMcpTools } from "#api/members/index";
-import { columnsMcpTools, projectsMcpTools } from "#api/projects/index";
+import {
+  columnsMcpTools,
+  fieldsMcpTools,
+  projectsMcpTools,
+} from "#api/projects/index";
 import {
   commentsMcpTools,
   linksMcpTools,
@@ -26,6 +30,7 @@ export const mcpTools: McpTool[] = [
   ...membersMcpTools,
   ...projectsMcpTools,
   ...columnsMcpTools,
+  ...fieldsMcpTools,
   ...tasksMcpTools,
   ...commentsMcpTools,
   ...linksMcpTools,

@@ -62,6 +62,17 @@ export const backgroundRemovedResult = z.object({
   txid,
 });
 
+export const fieldListResult = z.array(
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.string(),
+    options: z.array(
+      z.object({ id: z.string(), name: z.string(), color: colorHex }),
+    ),
+  }),
+);
+
 export const fieldUsageResult = z.array(
   z.object({
     fieldId: z.string(),

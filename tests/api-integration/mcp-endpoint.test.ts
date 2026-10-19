@@ -129,8 +129,10 @@ describe("MCP endpoint", () => {
       "create_tasks",
       "delete_project",
       "delete_task",
+      "duplicate_task",
       "get_task",
       "list_activity",
+      "list_fields",
       "list_labels",
       "list_members",
       "list_projects",
@@ -145,7 +147,7 @@ describe("MCP endpoint", () => {
       "update_tasks",
       "whoami",
     ]);
-    expect((await rpc(second)).result?.tools).toHaveLength(21);
+    expect((await rpc(second)).result?.tools).toHaveLength(23);
   });
 
   it("runs tools as the token's user, concurrently", async () => {
@@ -1044,5 +1046,200 @@ describe("MCP endpoint", () => {
     expect((await rpc(listed)).result?.tools).toContainEqual(
       expect.objectContaining({ name: "whoami" }),
     );
+  });
+});
+
+describe("MCP tools for fields, duplicates and batch changes", () => {
+  async function setup() {
+    const owner = await signUp("Owner");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Fields", slug: "mcp-fields", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const run = async (name: string, args: Record<string, unknown>) => {
+      const response = await call(owner.token, name, {
+        workspaceId: workspace.id,
+        ...args,
+      });
+      return {
+        failed: response.result?.isError === true,
+        body: JSON.parse(response.result!.content[0].text),
+      };
+    };
+    const { body: project } = await run("create_project", {
+      name: "Morrow",
+      key: "MOR",
+    });
+    await db.insert(schema.projectFieldTable).values({
+      projectId: project.projectId,
+      name: "Size",
+      type: "single_choice",
+      position: "a0",
+      options: [
+        { id: "opt-small", name: "Small", color: "#22c55e", position: "a0" },
+        { id: "opt-large", name: "Large", color: "#ef4444", position: "a1" },
+      ],
+    });
+    return { run, projectId: project.projectId as string };
+  }
+
+  it("lists a project's fields with their options", async () => {
+    const { run, projectId } = await setup();
+
+    const fields = await run("list_fields", { projectId });
+
+    expect(fields.body).toEqual([
+      {
+        name: "Size",
+        type: "single_choice",
+        options: [
+          { name: "Small", color: "#22c55e" },
+          { name: "Large", color: "#ef4444" },
+        ],
+      },
+    ]);
+  });
+
+  it("sets, reports and clears a field value by name, and refuses unknown names per item", async () => {
+    const { run, projectId } = await setup();
+    await run("create_tasks", {
+      projectId,
+      items: [{ title: "A", fields: { size: "large" } }, { title: "B" }],
+    });
+
+    const created = await run("get_task", { projectId, ticketId: "MOR-1" });
+    expect(created.body.fields).toEqual({ Size: "Large" });
+
+    const updated = await run("update_tasks", {
+      projectId,
+      items: [
+        { ticketId: "MOR-2", fields: { Size: "Small" } },
+        { ticketId: "MOR-2", fields: { Nope: "Small" } },
+        { ticketId: "MOR-2", fields: { Size: "Huge" } },
+        { ticketId: "MOR-1", fields: { Size: null } },
+        { ticketId: "MOR-1", fields: {} },
+      ],
+    });
+    expect(updated.body).toMatchObject([
+      { index: 0, ticketId: "MOR-2", changed: ["fields"] },
+      { index: 1, error: expect.stringContaining('No field named "Nope"') },
+      { index: 2, error: expect.stringContaining('No option "Huge"') },
+      { index: 3, ticketId: "MOR-1", changed: ["fields"] },
+      { index: 4, error: expect.stringContaining("Nothing to change") },
+    ]);
+
+    const listed = await run("list_tasks", { projectId });
+    expect(listed.body.tasks).toMatchObject([
+      { ticketId: "MOR-1" },
+      { ticketId: "MOR-2", fields: { Size: "Small" } },
+    ]);
+    expect(listed.body.tasks[0]).not.toHaveProperty("fields");
+  });
+
+  it("duplicates a task with its description, labels and field values, right after the original", async () => {
+    const { run, projectId } = await setup();
+    await run("create_tasks", {
+      projectId,
+      items: [
+        {
+          title: "Original",
+          description: "Details",
+          priority: "high",
+          labels: ["Bug"],
+          fields: { Size: "Large" },
+        },
+        { title: "Next" },
+      ],
+    });
+
+    const copy = await run("duplicate_task", { projectId, ticketId: "MOR-1" });
+    expect(copy.body).toEqual({ ticketId: "MOR-3", from: "MOR-1" });
+
+    const detail = await run("get_task", { projectId, ticketId: "MOR-3" });
+    expect(detail.body).toMatchObject({
+      title: "Original (copy)",
+      description: "Details",
+      priority: "high",
+      labels: [{ name: "Bug" }],
+      fields: { Size: "Large" },
+      completedAt: null,
+    });
+    const listed = await run("list_tasks", { projectId });
+    expect(
+      listed.body.tasks.map((t: { ticketId: string }) => t.ticketId),
+    ).toEqual(["MOR-1", "MOR-3", "MOR-2"]);
+  });
+
+  it("moves tasks in a batch with update_tasks and filters list_tasks by priority and state", async () => {
+    const { run, projectId } = await setup();
+    await run("create_tasks", {
+      projectId,
+      items: [
+        { title: "A", priority: "urgent" },
+        { title: "B", priority: "low" },
+        { title: "C", priority: "urgent" },
+      ],
+    });
+
+    const moved = await run("update_tasks", {
+      projectId,
+      items: [
+        { ticketId: "MOR-1", column: "Done" },
+        { ticketId: "MOR-2", column: "Done", at: "top" },
+        { ticketId: "MOR-3", column: "Nowhere" },
+      ],
+    });
+    expect(moved.body).toMatchObject([
+      { index: 0, changed: ["column"] },
+      { index: 1, changed: ["column"] },
+      { index: 2, error: expect.stringContaining('No column named "Nowhere"') },
+    ]);
+
+    const done = await run("list_tasks", { projectId, column: "Done" });
+    expect(
+      done.body.tasks.map((t: { ticketId: string }) => t.ticketId),
+    ).toEqual(["MOR-2", "MOR-1"]);
+    expect(done.body.tasks[0].completedAt).not.toBeNull();
+
+    const closed = await run("list_tasks", { projectId, state: "closed" });
+    expect(closed.body.tasks).toHaveLength(2);
+    const open = await run("list_tasks", { projectId, state: "open" });
+    expect(
+      open.body.tasks.map((t: { ticketId: string }) => t.ticketId),
+    ).toEqual(["MOR-3"]);
+    const urgent = await run("list_tasks", {
+      projectId,
+      priority: "urgent",
+      state: "open",
+    });
+    expect(
+      urgent.body.tasks.map((t: { ticketId: string }) => t.ticketId),
+    ).toEqual(["MOR-3"]);
+  });
+
+  it("creates a batch of tasks in order at the bottom of a column", async () => {
+    const { run, projectId } = await setup();
+
+    await run("create_tasks", {
+      projectId,
+      items: [
+        { title: "One" },
+        { title: "Two" },
+        { title: "Three", at: "top" },
+      ],
+    });
+
+    const listed = await run("list_tasks", { projectId });
+    expect(listed.body.tasks.map((t: { title: string }) => t.title)).toEqual([
+      "Three",
+      "One",
+      "Two",
+    ]);
   });
 });

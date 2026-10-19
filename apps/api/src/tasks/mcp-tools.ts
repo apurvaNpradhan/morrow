@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { generateKeyBetween } from "fractional-indexing";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { mcpTool } from "#api/platform/orpc/mcp-tool";
@@ -7,9 +8,10 @@ import { description, dueDate, priority, title } from "./schemas";
 import {
   resolveAssigneeId,
   resolveLabelIds,
+  resolveFieldValues,
   resolveOrCreateLabelIds,
   resolveTask,
-  taskPosition,
+  taskPositions,
 } from "./mcp-resolve";
 
 const project = z.object({
@@ -29,6 +31,10 @@ const parentTicket = z
   .min(1)
   .describe("The parent's ticket id, for example MOR-12; same project.");
 
+const fieldsByName = z
+  .record(z.string(), z.string())
+  .describe('Option name by Field name, for example { "Size": "Large" }.');
+
 const createItem = z.object({
   title,
   description: description.optional(),
@@ -37,6 +43,7 @@ const createItem = z.object({
   assignee: z.string().optional(),
   dueDate: dueDate.optional(),
   labels: z.array(z.string()).optional(),
+  fields: fieldsByName.optional(),
   parentId: parentTicket.optional(),
   at: edge.default("bottom"),
 });
@@ -50,6 +57,21 @@ const updateItem = z.object({
   assignee: z.string().nullable().optional(),
   addLabels: z.array(z.string()).optional(),
   removeLabels: z.array(z.string()).optional(),
+  fields: z
+    .record(z.string(), z.string().nullable())
+    .optional()
+    .describe(
+      'Option name by Field name, for example { "Size": "Large" }; null clears that Field.',
+    ),
+  column: z
+    .string()
+    .optional()
+    .describe(
+      "Moves the task to this column; moving to a done column completes it.",
+    ),
+  at: edge
+    .optional()
+    .describe("With column: top or bottom of it (default bottom)."),
   parentId: parentTicket
     .nullable()
     .optional()
@@ -85,13 +107,18 @@ export const tasksMcpTools = [
   mcpTool({
     name: "list_tasks",
     description:
-      'List tasks in board order. Without projectId it lists every project of the workspace (each task then carries its project key). Filter by assignee ("me" or an email), label name, column name (needs projectId), text in title or description, and archived state. Descriptions are left out unless withDescription is true. At most limit tasks (default 50, max 200); truncated says when more matched, so narrow the query or raise limit.',
+      'List tasks in board order. Without projectId it lists every project of the workspace (each task then carries its project key). Filter by assignee ("me" or an email), label name, column name (needs projectId), priority, state (open or closed), text in title or description, and archived state. Each task carries its custom Field values by name when it has any. Descriptions are left out unless withDescription is true. At most limit tasks (default 50, max 200); truncated says when more matched, so narrow the query or raise limit.',
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       projectId: z.string().trim().min(1).optional(),
       assignee: z.string().trim().min(1).optional(),
       label: z.string().trim().min(1).optional(),
       column: z.string().trim().min(1).optional(),
+      priority: priority.optional(),
+      state: z
+        .enum(["open", "closed"])
+        .optional()
+        .describe("closed: in a done or canceled column; open: anywhere else."),
       query: z.string().trim().min(1).max(200).optional(),
       includeArchived: z.boolean().default(false),
       withDescription: z.boolean().default(false),
@@ -121,6 +148,7 @@ export const tasksMcpTools = [
           subtasks: { done: task.subtaskDone, total: task.subtaskTotal },
           openBlockers: task.openBlockerCount,
           labels: task.labels,
+          ...(Object.keys(task.fields).length > 0 && { fields: task.fields }),
           completedAt: task.completedAt,
           archivedAt: task.archivedAt,
           ...(withDescription && { description: task.description }),
@@ -131,7 +159,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "get_task",
     description:
-      "Get one task by ticket id (for example MOR-12): its parent (ticket id and title), subtask counts (done of total, archived left out, canceled counted as done), description, labels (names and colours), external links (id, url, title), relations (id, type, direction, kind: blocks, blocked_by, related, duplicate_of or duplicated_by, and the other task's ticket id and title) and comments, oldest first, with the fields list_tasks gives.",
+      "Get one task by ticket id (for example MOR-12): its parent (ticket id and title), subtask counts (done of total, archived left out, canceled counted as done), description, labels (names and colours), custom Field values (option name by Field name), external links (id, url, title), relations (id, type, direction, kind: blocks, blocked_by, related, duplicate_of or duplicated_by, and the other task's ticket id and title) and comments, oldest first, with the fields list_tasks gives.",
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       projectId: z.string().trim().min(1),
@@ -142,12 +170,13 @@ export const tasksMcpTools = [
   mcpTool({
     name: "create_tasks",
     description:
-      "Create 1–50 tasks in one call. Each item has a title and optionally parentId (a ticket id of this project), description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
+      "Create 1–50 tasks in one call. Each item has a title and optionally parentId (a ticket id of this project), description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created), fields (option name by Field name) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(createItem).min(1).max(MAX_BATCH),
     }),
-    run: async (input, client) =>
-      runBatch(input.items, async (item) => {
+    run: async (input, client) => {
+      const positionIn = taskPositions(client, input);
+      return runBatch(input.items, async (item) => {
         const { column, projectKey } = await resolveColumn(
           client,
           input,
@@ -160,12 +189,20 @@ export const tasksMcpTools = [
               item.labels,
             )
           : undefined;
+        const fieldValues = item.fields
+          ? Object.fromEntries(
+              (await resolveFieldValues(client, input, item.fields)).map(
+                ({ fieldId, value }) => [fieldId, value as string],
+              ),
+            )
+          : undefined;
         const created = await client.tasks.create({
           workspaceId: input.workspaceId,
           projectId: input.projectId,
           id: createId(),
           columnId: column.id,
-          position: await taskPosition(client, input, column.id, item.at),
+          position: await positionIn(column.id, item.at),
+          fieldValues,
           title: item.title,
           description: item.description,
           priority: item.priority,
@@ -182,23 +219,29 @@ export const tasksMcpTools = [
           ticketId: `${projectKey}-${created.number}`,
           ...(labels?.created.length && { createdLabels: labels.created }),
         };
-      }),
+      });
+    },
   }),
   mcpTool({
     name: "update_tasks",
     description:
-      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate, assignee (an email) and parentId (a ticket id; refused if it would make a loop). addLabels creates missing labels; removeLabels names existing ones. Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
+      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate, assignee (an email) and parentId (a ticket id; refused if it would make a loop). addLabels creates missing labels; removeLabels names existing ones. fields sets custom Fields by name (option name by Field name; null clears one). column moves the task, at its top or bottom (default bottom). Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(updateItem).min(1).max(MAX_BATCH),
     }),
-    run: async (input, client) =>
-      runBatch(input.items, async (item) => {
-        const { ticketId, ...fields } = item;
+    run: async (input, client) => {
+      const positionIn = taskPositions(client, input);
+      return runBatch(input.items, async (item) => {
+        const { ticketId, at: _at, ...fields } = item;
         if (
           Object.values(fields).every(
             (value) =>
               value === undefined ||
-              (Array.isArray(value) && value.length === 0),
+              (Array.isArray(value) && value.length === 0) ||
+              (typeof value === "object" &&
+                value !== null &&
+                !Array.isArray(value) &&
+                Object.keys(value).length === 0),
           )
         ) {
           throw new ORPCError("BAD_REQUEST", {
@@ -215,6 +258,12 @@ export const tasksMcpTools = [
           item.parentId == null
             ? item.parentId
             : (await resolveTask(client, input, item.parentId)).taskId;
+        const fieldWrites = item.fields
+          ? await resolveFieldValues(client, input, item.fields)
+          : [];
+        const target = item.column
+          ? (await resolveColumn(client, input, item.column)).column
+          : undefined;
         const removeIds = item.removeLabels?.length
           ? await resolveLabelIds(client, input.workspaceId, item.removeLabels)
           : [];
@@ -257,6 +306,19 @@ export const tasksMcpTools = [
           await client.tasks.updateParent({ ...scope, parentId });
           changed.push("parentId");
         }
+        if (fieldWrites.length) {
+          for (const { fieldId, value } of fieldWrites)
+            await client.tasks.setFieldValue({ ...scope, fieldId, value });
+          changed.push("fields");
+        }
+        if (target) {
+          await client.tasks.move({
+            ...scope,
+            columnId: target.id,
+            position: await positionIn(target.id, item.at ?? "bottom"),
+          });
+          changed.push("column");
+        }
         if (added) {
           for (const labelId of added.ids)
             await client.tasks.addLabel({ ...scope, labelId });
@@ -272,7 +334,8 @@ export const tasksMcpTools = [
           changed,
           ...(added?.created.length && { createdLabels: added.created }),
         };
-      }),
+      });
+    },
   }),
   mcpTool({
     name: "move_task",
@@ -288,15 +351,45 @@ export const tasksMcpTools = [
       await client.tasks.move({
         ...scope,
         columnId: column.id,
-        position: await taskPosition(
+        position: await taskPositions(
           client,
           input,
-          column.id,
-          input.at,
           scope.taskId,
-        ),
+        )(column.id, input.at),
       });
       return { ticketId: input.ticketId, column: column.name };
+    },
+  }),
+  mcpTool({
+    name: "duplicate_task",
+    description:
+      'Copy a task into the same column, right after the original, as a new ticket titled "<title> (copy)". The copy keeps the description, priority, due date, labels, custom Field values and, if you may assign, the assignee. Comments, links and relations are not copied; completion is reset unless the column is a done column.',
+    inputSchema: task,
+    run: async (input, client) => {
+      const scope = await resolveTask(client, input, input.ticketId);
+      const tasks = await client.tasks.list(input);
+      const source = tasks.find((t) => t.id === scope.taskId);
+      if (!source) {
+        throw new ORPCError("NOT_FOUND", {
+          message: `No task ${input.ticketId}`,
+        });
+      }
+      const next = tasks
+        .filter(
+          (t) => t.columnId === source.columnId && t.position > source.position,
+        )
+        .map((t) => t.position)
+        .sort()[0];
+      const created = await client.tasks.duplicate({
+        ...scope,
+        id: createId(),
+        position: generateKeyBetween(source.position, next ?? null),
+      });
+      const { projectKey } = await resolveColumn(client, input);
+      return {
+        ticketId: `${projectKey}-${created.number}`,
+        from: input.ticketId,
+      };
     },
   }),
   mcpTool({

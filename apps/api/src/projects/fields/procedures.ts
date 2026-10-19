@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authed, requireWorkspacePermission } from "#api/platform/orpc/base";
 import {
   createdResult,
+  fieldListResult,
   fieldUsageResult,
   txidResult,
 } from "#api/projects/response";
@@ -13,6 +14,7 @@ import { createOption } from "./operations/create-option";
 import { deleteField } from "./operations/delete-field";
 import { deleteOption } from "./operations/delete-option";
 import { fieldUsage } from "./operations/field-usage";
+import { listFields } from "./operations/list-fields";
 import { moveField } from "./operations/move-field";
 import { moveOption } from "./operations/move-option";
 import { updateField } from "./operations/update-field";
@@ -71,6 +73,12 @@ const remove = authed
   .handler(({ input }) =>
     deleteField(input.workspaceId, input.projectId, input.fieldId),
   );
+
+const list = authed
+  .input(forProject)
+  .use(canRead)
+  .output(fieldListResult)
+  .handler(({ input }) => listFields(input.workspaceId, input.projectId));
 
 const usage = authed
   .input(forProject)
@@ -138,6 +146,7 @@ const removeOption = authed
   );
 
 export const fieldsRouter = {
+  list,
   create,
   update,
   move,

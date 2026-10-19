@@ -2,6 +2,7 @@ export { projectsRouter } from "./procedures";
 export { projectsShapes } from "./shapes";
 export { projectsMcpTools } from "./mcp-tools";
 export { columnsMcpTools } from "./columns/mcp-tools";
+export { fieldsMcpTools } from "./fields/mcp-tools";
 export { projectBackgroundKeys } from "./lib/background-keys";
 export { listProjects } from "./operations/list-projects";
 export { lockProject } from "./lib/lock-project";

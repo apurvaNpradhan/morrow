@@ -54,21 +54,69 @@ export async function resolveAssigneeId(
   return member.id;
 }
 
-/** A key at the top or bottom of a column's tasks. */
-export async function taskPosition(
+/**
+ * Keys for putting tasks at the top or bottom of a column. The project's
+ * tasks are read once, on first use, and each key handed out is remembered, so
+ * a batch of 50 creates reads them once and its items line up in order.
+ */
+export function taskPositions(
   client: McpClient,
   scope: { workspaceId: string; projectId: string },
-  columnId: string,
-  at: "top" | "bottom",
   movingTaskId?: string,
 ) {
-  const keys = (await client.tasks.list(scope))
-    .filter((t) => t.columnId === columnId && t.id !== movingTaskId)
-    .map((t) => t.position)
-    .sort();
-  return at === "top"
-    ? generateKeyBetween(null, keys[0] ?? null)
-    : generateKeyBetween(keys.at(-1) ?? null, null);
+  let byColumn: Map<string, string[]> | undefined;
+  return async (columnId: string, at: "top" | "bottom") => {
+    if (!byColumn) {
+      byColumn = new Map();
+      for (const task of await client.tasks.list(scope)) {
+        if (task.id === movingTaskId) continue;
+        byColumn.set(task.columnId, [
+          ...(byColumn.get(task.columnId) ?? []),
+          task.position,
+        ]);
+      }
+      for (const keys of byColumn.values()) keys.sort();
+    }
+    const keys = byColumn.get(columnId) ?? [];
+    byColumn.set(columnId, keys);
+    if (at === "top") {
+      const key = generateKeyBetween(null, keys[0] ?? null);
+      keys.unshift(key);
+      return key;
+    }
+    const key = generateKeyBetween(keys.at(-1) ?? null, null);
+    keys.push(key);
+    return key;
+  };
+}
+
+/**
+ * Field ids and option ids for Fields and options given by name (any letter
+ * case); `null` stays `null`, which clears a value. An unknown name is refused
+ * with the names that exist.
+ */
+export async function resolveFieldValues(
+  client: McpClient,
+  scope: { workspaceId: string; projectId: string },
+  named: Record<string, string | null>,
+) {
+  const fields = await client.projects.fields.list(scope);
+  return Object.entries(named).map(([fieldName, optionName]) => {
+    const field = fields.find((f) => same(f.name, fieldName));
+    if (!field) {
+      throw refused(
+        `No field named "${fieldName}". Fields: ${fields.map((f) => f.name).join(", ") || "none"}`,
+      );
+    }
+    if (optionName === null) return { fieldId: field.id, value: null };
+    const option = field.options.find((o) => same(o.name, optionName));
+    if (!option) {
+      throw refused(
+        `No option "${optionName}" in field "${field.name}". Options: ${field.options.map((o) => o.name).join(", ")}`,
+      );
+    }
+    return { fieldId: field.id, value: option.id };
+  });
 }
 
 /**

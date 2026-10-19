@@ -1,11 +1,32 @@
-import { COLUMN_CATEGORIES, ticketId } from "@morrow/sync-schemas";
-import { and, asc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import {
+  COLUMN_CATEGORIES,
+  isClosedCategory,
+  type TaskPriority,
+  ticketId,
+} from "@morrow/sync-schemas";
+import {
+  and,
+  asc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  notInArray,
+  or,
+  sql,
+} from "drizzle-orm";
 import { labelTable } from "#api/labels/index";
 import { db, schema } from "#api/platform/database/index";
 import { projectColumnTable, projectTable } from "#api/projects/index";
+import {
+  fieldsOfProjects,
+  namedFieldValues,
+} from "#api/tasks/lib/named-field-values";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 
 export const SEARCH_TASKS_MAX = 200;
+
+const CLOSED_CATEGORIES = COLUMN_CATEGORIES.filter(isClosedCategory);
 
 export type TaskSearch = {
   projectId?: string;
@@ -17,6 +38,9 @@ export type TaskSearch = {
   label?: string;
   /** A column's name, any letter case. */
   column?: string;
+  priority?: TaskPriority;
+  /** Tasks in a closed column (done or canceled), or in any other column. */
+  state?: "open" | "closed";
   /** Matched case-insensitively against title and description. */
   query?: string;
   includeArchived: boolean;
@@ -81,6 +105,12 @@ export async function searchTasks(workspaceId: string, search: TaskSearch) {
         search.label
           ? sql`exists (select 1 from ${labelTable} where ${labelTable.workspaceId} = ${workspaceId} and ${labelTable.id} = any(${taskTable.labelIds}) and lower(${labelTable.name}) = ${search.label.trim().toLowerCase()})`
           : undefined,
+        search.priority ? eq(taskTable.priority, search.priority) : undefined,
+        search.state
+          ? search.state === "closed"
+            ? inArray(projectColumnTable.category, [...CLOSED_CATEGORIES])
+            : notInArray(projectColumnTable.category, [...CLOSED_CATEGORIES])
+          : undefined,
         query
           ? or(
               ilike(taskTable.title, containsPattern(query)),
@@ -114,6 +144,9 @@ export async function searchTasks(workspaceId: string, search: TaskSearch) {
     .from(labelTable)
     .where(eq(labelTable.workspaceId, workspaceId));
   const labelName = new Map(labels.map((label) => [label.id, label.name]));
+  const fieldById = await fieldsOfProjects([
+    ...new Set(page.map(({ task }) => task.projectId)),
+  ]);
 
   return {
     truncated: rows.length > limit,
@@ -136,6 +169,7 @@ export async function searchTasks(workspaceId: string, search: TaskSearch) {
           assigneeName,
           dueDate: task.dueDate,
           labels: task.labelIds.flatMap((id) => labelName.get(id) ?? []),
+          fields: namedFieldValues(task.fieldValues, fieldById),
           completedAt: task.completedAt,
           archivedAt: task.archivedAt,
         };

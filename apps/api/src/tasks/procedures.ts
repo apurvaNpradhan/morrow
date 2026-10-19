@@ -104,6 +104,8 @@ const search = authed
         .describe('"me" or a member\'s email.'),
       label: z.string().trim().min(1).optional(),
       column: z.string().trim().min(1).optional(),
+      priority: priority.optional(),
+      state: z.enum(["open", "closed"]).optional(),
       query: z.string().trim().min(1).max(200).optional(),
       includeArchived: z.boolean().default(false),
       limit: z
@@ -124,6 +126,8 @@ const search = authed
         : { assigneeEmail: input.assignee }),
       label: input.label,
       column: input.column,
+      priority: input.priority,
+      state: input.state,
       query: input.query,
       includeArchived: input.includeArchived,
       limit: input.limit,
