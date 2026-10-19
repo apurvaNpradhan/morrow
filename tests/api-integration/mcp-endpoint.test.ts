@@ -145,7 +145,7 @@ describe("MCP endpoint", () => {
       "update_tasks",
       "whoami",
     ]);
-    expect((await rpc(second)).result?.tools).toHaveLength(20);
+    expect((await rpc(second)).result?.tools).toHaveLength(21);
   });
 
   it("runs tools as the token's user, concurrently", async () => {
