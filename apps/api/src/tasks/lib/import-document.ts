@@ -23,6 +23,17 @@ export const importDocument = z.object({
   labels: z
     .array(z.object({ name: z.string(), color: z.string().optional() }))
     .default([]),
+  fields: z
+    .array(
+      z.object({
+        name: z.string(),
+        type: z.string().optional(),
+        options: z
+          .array(z.object({ name: z.string(), color: z.string().optional() }))
+          .default([]),
+      }),
+    )
+    .default([]),
   tasks: z.array(
     z.object({
       number: z.number().int().default(0),
@@ -37,6 +48,7 @@ export const importDocument = z.object({
       archivedAt: isoDate.nullable().default(null),
       createdAt: isoDate.nullable().default(null),
       labels: z.array(z.string()).default([]),
+      fields: z.record(z.string(), z.string()).default({}),
       comments: z
         .array(
           z.object({

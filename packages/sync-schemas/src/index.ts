@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { fieldOptionSchema, FIELD_TYPES, fieldValuesSchema } from "./fields.js";
 import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
 export * from "./comments.js";
+export * from "./fields.js";
 export * from "./task-events.js";
 export * from "./labels.js";
 export * from "./links.js";
@@ -117,8 +119,27 @@ export const projectColumnsShape = shape(
   }),
 );
 
+/**
+ * The custom Fields of those Projects, with their options. Few and needed by
+ * every card, so the shape is eager.
+ */
+export const projectFieldsShape = shape(
+  "project-fields",
+  z.object({
+    id: z.string(),
+    projectId: z.string(),
+    name: z.string(),
+    type: z.enum(FIELD_TYPES),
+    position: z.string(),
+    options: z.array(fieldOptionSchema),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
 export type ProjectRow = z.infer<typeof projectsShape.schema>;
 export type ProjectColumnRow = z.infer<typeof projectColumnsShape.schema>;
+export type ProjectFieldRow = z.infer<typeof projectFieldsShape.schema>;
 
 /**
  * Every Task of the Projects of the Workspaces the user belongs to, archived
@@ -138,6 +159,7 @@ export const tasksShape = shape(
     assigneeId: z.string().nullable(),
     dueDate: z.string().nullable(),
     labelIds: z.array(z.string()),
+    fieldValues: fieldValuesSchema,
     commentCount: z.number(),
     position: z.string(),
     completedAt: z.date().nullable(),

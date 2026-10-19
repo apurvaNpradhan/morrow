@@ -5,10 +5,14 @@ import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
 import { isOverdue } from "../lib/due-date";
+import { selectByClick } from "../lib/select-gesture";
+import { useIsSelected } from "../lib/selection-store";
+import { TaskSelectBox } from "./task-select-box";
 import { openFieldPicker } from "../lib/field-picker-store";
 import { displayTicketId } from "../lib/task-links";
 import { ColumnMarker } from "./column-marker";
 import { DueDateText } from "./due-date-chip-text";
+import { FieldValueChips } from "./field-value-chips";
 import { PersonAvatar } from "./person-avatar";
 import { TaskChip } from "./task-chip";
 import { TaskPriorityIcon } from "./task-priority-icon";
@@ -45,6 +49,7 @@ export function TaskListRow({
     frozen,
     today,
   } = view;
+  const selected = useIsSelected(project.id, task.id);
   const labels = labelsOfTask(task.labelIds, labelById);
   const column = columnById.get(task.columnId);
   const closed = column ? isClosedCategory(column.category) : false;
@@ -70,12 +75,16 @@ export function TaskListRow({
       data-task-id={task.id}
       aria-label={t("card.label", { id: ticket, title: task.title })}
       className={cn(
-        "flex h-9 cursor-pointer items-center gap-2 border-b px-4 text-sm outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+        "group/task relative flex h-9 cursor-pointer items-center gap-2 border-b px-4 text-sm outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
         closed && "opacity-60",
         dragging && "opacity-40",
         lifted && "bg-card shadow-lg",
+        selected && "bg-accent/60",
       )}
-      onClick={() => view.openTask(task)}
+      onClick={(event) => {
+        if (selectByClick(project.id, task.id, event)) return;
+        view.openTask(task);
+      }}
       onKeyDown={(event) => {
         if (event.key === "Enter" && event.target === event.currentTarget) {
           event.preventDefault();
@@ -83,6 +92,12 @@ export function TaskListRow({
         }
       }}
     >
+      {editable || can.delete ? (
+        <TaskSelectBox
+          task={task}
+          className="absolute start-1 top-1/2 -translate-y-1/2"
+        />
+      ) : null}
       {display.priority ? (
         <TaskChip
           label={t(`priority.${task.priority}`)}
@@ -112,11 +127,10 @@ export function TaskListRow({
           </span>
         ) : null}
       </span>
-      {labels.length > 0 ? (
-        <span className="hidden shrink-0 items-center gap-1 sm:flex">
-          <LabelChips labels={labels} max={2} />
-        </span>
-      ) : null}
+      <span className="hidden shrink-0 items-center gap-1 empty:hidden sm:flex">
+        <LabelChips labels={labels} max={2} />
+        <FieldValueChips task={task} max={2} />
+      </span>
       {task.commentCount > 0 ? (
         <TaskChip label={t("card.comments", { count: task.commentCount })}>
           <MessageSquare aria-hidden="true" className="size-3" />

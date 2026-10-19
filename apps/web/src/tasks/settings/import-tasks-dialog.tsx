@@ -199,6 +199,16 @@ function describeWarning(t: TFunction, warning: Warning) {
         key: `l:${warning.label}`,
         text: t("import.warning.labelDropped", warning),
       };
+    case "field_dropped":
+      return {
+        key: `f:${warning.field}`,
+        text: t("import.warning.fieldDropped", warning),
+      };
+    case "option_dropped":
+      return {
+        key: `o:${warning.field}:${warning.option}`,
+        text: t("import.warning.optionDropped", warning),
+      };
     case "comment_author_unknown":
       return {
         key: `m:${warning.email}`,

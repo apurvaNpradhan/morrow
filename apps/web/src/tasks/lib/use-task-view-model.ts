@@ -1,4 +1,8 @@
-import type { ProjectColumnRow, TaskRow } from "@morrow/sync-schemas";
+import type {
+  ProjectColumnRow,
+  ProjectFieldRow,
+  TaskRow,
+} from "@morrow/sync-schemas";
 import { useDeferredValue, useMemo } from "react";
 import { localeWeekStart } from "./calendar-day";
 import { matchesFilters, type TaskFilter } from "./filters";
@@ -18,6 +22,7 @@ import { sortTasks, type TaskSort } from "./sort";
 export function useTaskViewModel({
   projectKey,
   columns,
+  fields,
   tasks,
   filters,
   search,
@@ -27,6 +32,8 @@ export function useTaskViewModel({
 }: {
   projectKey: string;
   columns: ProjectColumnRow[];
+  /** The Project's Fields, for sorting by one. */
+  fields: readonly ProjectFieldRow[];
   tasks: readonly TaskRow[];
   filters: readonly TaskFilter[];
   search: string;
@@ -40,10 +47,10 @@ export function useTaskViewModel({
     );
     for (const task of tasks) byColumn.get(task.columnId)?.push(task);
     for (const [columnId, inColumn] of byColumn) {
-      byColumn.set(columnId, sortTasks(inColumn, sort));
+      byColumn.set(columnId, sortTasks(inColumn, sort, fields));
     }
     return byColumn;
-  }, [columns, sort, tasks]);
+  }, [columns, fields, sort, tasks]);
 
   const deferredSearch = useDeferredValue(search);
 

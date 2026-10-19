@@ -1,4 +1,5 @@
 import {
+  type FieldValues,
   isClosedCategory,
   type TaskPriority,
   TASK_ID_PATTERN,
@@ -13,6 +14,7 @@ import {
 } from "#api/projects/index";
 import { assertLabelsExist } from "#api/labels/index";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
+import { checkFieldValues } from "#api/tasks/lib/field-values";
 import { freePosition } from "#api/tasks/lib/free-position";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { checklistColumns, saveDescription } from "#api/tasks/lib/description";
@@ -30,6 +32,7 @@ export type NewTask = {
   assigneeId?: string | null;
   dueDate?: string | null;
   labelIds?: string[];
+  fieldValues?: FieldValues;
 };
 
 /**
@@ -38,7 +41,8 @@ export type NewTask = {
  * from the browser so the card can appear before the server answers; the
  * ticket number is the Project's next one, taken under the project lock so two
  * creates never share a number. A task created in a done or canceled Column
- * starts out completed.
+ * starts out completed. Field values must name Fields of the Project and
+ * their options.
  */
 export async function createTask(
   workspaceId: string,
@@ -60,6 +64,11 @@ export async function createTask(
         tx,
         workspaceId,
         input.labelIds ?? [],
+      );
+      const fieldValues = await checkFieldValues(
+        tx,
+        projectId,
+        input.fieldValues ?? {},
       );
       await assertAssignable(
         tx,
@@ -89,6 +98,7 @@ export async function createTask(
           assigneeId: input.assigneeId ?? null,
           dueDate: input.dueDate ?? null,
           labelIds,
+          fieldValues,
           position: await freePosition(tx, input.columnId, input.position),
           completedAt: isClosedCategory(column.category) ? new Date() : null,
           createdBy: actor.userId,

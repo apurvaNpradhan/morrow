@@ -206,9 +206,17 @@ export function TaskList({
     () => lines.flatMap((line) => (line.kind === "task" ? [line.task] : [])),
     [lines],
   );
+  const selectable = useMemo(
+    () =>
+      lines.flatMap((line) =>
+        line.kind === "task" || line.kind === "archivedTask" ? [line.task] : [],
+      ),
+    [lines],
+  );
   const view = useMemo(
     () => ({
       tasks: shown,
+      selectable,
       lanes: null,
       reveal: (taskId: string) => {
         const at = lines.findIndex(
@@ -219,7 +227,7 @@ export function TaskList({
         if (at !== -1) virtualizer.scrollToIndex(at, { align: "auto" });
       },
     }),
-    [lines, shown, virtualizer],
+    [lines, selectable, shown, virtualizer],
   );
   usePublishedView(view);
 

@@ -7,6 +7,12 @@ export { listProjects } from "./operations/list-projects";
 export { lockProject } from "./lib/lock-project";
 export { assertValidPosition } from "./lib/position";
 export { findColumn } from "./columns/lib/find-column";
-export { projectError, projectNotFound, violatedConstraint } from "./errors";
-export { projectColumnTable, projectTable } from "./tables";
+export { findField } from "./fields/lib/find-field";
+export {
+  fieldNotFound,
+  projectError,
+  projectNotFound,
+  violatedConstraint,
+} from "./errors";
+export { projectColumnTable, projectFieldTable, projectTable } from "./tables";
 export { resolveColumn } from "./mcp-resolve";

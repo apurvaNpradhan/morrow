@@ -1,6 +1,7 @@
 import type {
   LabelRow,
   ProjectColumnRow,
+  ProjectFieldRow,
   ProjectRow,
   TaskRow,
 } from "@morrow/sync-schemas";
@@ -41,6 +42,11 @@ export type TaskViewValue = {
   columnById: Map<string, ProjectColumnRow>;
   /** How full each `started` Column's status icon is. */
   statusFractions: ReadonlyMap<string, number>;
+  /** The Project's custom Fields in order, with their options in order, and by id. */
+  fields: ProjectFieldRow[];
+  fieldById: Map<string, ProjectFieldRow>;
+  /** Whether cards and rows show a Field's value, per this device. */
+  showsField: (fieldId: string) => boolean;
   /** The Workspace's labels in order, and by id. */
   labels: LabelRow[];
   labelById: Map<string, LabelRow>;

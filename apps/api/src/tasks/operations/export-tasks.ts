@@ -4,6 +4,7 @@ import { labelTable } from "#api/labels/index";
 import { db, schema } from "#api/platform/database/index";
 import {
   projectColumnTable,
+  projectFieldTable,
   projectNotFound,
   projectTable,
 } from "#api/projects/index";
@@ -17,7 +18,8 @@ import {
  * A project's tasks as a portable document: columns by name and category,
  * tasks in board order, assignees and comment authors by email (ids mean
  * nothing elsewhere), labels by name with the colours of those in use, and
- * comments. History is not exported.
+ * comments, and the Project's Fields with their options, each task's values
+ * by Field and option name. History is not exported.
  */
 export async function exportTasks(workspaceId: string, projectId: string) {
   const [project] = await db
@@ -34,6 +36,14 @@ export async function exportTasks(workspaceId: string, projectId: string) {
   ).sort(compareColumns);
   const order = new Map(columns.map((column, index) => [column.id, index]));
   const columnById = new Map(columns.map((column) => [column.id, column]));
+
+  const fields = (
+    await db
+      .select()
+      .from(projectFieldTable)
+      .where(eq(projectFieldTable.projectId, projectId))
+  ).sort(comparePosition);
+  const fieldById = new Map(fields.map((field) => [field.id, field]));
 
   const rows = await db
     .select({
@@ -88,6 +98,13 @@ export async function exportTasks(workspaceId: string, projectId: string) {
       .filter((label) => usedLabelIds.has(label.id))
       .map(({ name, color }) => ({ name, color })),
     columns: columns.map(({ name, category }) => ({ name, category })),
+    fields: fields.map(({ name, type, options }) => ({
+      name,
+      type,
+      options: [...options]
+        .sort(comparePosition)
+        .map(({ name, color }) => ({ name, color })),
+    })),
     tasks: rows.map(({ task, assigneeEmail, description }) => {
       const column = columnById.get(task.columnId);
       return {
@@ -106,6 +123,13 @@ export async function exportTasks(workspaceId: string, projectId: string) {
           const label = labelById.get(id);
           return label ? [label.name] : [];
         }),
+        fields: Object.fromEntries(
+          Object.entries(task.fieldValues).flatMap(([fieldId, optionId]) => {
+            const field = fieldById.get(fieldId);
+            const option = field?.options.find((o) => o.id === optionId);
+            return field && option ? [[field.name, option.name]] : [];
+          }),
+        ),
         comments: (commentsByTask.get(task.id) ?? []).map(
           ({ comment, authorEmail }) => ({
             authorEmail,

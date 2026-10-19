@@ -2,6 +2,7 @@ import { ArrowLeft, ListFilter } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  fieldSubject,
   FILTER_SUBJECTS,
   type FilterSubject,
 } from "@/app/preferences/task-view-options";
@@ -20,6 +21,7 @@ import {
 import type { TaskFilter } from "../lib/filters";
 import { FilterOptionList } from "./filter-option-list";
 import { useFilterOptions } from "./use-filter-options";
+import { useTaskView } from "./task-view-context";
 
 /**
  * The Filter button: pick a field, then its values, all in one popover that
@@ -41,11 +43,15 @@ export function FilterAddPopover({
   includeColumn: boolean;
 }) {
   const { t } = useTranslation("tasks");
-  const { optionsFor } = useFilterOptions();
+  const { optionsFor, subjectLabel } = useFilterOptions();
+  const { fields } = useTaskView();
   const [subject, setSubject] = useState<FilterSubject | null>(null);
-  const subjects = FILTER_SUBJECTS.filter(
-    (candidate) => includeColumn || candidate !== "column",
-  );
+  const subjects: FilterSubject[] = [
+    ...FILTER_SUBJECTS.filter(
+      (candidate) => includeColumn || candidate !== "column",
+    ),
+    ...fields.map((field) => fieldSubject(field.id)),
+  ];
   const selected = new Set(
     filters.find((filter) => filter.subject === subject)?.values,
   );
@@ -84,13 +90,13 @@ export function FilterAddPopover({
                 onClick={() => setSubject(null)}
               >
                 <ArrowLeft aria-hidden="true" className="size-3.5" />
-                {t(`filter.subject.${subject}`)}
+                {subjectLabel(subject)}
               </button>
               <FilterOptionList
                 key={subject}
                 options={optionsFor(subject)}
                 selected={selected}
-                label={t(`filter.subject.${subject}`)}
+                label={subjectLabel(subject)}
                 onPick={(value) => onToggleValue(subject, value)}
               />
             </>
@@ -99,7 +105,7 @@ export function FilterAddPopover({
               key="subjects"
               options={subjects.map((candidate) => ({
                 value: candidate,
-                label: t(`filter.subject.${candidate}`),
+                label: subjectLabel(candidate),
               }))}
               label={t("filter.field")}
               onPick={(value) => setSubject(value as FilterSubject)}

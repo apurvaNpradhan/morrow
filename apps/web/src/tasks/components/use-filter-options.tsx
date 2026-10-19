@@ -1,13 +1,19 @@
 import { TASK_PRIORITIES } from "@morrow/sync-schemas";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import type { FilterSubject } from "@/app/preferences/task-view-options";
-import { DUE_VALUES, ME, UNASSIGNED } from "../lib/filters";
+import {
+  fieldIdOf,
+  FILTER_SUBJECTS,
+  type FilterSubject,
+} from "@/app/preferences/task-view-options";
+import { DUE_VALUES, ME, NO_FIELD_VALUE, UNASSIGNED } from "../lib/filters";
 import { LabelDot } from "@/labels";
 import { ColumnMarker } from "./column-marker";
 import { PersonAvatar } from "./person-avatar";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { useTaskView } from "./task-view-context";
+
+type BuiltInSubject = (typeof FILTER_SUBJECTS)[number];
 
 export type FilterOption = {
   value: string;
@@ -18,9 +24,28 @@ export type FilterOption = {
 /** The values each filter subject offers, and how to word one of them. */
 export function useFilterOptions() {
   const { t } = useTranslation("tasks");
-  const { people, meId, columns, statusFractions, labels } = useTaskView();
+  const { people, meId, columns, statusFractions, labels, fieldById } =
+    useTaskView();
+
+  /** A subject as the filter UI names it: a built-in one by its label, a Field by its name. */
+  function subjectLabel(subject: FilterSubject) {
+    const fieldId = fieldIdOf(subject);
+    if (fieldId !== null) return fieldById.get(fieldId)?.name ?? fieldId;
+    return t(`filter.subject.${subject as BuiltInSubject}`);
+  }
 
   function optionsFor(subject: FilterSubject): FilterOption[] {
+    const fieldId = fieldIdOf(subject);
+    if (fieldId !== null) {
+      return [
+        { value: NO_FIELD_VALUE, label: t("filter.noValue") },
+        ...(fieldById.get(fieldId)?.options ?? []).map((option) => ({
+          value: option.id,
+          label: option.name,
+          glyph: <LabelDot color={option.color} />,
+        })),
+      ];
+    }
     switch (subject) {
       case "assignee":
         return [
@@ -62,6 +87,8 @@ export function useFilterOptions() {
           label: label.name,
           glyph: <LabelDot color={label.color} />,
         }));
+      default:
+        return [];
     }
   }
 
@@ -72,5 +99,5 @@ export function useFilterOptions() {
     );
   }
 
-  return { optionsFor, labelFor };
+  return { optionsFor, labelFor, subjectLabel };
 }

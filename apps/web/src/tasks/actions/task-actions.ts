@@ -43,6 +43,7 @@ export type NewTask = {
   assigneeId?: string | null;
   dueDate?: string | null;
   labelIds?: string[];
+  fieldValues?: Record<string, string>;
   /** The signed-in user, recorded as the creator. */
   userId: string;
 };
@@ -66,6 +67,7 @@ export async function createTask(input: NewTask): Promise<TaskRow> {
       assigneeId: input.assigneeId ?? null,
       dueDate: input.dueDate ?? null,
       labelIds: input.labelIds ?? [],
+      fieldValues: input.fieldValues ?? {},
       commentCount: 0,
       position: await endOfColumn(input.column.id),
       completedAt: isClosedCategory(input.column.category) ? now : null,
@@ -90,6 +92,7 @@ type TaskPatch = Partial<
     | "assigneeId"
     | "dueDate"
     | "labelIds"
+    | "fieldValues"
     | "columnId"
     | "position"
     | "completedAt"
