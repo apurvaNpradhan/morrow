@@ -1,4 +1,5 @@
 import {
+  type FieldValues,
   isClosedCategory,
   type TaskPriority,
   TASK_ID_PATTERN,
@@ -13,9 +14,13 @@ import {
 } from "#api/projects/index";
 import { assertLabelsExist } from "#api/labels/index";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
+import { checkFieldValues } from "#api/tasks/lib/field-values";
 import { freePosition } from "#api/tasks/lib/free-position";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { checklistColumns, saveDescription } from "#api/tasks/lib/description";
+import { findParent } from "#api/tasks/lib/find-parent";
+import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
+import { recordParentChange } from "#api/tasks/history/record-parent-change";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskTable } from "#api/tasks/tables";
@@ -30,6 +35,8 @@ export type NewTask = {
   assigneeId?: string | null;
   dueDate?: string | null;
   labelIds?: string[];
+  parentId?: string | null;
+  fieldValues?: FieldValues;
 };
 
 /**
@@ -38,7 +45,8 @@ export type NewTask = {
  * from the browser so the card can appear before the server answers; the
  * ticket number is the Project's next one, taken under the project lock so two
  * creates never share a number. A task created in a done or canceled Column
- * starts out completed.
+ * starts out completed. Field values must name Fields of the Project and
+ * their options.
  */
 export async function createTask(
   workspaceId: string,
@@ -61,6 +69,11 @@ export async function createTask(
         workspaceId,
         input.labelIds ?? [],
       );
+      const fieldValues = await checkFieldValues(
+        tx,
+        projectId,
+        input.fieldValues ?? {},
+      );
       await assertAssignable(
         tx,
         workspaceId,
@@ -68,6 +81,10 @@ export async function createTask(
         input.assigneeId ?? null,
         null,
       );
+
+      const parent = input.parentId
+        ? await findParent(tx, projectId, input.parentId)
+        : null;
 
       const [counter] = await tx
         .update(projectTable)
@@ -81,6 +98,7 @@ export async function createTask(
         .values({
           id: input.id,
           projectId,
+          parentId: parent?.id ?? null,
           columnId: input.columnId,
           number: counter.number,
           title: input.title,
@@ -89,6 +107,7 @@ export async function createTask(
           assigneeId: input.assigneeId ?? null,
           dueDate: input.dueDate ?? null,
           labelIds,
+          fieldValues,
           position: await freePosition(tx, input.columnId, input.position),
           completedAt: isClosedCategory(column.category) ? new Date() : null,
           createdBy: actor.userId,
@@ -105,6 +124,8 @@ export async function createTask(
         type: "created",
         data: {},
       });
+      await refreshSubtaskCounts(tx, [parent?.id]);
+      await recordParentChange(tx, project, task, null, parent);
       return task;
     });
     return { id: result.id, number: result.number, txid };

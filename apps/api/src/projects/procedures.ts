@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { authed, requireWorkspacePermission } from "#api/platform/orpc/base";
 import { columnsRouter } from "./columns/procedures";
+import { fieldsRouter } from "./fields/procedures";
 import { changeProjectKey } from "./operations/change-project-key";
 import { createProject } from "./operations/create-project";
 import { deleteProject } from "./operations/delete-project";
@@ -158,4 +159,5 @@ export const projectsRouter = {
   uploadBackground,
   removeBackground,
   columns: columnsRouter,
+  fields: fieldsRouter,
 };

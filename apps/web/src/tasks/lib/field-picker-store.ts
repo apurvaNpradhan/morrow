@@ -5,10 +5,18 @@ export type PickerField =
   | "priority"
   | "assignee"
   | "dueDate"
-  | "labels";
+  | "labels"
+  /** The Project's custom Fields: choose one, then its value. */
+  | "fields";
 
 /** The field picker that is open: which task, which field, and what it hangs from. */
-type OpenPicker = { taskId: string; field: PickerField; anchor: Element };
+type OpenPicker = {
+  taskId: string;
+  field: PickerField;
+  anchor: Element;
+  /** For "fields": the custom Field being set, once chosen. */
+  fieldId?: string;
+};
 
 let current: OpenPicker | null = null;
 const listeners = new Set<() => void>();
@@ -32,8 +40,9 @@ export function openFieldPicker(
   taskId: string,
   field: PickerField,
   anchor: Element,
+  fieldId?: string,
 ) {
-  set({ taskId, field, anchor });
+  set({ taskId, field, anchor, fieldId });
 }
 
 export function closeFieldPicker() {

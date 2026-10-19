@@ -6,6 +6,8 @@ import {
   userCan,
 } from "#api/platform/orpc/base";
 import { archiveColumn } from "./operations/archive-column";
+import { bulkRemoveTasks } from "./operations/bulk-remove-tasks";
+import { bulkUpdateTasks } from "./operations/bulk-update-tasks";
 import { createTask } from "./operations/create-task";
 import { deleteTask } from "./operations/delete-task";
 import { duplicateTask } from "./operations/duplicate-task";
@@ -15,11 +17,14 @@ import { importTasks } from "./operations/import-tasks";
 import { listTasks } from "./operations/list-tasks";
 import { moveTask } from "./operations/move-task";
 import { searchTasks, SEARCH_TASKS_MAX } from "./operations/search-tasks";
+import { setTaskParent } from "./operations/set-task-parent";
+import { setFieldValue } from "./operations/set-field-value";
 import { setTaskLabel } from "./operations/set-task-label";
 import { setTaskArchived } from "./operations/set-task-archived";
 import { updateTask } from "./operations/update-task";
 import {
   archivedColumnResult,
+  bulkResult,
   createdResult,
   exportDocument,
   importResult,
@@ -30,9 +35,14 @@ import {
 } from "./response";
 import {
   assigneeId,
+  bulkChange,
+  bulkTaskIds,
   columnId,
   description,
   dueDate,
+  fieldId,
+  fieldValue,
+  fieldValues,
   labelId,
   newTaskId,
   position,
@@ -131,6 +141,8 @@ const create = authed
       assigneeId: assigneeId.nullable().optional(),
       dueDate: dueDate.nullable().optional(),
       labelIds: z.array(labelId).max(MAX_TASK_LABELS).optional(),
+      parentId: taskId.nullable().optional(),
+      fieldValues: fieldValues.optional(),
     }),
   )
   .use(canCreate)
@@ -215,6 +227,19 @@ const updateAssignee = authed
     ),
   );
 
+const updateParent = authed
+  .input(forTask.extend({ parentId: taskId.nullable() }))
+  .use(canUpdate)
+  .output(txidResult)
+  .handler(({ input }) =>
+    setTaskParent(
+      input.workspaceId,
+      input.projectId,
+      input.taskId,
+      input.parentId,
+    ),
+  );
+
 const addLabel = authed
   .input(forTask.extend({ labelId }))
   .use(canUpdate)
@@ -240,6 +265,20 @@ const removeLabel = authed
       input.taskId,
       input.labelId,
       false,
+    ),
+  );
+
+const updateFieldValue = authed
+  .input(forTask.extend({ fieldId, value: fieldValue }))
+  .use(canUpdate)
+  .output(txidResult)
+  .handler(({ input }) =>
+    setFieldValue(
+      input.workspaceId,
+      input.projectId,
+      input.taskId,
+      input.fieldId,
+      input.value,
     ),
   );
 
@@ -300,6 +339,28 @@ const remove = authed
     deleteTask(input.workspaceId, input.projectId, input.taskId),
   );
 
+const bulkUpdate = authed
+  .input(forProject.extend({ taskIds: bulkTaskIds, change: bulkChange }))
+  .use(canUpdate)
+  .output(bulkResult)
+  .handler(async ({ input, context }) =>
+    bulkUpdateTasks(
+      input.workspaceId,
+      input.projectId,
+      await actorOf(context, input.workspaceId),
+      input.taskIds,
+      input.change,
+    ),
+  );
+
+const bulkRemove = authed
+  .input(forProject.extend({ taskIds: bulkTaskIds }))
+  .use(canDelete)
+  .output(bulkResult)
+  .handler(({ input }) =>
+    bulkRemoveTasks(input.workspaceId, input.projectId, input.taskIds),
+  );
+
 const exportProject = authed
   .input(forProject)
   .use(canRead)
@@ -319,6 +380,9 @@ const importProject = authed
         canCreateLabels: await userCan(context.user, input.workspaceId, {
           label: ["create"],
         }),
+        canDefineFields: await userCan(context.user, input.workspaceId, {
+          project: ["update"],
+        }),
       },
       input.document,
     ),
@@ -334,14 +398,18 @@ export const tasksRouter = {
   updatePriority,
   updateDueDate,
   updateAssignee,
+  updateParent,
   addLabel,
   removeLabel,
+  setFieldValue: updateFieldValue,
   move,
   archive,
   unarchive,
   archiveCompleted,
   duplicate,
   remove,
+  bulkUpdate,
+  bulkRemove,
   export: exportProject,
   import: importProject,
 };

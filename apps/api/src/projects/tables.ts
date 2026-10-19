@@ -1,10 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
-import { COLUMN_CATEGORIES } from "@morrow/sync-schemas";
+import {
+  COLUMN_CATEGORIES,
+  FIELD_TYPES,
+  type FieldOption,
+} from "@morrow/sync-schemas";
 import { sql } from "drizzle-orm";
 import {
   check,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -91,5 +96,49 @@ export const projectColumnTable = pgTable(
       sql`${table.category} IN ('backlog', 'unstarted', 'started', 'done', 'canceled')`,
     ),
     check("project_column_color_check", sql`${table.color} ~ '^#[0-9a-f]{6}$'`),
+  ],
+);
+
+/*
+ * A custom Field of a Project. `options` holds a choice Field's choices as
+ * `{ id, name, color, position }`; Tasks store the option id in
+ * `task.field_values`, so renaming or recolouring an option rewrites only this
+ * row. Delete cascades strip the values (see `deleteField`, `deleteFieldOption`).
+ */
+export const projectFieldTable = pgTable(
+  "project_field",
+  {
+    id: text("id")
+      .$defaultFn(() => createId())
+      .primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projectTable.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    type: text("type", { enum: FIELD_TYPES }).notNull(),
+    position: text("position").notNull(),
+    options: jsonb("options")
+      .$type<FieldOption[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    createdAt: timestamp("created_at", { mode: "date" })
+      .default(utcNow)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
+      .default(utcNow)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("project_field_projectId_idx").on(table.projectId),
+    uniqueIndex("project_field_project_name_uidx").on(
+      table.projectId,
+      sql`lower(${table.name})`,
+    ),
+    uniqueIndex("project_field_position_uidx").on(
+      table.projectId,
+      table.position,
+    ),
+    check("project_field_type_check", sql`${table.type} IN ('single_choice')`),
   ],
 );

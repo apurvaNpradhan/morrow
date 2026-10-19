@@ -10,6 +10,7 @@ import { columnsMcpTools, projectsMcpTools } from "#api/projects/index";
 import {
   commentsMcpTools,
   linksMcpTools,
+  relationsMcpTools,
   tasksMcpTools,
 } from "#api/tasks/index";
 import type { McpTool } from "#api/platform/orpc/mcp-tool";
@@ -28,6 +29,7 @@ export const mcpTools: McpTool[] = [
   ...tasksMcpTools,
   ...commentsMcpTools,
   ...linksMcpTools,
+  ...relationsMcpTools,
   ...labelsMcpTools,
   ...activityMcpTools,
 ] as McpTool[];

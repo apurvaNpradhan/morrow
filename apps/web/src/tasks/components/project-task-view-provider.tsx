@@ -1,6 +1,6 @@
 import type { ProjectRow } from "@morrow/sync-schemas";
 import type { ReactNode } from "react";
-import { useProjectColumns } from "@/projects";
+import { useProjectColumns, useProjectFields } from "@/projects";
 import { useLabels } from "@/labels";
 import { useWorkspacePermission } from "@/workspace";
 import { statusFractions } from "../lib/status-fraction";
@@ -29,6 +29,7 @@ export function ProjectTaskViewProvider({
 }) {
   const permission = useWorkspacePermission();
   const columns = useProjectColumns(project.id);
+  const fields = useProjectFields(project.id);
   const { people, byId, meId } = useWorkspacePeople(workspace.id);
   const { labels, labelById } = useLabels(workspace.id);
   const today = useToday();
@@ -42,6 +43,9 @@ export function ProjectTaskViewProvider({
         columns,
         columnById: new Map(columns.map((column) => [column.id, column])),
         statusFractions: statusFractions(columns),
+        fields,
+        fieldById: new Map(fields.map((field) => [field.id, field])),
+        showsField: preferences.showsField,
         labels,
         labelById,
         people,

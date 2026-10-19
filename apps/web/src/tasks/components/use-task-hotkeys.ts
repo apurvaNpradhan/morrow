@@ -5,6 +5,7 @@ import { taskHotkeysAllowed } from "../lib/hotkey-scope";
 import { focusedTaskId } from "../lib/task-links";
 import { focusTask } from "../lib/focus-task";
 import { currentView, neighborInView } from "../lib/view-order-store";
+import { clearSelection } from "../lib/selection-store";
 import { useTaskFieldHotkeys } from "./use-task-field-hotkeys";
 
 /** Whether the focus is in a field where arrow keys move a cursor. */
@@ -85,6 +86,13 @@ export function useTaskHotkeys({
     { hotkey: hotkeys.searchTasks, callback: guarded(focusSearch) },
     { hotkey: hotkeys.nextTask, callback: step(1) },
     { hotkey: hotkeys.previousTask, callback: step(-1) },
+    // The sheet closes on the first Escape; the selection clears on the next.
+    {
+      hotkey: "Escape",
+      callback: guarded(() => {
+        if (openNumber === null) clearSelection();
+      }),
+    },
     { hotkey: "ArrowDown", callback: stepInSheet(1) },
     { hotkey: "ArrowUp", callback: stepInSheet(-1) },
   ]);

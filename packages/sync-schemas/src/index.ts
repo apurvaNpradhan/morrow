@@ -1,13 +1,18 @@
 import { z } from "zod";
+import { fieldOptionSchema, FIELD_TYPES, fieldValuesSchema } from "./fields.js";
 import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
+import { RELATION_TYPES } from "./relations.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
 export * from "./comments.js";
+export * from "./fields.js";
 export * from "./task-events.js";
 export * from "./labels.js";
 export * from "./links.js";
 export * from "./projects.js";
+export * from "./relations.js";
 export * from "./search.js";
+export * from "./shape-schema-version.js";
 export * from "./tasks.js";
 
 /**
@@ -117,8 +122,27 @@ export const projectColumnsShape = shape(
   }),
 );
 
+/**
+ * The custom Fields of those Projects, with their options. Few and needed by
+ * every card, so the shape is eager.
+ */
+export const projectFieldsShape = shape(
+  "project-fields",
+  z.object({
+    id: z.string(),
+    projectId: z.string(),
+    name: z.string(),
+    type: z.enum(FIELD_TYPES),
+    position: z.string(),
+    options: z.array(fieldOptionSchema),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
 export type ProjectRow = z.infer<typeof projectsShape.schema>;
 export type ProjectColumnRow = z.infer<typeof projectColumnsShape.schema>;
+export type ProjectFieldRow = z.infer<typeof projectFieldsShape.schema>;
 
 /**
  * Every Task of the Projects of the Workspaces the user belongs to, archived
@@ -130,14 +154,19 @@ export const tasksShape = shape(
     id: z.string(),
     projectId: z.string(),
     columnId: z.string(),
+    parentId: z.string().nullable(),
     number: z.number(),
     title: z.string(),
+    subtaskDone: z.number(),
+    subtaskTotal: z.number(),
+    openBlockerCount: z.number(),
     checklistDone: z.number(),
     checklistTotal: z.number(),
     priority: z.enum(TASK_PRIORITIES),
     assigneeId: z.string().nullable(),
     dueDate: z.string().nullable(),
     labelIds: z.array(z.string()),
+    fieldValues: fieldValuesSchema,
     commentCount: z.number(),
     position: z.string(),
     completedAt: z.date().nullable(),
@@ -242,4 +271,22 @@ export const taskEventsShape = shape(
 );
 
 export type TaskEventRow = z.infer<typeof taskEventsShape.schema>;
-export * from "./shape-schema-version.js";
+
+/**
+ * A relation between two Tasks of a Workspace (possibly of different
+ * Projects). Read on demand with a `where` on the Task it concerns.
+ */
+export const taskRelationsShape = shape(
+  "task-relations",
+  z.object({
+    id: z.string(),
+    workspaceId: z.string(),
+    type: z.enum(RELATION_TYPES),
+    sourceTaskId: z.string(),
+    targetTaskId: z.string(),
+    createdBy: z.string().nullable(),
+    createdAt: z.date(),
+  }),
+);
+
+export type TaskRelationRow = z.infer<typeof taskRelationsShape.schema>;

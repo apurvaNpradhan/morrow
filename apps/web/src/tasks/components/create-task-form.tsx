@@ -17,6 +17,7 @@ import { MenuRadioGroup, MenuRadioItem } from "@/design-system/ui/menu";
 import { Textarea } from "@/design-system/ui/textarea";
 import {
   useProjectColumnsWithoutSuspense,
+  useProjectFieldsWithoutSuspense,
   useProjectsWithoutSuspense,
 } from "@/projects";
 import { useWorkspacePermission } from "@/workspace";
@@ -31,6 +32,7 @@ import { useCurrentProjectKey } from "../lib/use-current-project-key";
 import { useToday } from "../queries/use-today";
 import { useWorkspacePeople } from "../queries/use-workspace-people";
 import { ColumnMarker } from "./column-marker";
+import { DraftFieldChips } from "./draft-field-chips";
 import { DraftLabelField } from "./draft-label-field";
 import type { TaskDraft } from "./create-task-draft";
 import { FieldChipMenu } from "./field-chip-menu";
@@ -84,6 +86,7 @@ export function CreateTaskForm({
     projects.find((candidate) => candidate.key === currentKey) ??
     projects[0];
   const columns = useProjectColumnsWithoutSuspense(project?.id);
+  const fields = useProjectFieldsWithoutSuspense(project?.id);
   const column =
     columns.find((candidate) => candidate.id === draft.columnId) ??
     columns.find((candidate) => candidate.id === preset.columnId) ??
@@ -114,6 +117,13 @@ export function CreateTaskForm({
         assigneeId: draft.assigneeId,
         dueDate: draft.dueDate,
         labelIds: draft.labelIds,
+        // Values chosen for another Project's Fields (the Project was changed after) are left out.
+        fieldValues: Object.fromEntries(
+          fields.flatMap((field) => {
+            const optionId = draft.fieldValues[field.id];
+            return optionId === undefined ? [] : [[field.id, optionId]];
+          }),
+        ),
         userId: meId,
       });
       showCreated(project.key, created.number);
@@ -129,6 +139,7 @@ export function CreateTaskForm({
           assigneeId: null,
           dueDate: null,
           labelIds: [],
+          fieldValues: {},
         });
         setPickingDate(false);
         titleRef.current?.focus();
@@ -204,7 +215,7 @@ export function CreateTaskForm({
               <MenuRadioGroup
                 value={project?.id ?? ""}
                 onValueChange={(projectId) =>
-                  update({ projectId, columnId: undefined })
+                  update({ projectId, columnId: undefined, fieldValues: {} })
                 }
               >
                 {projects.map((candidate) => (
@@ -288,6 +299,11 @@ export function CreateTaskForm({
             workspaceId={workspace.id}
             labelIds={draft.labelIds}
             onChange={(labelIds) => update({ labelIds })}
+          />
+          <DraftFieldChips
+            fields={fields}
+            fieldValues={draft.fieldValues}
+            onChange={(fieldValues) => update({ fieldValues })}
           />
           {pickingDate ? (
             <Input

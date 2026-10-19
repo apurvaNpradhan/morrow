@@ -161,13 +161,42 @@ describe("shape proxy", () => {
 
     expect(upstream.searchParams.get("table")).toBe("task");
     expect(upstream.searchParams.get("columns")).toBe(
-      "id,project_id,column_id,number,title,checklist_done,checklist_total,priority,assignee_id,due_date,label_ids,comment_count,position,completed_at,archived_at,created_by,created_at,updated_at",
+      "id,project_id,column_id,parent_id,number,title,subtask_done,subtask_total,open_blocker_count,checklist_done,checklist_total,priority,assignee_id,due_date,label_ids,field_values,comment_count,position,completed_at,archived_at,created_by,created_at,updated_at",
     );
     expect(upstream.searchParams.get("where")).toContain(
       "project_id IN (SELECT id FROM project WHERE workspace_id IN (",
     );
     expect(upstream.searchParams.get("where")).toContain("user_id = $1");
     expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
+  it("serves the fields of those projects only, in full, with no way to narrow", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await app.request(
+      "/api/shapes/project-fields?" +
+        new URLSearchParams({
+          offset: "-1",
+          table: "user",
+          columns: "id,email",
+          where: "true",
+          "params[1]": "someone-else",
+        }),
+    );
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("project_field");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,project_id,name,type,position,options,created_at,updated_at",
+    );
+    expect(upstream.searchParams.get("where")).toBe(
+      "project_id IN (SELECT id FROM project WHERE workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1))",
+    );
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+    // Eager: the proxy never asks Electric for a subset of it.
+    expect(upstream.searchParams.get("subset__where")).toBeNull();
   });
 
   it("serves the labels of the user's workspaces only", async () => {
@@ -249,6 +278,33 @@ describe("shape proxy", () => {
       "project_id IN (SELECT id FROM project WHERE workspace_id IN (",
     );
     expect(upstream.searchParams.get("where")).toContain("user_id = $1");
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
+  it("serves the relations of the user's workspaces only, never widened", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await app.request(
+      "/api/shapes/task-relations?" +
+        new URLSearchParams({
+          offset: "-1",
+          table: "user",
+          columns: "id,email",
+          where: "true",
+          "params[1]": "someone-else",
+        }),
+    );
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("task_relation");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,workspace_id,type,source_task_id,target_task_id,created_by,created_at",
+    );
+    expect(upstream.searchParams.get("where")).toContain(
+      "workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",
+    );
     expect(upstream.searchParams.get("params[1]")).toBe(user.id);
   });
 

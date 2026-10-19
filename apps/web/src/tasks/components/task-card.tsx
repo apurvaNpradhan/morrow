@@ -5,12 +5,17 @@ import { type Ref, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
 import { isOverdue } from "../lib/due-date";
+import { selectByClick } from "../lib/select-gesture";
+import { useIsSelected } from "../lib/selection-store";
+import { TaskSelectBox } from "./task-select-box";
 import { openFieldPicker } from "../lib/field-picker-store";
 import { displayTicketId } from "../lib/task-links";
 import { DueDateText } from "./due-date-chip-text";
+import { FieldValueChips } from "./field-value-chips";
 import { PersonAvatar } from "./person-avatar";
 import { TaskChip } from "./task-chip";
 import { TaskPriorityIcon } from "./task-priority-icon";
+import { TaskStructureChips } from "./task-structure-chips";
 import { useTaskView } from "./task-view-context";
 
 /**
@@ -43,8 +48,14 @@ export function TaskCard({
     can,
     frozen,
     today,
+    fields,
+    showsField,
   } = view;
+  const selected = useIsSelected(project.id, task.id);
   const labels = labelsOfTask(task.labelIds, labelById);
+  const hasFieldValues = fields.some(
+    (field) => showsField(field.id) && task.fieldValues[field.id] !== undefined,
+  );
   const column = columnById.get(task.columnId);
   const closed = column ? isClosedCategory(column.category) : false;
   const assignee = task.assigneeId
@@ -64,7 +75,12 @@ export function TaskCard({
   const showDue = display.dueDates && task.dueDate !== null && !closed;
   const showProgress = display.checklist && progress !== null;
   const showComments = task.commentCount > 0;
-  const showChips = showPriority || showDue || showProgress || showComments;
+  const showStructure =
+    task.parentId !== null ||
+    task.subtaskTotal > 0 ||
+    (task.openBlockerCount > 0 && !closed);
+  const showChips =
+    showPriority || showDue || showProgress || showComments || showStructure;
   const ticket = displayTicketId(project.key, task.number);
 
   return (
@@ -76,12 +92,16 @@ export function TaskCard({
       data-pressed={pressed && !dragging && !lifted ? "" : undefined}
       aria-label={t("card.label", { id: ticket, title: task.title })}
       className={cn(
-        "flex cursor-pointer flex-col gap-2 rounded-lg border bg-card p-2.5 text-left shadow-xs outline-none transition-colors hover:bg-accent/40 motion-safe:data-pressed:scale-[0.98] motion-safe:data-pressed:transition-transform motion-safe:data-pressed:duration-100 motion-safe:data-pressed:ease-out focus-visible:ring-2 focus-visible:ring-ring",
+        "group/task relative flex cursor-pointer flex-col gap-2 rounded-lg border bg-card p-2.5 text-left shadow-xs outline-none transition-colors hover:bg-accent/40 motion-safe:data-pressed:scale-[0.98] motion-safe:data-pressed:transition-transform motion-safe:data-pressed:duration-100 motion-safe:data-pressed:ease-out focus-visible:ring-2 focus-visible:ring-ring",
         closed && "opacity-60",
         dragging && "opacity-40",
         lifted && "shadow-lg ring-1 ring-ring",
+        selected && "border-primary bg-accent/60",
       )}
-      onClick={() => view.openTask(task)}
+      onClick={(event) => {
+        if (selectByClick(project.id, task.id, event)) return;
+        view.openTask(task);
+      }}
       onPointerDown={() => setPressed(true)}
       onPointerUp={() => setPressed(false)}
       onPointerCancel={() => setPressed(false)}
@@ -93,6 +113,9 @@ export function TaskCard({
         }
       }}
     >
+      {editable || can.delete ? (
+        <TaskSelectBox task={task} className="absolute end-1.5 bottom-1.5" />
+      ) : null}
       {display.numbers || (display.assignees && assignee) ? (
         <div className="flex items-center justify-between gap-2">
           {display.numbers ? (
@@ -108,9 +131,10 @@ export function TaskCard({
         </div>
       ) : null}
       <p className="line-clamp-3 break-words text-sm">{task.title}</p>
-      {labels.length > 0 ? (
+      {labels.length > 0 || hasFieldValues ? (
         <div className="flex flex-wrap items-center gap-1">
           <LabelChips labels={labels} max={3} />
+          <FieldValueChips task={task} />
         </div>
       ) : null}
       {showChips ? (
@@ -133,6 +157,7 @@ export function TaskCard({
               <DueDateText dueDate={task.dueDate} today={today} />
             </TaskChip>
           ) : null}
+          <TaskStructureChips task={task} closed={closed} />
           {showComments ? (
             <TaskChip label={t("card.comments", { count: task.commentCount })}>
               <MessageSquare aria-hidden="true" className="size-3" />

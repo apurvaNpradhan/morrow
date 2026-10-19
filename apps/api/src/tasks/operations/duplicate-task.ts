@@ -17,6 +17,8 @@ import type { TaskActor } from "#api/tasks/lib/assignee";
 import { saveDescription } from "#api/tasks/lib/description";
 import { findTask } from "#api/tasks/lib/find-task";
 import { freePosition } from "#api/tasks/lib/free-position";
+import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
+import { recordParentChange } from "#api/tasks/history/record-parent-change";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
@@ -25,7 +27,7 @@ const COPY_SUFFIX = " (copy)";
 
 /**
  * Copies a task into the same column under a new id, at a position the client
- * chose. The copy keeps the description, priority, due date and labels. It keeps the
+ * chose. The copy keeps the description, priority, due date, labels and Field values. It keeps the
  * assignee only when the actor could assign them; otherwise it is unassigned
  * rather than refused.
  */
@@ -61,6 +63,7 @@ export async function duplicateTask(
         .values({
           id: copy.id,
           projectId,
+          parentId: source.parentId,
           columnId: source.columnId,
           number: counter.number,
           title: `${source.title.slice(0, TASK_TITLE_MAX - COPY_SUFFIX.length)}${COPY_SUFFIX}`,
@@ -70,6 +73,7 @@ export async function duplicateTask(
           assigneeId,
           dueDate: source.dueDate,
           labelIds: source.labelIds,
+          fieldValues: source.fieldValues,
           position: await freePosition(tx, source.columnId, copy.position),
           completedAt: isClosedCategory(column.category) ? new Date() : null,
           createdBy: actor.userId,
@@ -95,6 +99,11 @@ export async function duplicateTask(
         type: "duplicated",
         data: { sourceTicketId: ticketId(project.key, source.number) },
       });
+      if (source.parentId) {
+        const parent = await findTask(tx, projectId, source.parentId);
+        await refreshSubtaskCounts(tx, [parent.id]);
+        await recordParentChange(tx, project, task, null, parent);
+      }
       return task;
     });
     return { id: result.id, number: result.number, txid };

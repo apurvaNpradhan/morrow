@@ -114,7 +114,13 @@
 			"labelLimitReached": "A task can have at most 20 labels.",
 			"commentInvalidId": "That comment id isn't valid. Try again.",
 			"commentIdTaken": "That comment already exists. Try again.",
-			"commentNotYours": "You can only change your own comments."
+			"commentNotYours": "You can only change your own comments.",
+			"taskParentCycle": "A task can't be under itself or one of its own subtasks.",
+			"taskParentNotInProject": "A parent has to be in the same project.",
+			"relationExists": "Those tasks are already linked that way.",
+			"relationSelf": "A task can't be linked to itself.",
+			"relationCycle": "That would make a task wait on itself.",
+			"relationTaskNotInWorkspace": "That task isn't in this workspace."
 		}
 	},
 	"auth": {
@@ -853,7 +859,10 @@
 			"deleteTask": "Delete task",
 			"setTaskLabels": "Set labels",
 			"copyTaskBranch": "Copy branch name",
-			"search": "Search"
+			"search": "Search",
+			"setTaskField": "Set field",
+			"toggleTaskSelection": "Select task",
+			"selectAllTasks": "Select all tasks"
 		},
 		"sidebar": {
 			"home": "Home"
@@ -1122,6 +1131,11 @@
 			"search": "Search icons",
 			"clear": "Remove",
 			"empty": "No icons match",
+			"emptyEmoji": "No emoji match",
+			"tab": {
+				"icons": "Icons",
+				"emoji": "Emoji"
+			},
 			"color": "Project color",
 			"noColor": "No color"
 		},
@@ -1178,7 +1192,8 @@
 			"noProjectsDescription": "Create a project to configure it here.",
 			"notFoundDescription": "This project doesn't exist or its key has changed.",
 			"archivedNotice": "This project is archived. Unarchive it to change its settings.",
-			"saveError": "Couldn't save the change."
+			"saveError": "Couldn't save the change.",
+			"fields": "Fields"
 		},
 		"general": {
 			"title": "General",
@@ -1270,6 +1285,41 @@
 			"archive": "Archive",
 			"unarchive": "Restore",
 			"delete": "Delete…"
+		},
+		"fields": {
+			"title": "Fields",
+			"subtitle": "The custom fields of {{name}}. Each task can hold one choice per field. Drag a field or an option to reorder it.",
+			"empty": "No fields yet. Add one to start tracking something of your own, like size or customer.",
+			"addFieldPlaceholder": "Add a field",
+			"addField": "Add field",
+			"addFieldError": "Couldn't add the field.",
+			"updateError": "Couldn't update the field.",
+			"reorderFieldError": "Couldn't reorder the fields. Try again.",
+			"reorderField": "Reorder {{name}}. Drag, or press the up and down arrow keys.",
+			"nameLabel": "Name of the field",
+			"deleteField": "Delete {{name}}",
+			"noOptions": "No options yet.",
+			"addOptionPlaceholder": "Add an option",
+			"addOption": "Add option",
+			"addOptionError": "Couldn't add the option.",
+			"optionNameLabel": "Name of the option",
+			"optionUpdateError": "Couldn't update the option.",
+			"reorderOption": "Reorder {{name}}. Drag, or press the up and down arrow keys.",
+			"reorderOptionError": "Couldn't reorder the options. Try again.",
+			"deleteOption": "Delete {{name}}",
+			"deleteCounting": "Counting the tasks that use this…",
+			"fieldDeleteTitle": "Delete “{{name}}”?",
+			"fieldDeleteDescription_one": "{{count}} task has a value for this field. Deleting it removes that value.",
+			"fieldDeleteDescription_other": "{{count}} tasks have a value for this field. Deleting it removes the value from all of them.",
+			"fieldDeleteConfirm": "Delete field",
+			"fieldDeleteSuccess": "Field deleted",
+			"fieldDeleteError": "Couldn't delete the field.",
+			"optionDeleteTitle": "Delete “{{name}}”?",
+			"optionDeleteDescription_one": "{{count}} task has this option. Deleting it clears the value on that task.",
+			"optionDeleteDescription_other": "{{count}} tasks have this option. Deleting it clears the value on all of them.",
+			"optionDeleteConfirm": "Delete option",
+			"optionDeleteSuccess": "Option deleted",
+			"optionDeleteError": "Couldn't delete the option."
 		}
 	},
 	"tasks": {
@@ -1329,6 +1379,11 @@
 		"card": {
 			"label": "{{id}}: {{title}}",
 			"checklist": "Checklist progress",
+			"subtasks": "Subtasks done",
+			"parent": "Subtask of {{id}}",
+			"blockedMark": "Blocked",
+			"blocked_one": "Blocked by {{count}} open task",
+			"blocked_other": "Blocked by {{count}} open tasks",
 			"comments_one": "{{count}} comment",
 			"comments_other": "{{count}} comments"
 		},
@@ -1393,7 +1448,8 @@
 				"thisWeek": "This week",
 				"nextWeek": "Next week",
 				"none": "No due date"
-			}
+			},
+			"noValue": "No value"
 		},
 		"display": {
 			"layout": "Layout",
@@ -1420,7 +1476,8 @@
 				"checklist": "Checklist progress"
 			},
 			"background": "Project background",
-			"reset": "Reset"
+			"reset": "Reset",
+			"fields": "Fields"
 		},
 		"create": {
 			"title": "New task",
@@ -1459,6 +1516,31 @@
 			"copyMarkdown": "Copy as Markdown",
 			"more": "More actions",
 			"unknownUser": "Former member"
+		},
+		"parent": {
+			"field": "Parent",
+			"set": "Set parent",
+			"remove": "Remove parent",
+			"open": "Open the parent {{id}}"
+		},
+		"subtasks": {
+			"title": "Sub-tasks",
+			"add": "Add a sub-task",
+			"placeholder": "Add a sub-task…",
+			"error": "Couldn't add the sub-task"
+		},
+		"relations": {
+			"title": "Relations",
+			"add": "Add relation",
+			"remove": "Remove the relation with {{id}}",
+			"error": "Couldn't change the relation",
+			"kinds": {
+				"blocked_by": "Blocked by",
+				"blocks": "Blocks",
+				"related": "Related to",
+				"duplicate_of": "Duplicate of",
+				"duplicated_by": "Duplicated by"
+			}
 		},
 		"links": {
 			"title": "Links",
@@ -1505,7 +1587,22 @@
 		"delete": {
 			"title": "Delete {{id}}?",
 			"description": "“{{title}}” will be deleted for good. This can't be undone.",
-			"confirm": "Delete task"
+			"confirm": "Delete task",
+			"bulkTitle": "Delete {{count}} tasks?",
+			"bulkDescription": "This can't be undone. {{ids}}",
+			"bulkConfirm": "Delete {{count}} tasks",
+			"bulkMore": "{{ids}} and {{count}} more",
+			"bulkDone": "Deleted {{count}} tasks"
+		},
+		"selection": {
+			"toggle": "Select {{id}}",
+			"count": "{{count}} selected",
+			"capped": "Select up to {{max}} tasks",
+			"clear": "Clear selection",
+			"labels": "Labels",
+			"archive": "Archive",
+			"unarchive": "Unarchive",
+			"delete": "Delete"
 		},
 		"errors": {
 			"generic": "Couldn't save that change. It has been undone."
@@ -1545,7 +1642,13 @@
 				"labelDropped_one": "The label “{{label}}” was left off {{count}} task: you can't create labels.",
 				"labelDropped_other": "The label “{{label}}” was left off {{count}} tasks: you can't create labels.",
 				"commentAuthorUnknown_one": "{{count}} comment by {{email}} was kept without an author: they aren't a member of this workspace.",
-				"commentAuthorUnknown_other": "{{count}} comments by {{email}} were kept without an author: they aren't a member of this workspace."
+				"commentAuthorUnknown_other": "{{count}} comments by {{email}} were kept without an author: they aren't a member of this workspace.",
+				"fieldDropped_one": "The field “{{field}}” was left off {{count}} task: you can't create fields.",
+				"fieldDropped_other": "The field “{{field}}” was left off {{count}} tasks: you can't create fields.",
+				"optionDropped_one": "The option “{{option}}” of “{{field}}” was left off {{count}} task: you can't create options.",
+				"optionDropped_other": "The option “{{option}}” of “{{field}}” was left off {{count}} tasks: you can't create options.",
+				"fieldDroppedUnused": "The field “{{field}}” was not imported: you can't create fields.",
+				"optionDroppedUnused": "The option “{{option}}” of “{{field}}” was not imported: you can't create options."
 			}
 		},
 		"preferences": {
@@ -1599,8 +1702,34 @@
 			"archived": "archived the task",
 			"unarchived": "unarchived the task",
 			"description": "edited the description",
+			"parentSet": "made this a subtask of {{to}}",
+			"parentChanged": "moved this from {{from}} to {{to}}",
+			"parentCleared": "removed this from {{from}}",
+			"subtaskAdded": "added the subtask {{ticket}}",
+			"subtaskRemoved": "removed the subtask {{ticket}}",
+			"relationAdded": {
+				"blocks": "marked this as blocking {{ticket}}",
+				"blocked_by": "marked this as blocked by {{ticket}}",
+				"related": "linked this to {{ticket}}",
+				"duplicate_of": "marked this as a duplicate of {{ticket}}",
+				"duplicated_by": "marked this as duplicated by {{ticket}}"
+			},
+			"relationRemoved": {
+				"blocks": "removed the block on {{ticket}}",
+				"blocked_by": "removed the block by {{ticket}}",
+				"related": "unlinked this from {{ticket}}",
+				"duplicate_of": "removed the duplicate link to {{ticket}}",
+				"duplicated_by": "removed the duplicate link from {{ticket}}"
+			},
 			"more_one": "{{count}} more change",
-			"more_other": "{{count}} more changes"
+			"more_other": "{{count}} more changes",
+			"fieldSet": "set {{field}} to {{to}}",
+			"fieldChanged": "changed {{field}} from {{from}} to {{to}}",
+			"fieldCleared": "cleared {{field}} (was {{from}})"
+		},
+		"fieldValues": {
+			"noValue": "No value",
+			"heading": "Fields"
 		}
 	},
 	"labels": {

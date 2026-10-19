@@ -47,6 +47,11 @@ export async function writeTaskChanges({ original, changes }: TaskMutation) {
       rpc.tasks.updateAssignee({ ...target, assigneeId: changes.assigneeId }),
     );
   }
+  if (changes.parentId !== undefined) {
+    await keep(
+      rpc.tasks.updateParent({ ...target, parentId: changes.parentId }),
+    );
+  }
   if (changes.labelIds !== undefined) {
     // Adding and removing are separate writes, so two people labelling one
     // task at once both land.
@@ -60,6 +65,24 @@ export async function writeTaskChanges({ original, changes }: TaskMutation) {
     for (const labelId of original.labelIds) {
       if (!now.has(labelId)) {
         await keep(rpc.tasks.removeLabel({ ...target, labelId }));
+      }
+    }
+  }
+  if (changes.fieldValues !== undefined) {
+    // One write per Field that differs, so two people setting different Fields
+    // of one task both land.
+    const now = changes.fieldValues;
+    const before = original.fieldValues;
+    for (const [fieldId, value] of Object.entries(now)) {
+      if (before[fieldId] !== value) {
+        await keep(rpc.tasks.setFieldValue({ ...target, fieldId, value }));
+      }
+    }
+    for (const fieldId of Object.keys(before)) {
+      if (!(fieldId in now)) {
+        await keep(
+          rpc.tasks.setFieldValue({ ...target, fieldId, value: null }),
+        );
       }
     }
   }
