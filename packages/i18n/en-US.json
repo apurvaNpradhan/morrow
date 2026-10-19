@@ -1420,6 +1420,8 @@
 			"display": "Display"
 		},
 		"filter": {
+			"taskCount_one": "{{count}} task",
+			"taskCount_other": "{{count}} tasks",
 			"active": "Active filters",
 			"clearAll": "Clear all",
 			"editOperator": "Change how the {{subject}} filter matches",
@@ -1455,6 +1457,7 @@
 			"board": "Board",
 			"list": "List",
 			"sort": "Sort",
+			"sortBy": "Sort by",
 			"sortField": {
 				"manual": "Manual",
 				"created": "Created",

@@ -19,6 +19,8 @@ export type FilterOption = {
   value: string;
   label: string;
   glyph?: ReactNode;
+  /** How many tasks have this value, when the list is showing counts. */
+  count?: number;
 };
 
 /** The values each filter subject offers, and how to word one of them. */

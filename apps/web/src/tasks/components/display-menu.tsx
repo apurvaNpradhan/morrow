@@ -1,4 +1,10 @@
-import { SlidersHorizontal } from "lucide-react";
+import {
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   fieldSubject,
@@ -13,22 +19,19 @@ import {
   TooltipTrigger,
 } from "@/design-system/ui/tooltip";
 import {
-  Menu,
-  MenuCheckboxItem,
-  MenuGroup,
-  MenuGroupLabel,
-  MenuItem,
-  MenuPopup,
-  MenuRadioGroup,
-  MenuRadioItem,
-  MenuSeparator,
-  MenuTrigger,
-} from "@/design-system/ui/menu";
+  Popover,
+  PopoverPopup,
+  PopoverTrigger,
+} from "@/design-system/ui/popover";
 import {
-  defaultDirection,
-  type SortDirection,
-  type TaskSort,
-} from "../lib/sort";
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@/design-system/ui/select";
+import { cn } from "@/design-system/cn";
+import { defaultDirection, type TaskSort } from "../lib/sort";
 import type { useTaskViewPreferences } from "../lib/use-task-view-preferences";
 import { type TaskDisplay, useTaskView } from "./task-view-context";
 
@@ -39,7 +42,6 @@ const DISPLAY_FIELDS = [
   "assignees",
   "dueDates",
   "priority",
-  "checklist",
 ] as const satisfies readonly (keyof TaskDisplay)[];
 
 /**
@@ -61,12 +63,46 @@ export function DisplayMenu({
   const { switchLayout, fields } = useTaskView();
   const { layout, sort, display } = preferences;
 
+  const sortLabels = new Map<string, string>([
+    ...SORT_FIELDS.map((f) => [f, t(`display.sortField.${f}`)] as const),
+    ...fields.map((f) => [fieldSubject(f.id), f.name] as const),
+  ]);
+  const chips: {
+    key: string;
+    label: string;
+    on: boolean;
+    set: (on: boolean) => void;
+  }[] = [
+    ...DISPLAY_FIELDS.map((field) => ({
+      key: field,
+      label: t(`display.field.${field}`),
+      on: display[field],
+      set: (on: boolean) => preferences.setDisplay(field, on),
+    })),
+    ...fields.map((field) => ({
+      key: field.id,
+      label: field.name,
+      on: preferences.showsField(field.id),
+      set: (on: boolean) => preferences.setShowField(field.id, on),
+    })),
+    ...(hasBackground
+      ? [
+          {
+            key: "background",
+            label: t("display.background"),
+            on: preferences.showBackground,
+            set: preferences.setShowBackground,
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <Menu open={open} onOpenChange={onOpenChange}>
+    <Popover open={open} onOpenChange={onOpenChange}>
       <Tooltip>
         <TooltipTrigger
           render={
-            <MenuTrigger
+            <PopoverTrigger
               render={<Button variant="outline" size="xs" />}
               aria-label={t("toolbar.display")}
             />
@@ -82,109 +118,118 @@ export function DisplayMenu({
           />
         </TooltipContent>
       </Tooltip>
-      <MenuPopup align="end" className="min-w-56">
-        <MenuGroup>
-          <MenuGroupLabel>{t("display.layout")}</MenuGroupLabel>
-          <MenuRadioGroup
-            value={layout}
-            onValueChange={(next) => switchLayout(next as "board" | "list")}
+      <PopoverPopup align="end" className="w-80 p-0">
+        <div className="flex flex-col divide-y">
+          <div
+            role="radiogroup"
+            aria-label={t("display.layout")}
+            className="grid grid-cols-2 gap-1 p-3"
           >
-            <MenuRadioItem value="board">{t("display.board")}</MenuRadioItem>
-            <MenuRadioItem value="list">{t("display.list")}</MenuRadioItem>
-          </MenuRadioGroup>
-        </MenuGroup>
-        <MenuSeparator />
-        <MenuGroup>
-          <MenuGroupLabel>{t("display.sort")}</MenuGroupLabel>
-          <MenuRadioGroup
-            value={sort.field}
-            onValueChange={(next) => {
-              if (isSortField(next)) {
-                const field = next;
-                preferences.setSort({
-                  field,
-                  direction: defaultDirection(field),
-                });
-              }
-            }}
-          >
-            {SORT_FIELDS.map((field) => (
-              <MenuRadioItem key={field} value={field}>
-                {t(`display.sortField.${field}`)}
-              </MenuRadioItem>
+            {(
+              [
+                ["board", LayoutGrid],
+                ["list", List],
+              ] as const
+            ).map(([value, Icon]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={layout === value}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-xs text-muted-foreground outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring",
+                  layout === value &&
+                    "border-border bg-accent text-foreground shadow-xs",
+                )}
+                onClick={() => switchLayout(value)}
+              >
+                <Icon aria-hidden="true" className="size-4" />
+                {t(`display.${value}`)}
+              </button>
             ))}
-            {fields.map((field) => (
-              <MenuRadioItem key={field.id} value={fieldSubject(field.id)}>
-                {field.name}
-              </MenuRadioItem>
-            ))}
-          </MenuRadioGroup>
-          {sort.field !== "manual" ? (
-            <MenuRadioGroup
-              value={sort.direction}
-              onValueChange={(next) =>
-                preferences.setSort({
-                  ...sort,
-                  direction: next as SortDirection,
-                } satisfies TaskSort)
-              }
+          </div>
+          <div className="flex items-center gap-2 p-3">
+            <span className="me-auto text-sm">{t("display.sortBy")}</span>
+            <Select
+              value={sort.field}
+              onValueChange={(next) => {
+                if (next && isSortField(next)) {
+                  preferences.setSort({
+                    field: next,
+                    direction: defaultDirection(next),
+                  });
+                }
+              }}
             >
-              <MenuRadioItem value="asc">
-                {t("display.ascending")}
-              </MenuRadioItem>
-              <MenuRadioItem value="desc">
-                {t("display.descending")}
-              </MenuRadioItem>
-            </MenuRadioGroup>
-          ) : null}
-        </MenuGroup>
-        <MenuSeparator />
-        <MenuGroup>
-          <MenuGroupLabel>
-            {t(
-              layout === "board" ? "display.showOnCards" : "display.showOnRows",
-            )}
-          </MenuGroupLabel>
-          {DISPLAY_FIELDS.map((field) => (
-            <MenuCheckboxItem
-              key={field}
-              variant="switch"
-              checked={display[field]}
-              onCheckedChange={(checked) =>
-                preferences.setDisplay(field, checked)
-              }
-              closeOnClick={false}
-            >
-              {t(`display.field.${field}`)}
-            </MenuCheckboxItem>
-          ))}
-          {fields.map((field) => (
-            <MenuCheckboxItem
-              key={field.id}
-              variant="switch"
-              checked={preferences.showsField(field.id)}
-              onCheckedChange={(checked) =>
-                preferences.setShowField(field.id, checked)
-              }
-              closeOnClick={false}
-            >
-              {field.name}
-            </MenuCheckboxItem>
-          ))}
-          {hasBackground ? (
-            <MenuCheckboxItem
-              variant="switch"
-              checked={preferences.showBackground}
-              onCheckedChange={preferences.setShowBackground}
-              closeOnClick={false}
-            >
-              {t("display.background")}
-            </MenuCheckboxItem>
-          ) : null}
-        </MenuGroup>
-        <MenuSeparator />
-        <MenuItem onClick={preferences.reset}>{t("display.reset")}</MenuItem>
-      </MenuPopup>
-    </Menu>
+              <SelectTrigger size="sm" className="w-40">
+                <SelectValue>{sortLabels.get(sort.field)}</SelectValue>
+              </SelectTrigger>
+              <SelectPopup>
+                {[...sortLabels].map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
+            {sort.field !== "manual" ? (
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label={t(
+                  sort.direction === "asc"
+                    ? "display.ascending"
+                    : "display.descending",
+                )}
+                onClick={() =>
+                  preferences.setSort({
+                    ...sort,
+                    direction: sort.direction === "asc" ? "desc" : "asc",
+                  } satisfies TaskSort)
+                }
+              >
+                {sort.direction === "asc" ? (
+                  <ArrowUpNarrowWide aria-hidden="true" />
+                ) : (
+                  <ArrowDownWideNarrow aria-hidden="true" />
+                )}
+              </Button>
+            ) : null}
+          </div>
+          <div className="flex flex-col gap-2 p-3">
+            <span className="text-xs text-muted-foreground">
+              {t(
+                layout === "board"
+                  ? "display.showOnCards"
+                  : "display.showOnRows",
+              )}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {chips.map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  aria-pressed={chip.on}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    chip.on
+                      ? "border-transparent bg-accent text-foreground"
+                      : "text-muted-foreground opacity-70 hover:bg-accent/50",
+                  )}
+                  onClick={() => chip.set(!chip.on)}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end px-3 py-2">
+            <Button variant="ghost" size="xs" onClick={preferences.reset}>
+              {t("display.reset")}
+            </Button>
+          </div>
+        </div>
+      </PopoverPopup>
+    </Popover>
   );
 }

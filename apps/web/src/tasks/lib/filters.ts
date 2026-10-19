@@ -95,6 +95,20 @@ function nextDay(day: string) {
   return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`;
 }
 
+/** How many of the tasks a filter value would match. */
+export function countMatching(
+  tasks: readonly Parameters<typeof matchesValue>[0][],
+  subject: FilterSubject,
+  value: string,
+  context: FilterContext,
+) {
+  let count = 0;
+  for (const task of tasks) {
+    if (matchesValue(task, subject, value, context)) count++;
+  }
+  return count;
+}
+
 /**
  * Whether a task passes every filter. Values of one filter are alternatives
  * (any of them); filters are combined (all of them). "Is not" and "is none of"
