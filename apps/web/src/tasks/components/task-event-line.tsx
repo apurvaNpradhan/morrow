@@ -27,7 +27,7 @@ const day = (value: string) =>
  */
 export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
   const { t } = useTranslation("tasks");
-  const { columnById, labelById, personById } = useTaskView();
+  const { columnById, fieldById, labelById, personById } = useTaskView();
   const { row, event } = entry;
   const actor = row.actorId ? personById.get(row.actorId) : undefined;
 
@@ -35,6 +35,16 @@ export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
     columnById.get(ref.id)?.name ?? ref.name;
   const personName = (ref: { id: string; name: string } | null) =>
     ref ? (personById.get(ref.id)?.name ?? ref.name) : "";
+  const fieldName = (ref: { id: string; name: string }) =>
+    fieldById.get(ref.id)?.name ?? ref.name;
+  const optionName = (
+    fieldId: string,
+    ref: { id: string; name: string } | null,
+  ) =>
+    ref
+      ? (fieldById.get(fieldId)?.options.find((o) => o.id === ref.id)?.name ??
+        ref.name)
+      : "";
   const labelNames = (refs: readonly { id: string; name: string }[]) =>
     refs.map((ref) => labelById.get(ref.id)?.name ?? ref.name).join(", ");
 
@@ -51,7 +61,13 @@ export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
         <span className="font-medium text-foreground">
           {actor?.name ?? t("comments.deletedUser")}
         </span>{" "}
-        {sentence(t, event, { columnName, personName, labelNames })}
+        {sentence(t, event, {
+          columnName,
+          personName,
+          labelNames,
+          fieldName,
+          optionName,
+        })}
       </span>
       <time
         dateTime={row.createdAt.toISOString()}
@@ -68,6 +84,11 @@ type Names = {
   columnName: (ref: { id: string; name: string }) => string;
   personName: (ref: { id: string; name: string } | null) => string;
   labelNames: (refs: readonly { id: string; name: string }[]) => string;
+  fieldName: (ref: { id: string; name: string }) => string;
+  optionName: (
+    fieldId: string,
+    ref: { id: string; name: string } | null,
+  ) => string;
 };
 
 /** What the actor did, as the rest of the sentence. */
@@ -126,6 +147,26 @@ function sentence(t: TFunction, event: TaskEvent, names: Names): string {
         : t("history.labelsRemoved", {
             count: removed.length,
             labels: names.labelNames(removed),
+          });
+    }
+    case "field_changed": {
+      const { field, from, to } = event.data;
+      const name = names.fieldName(field);
+      if (to === null) {
+        return t("history.fieldCleared", {
+          field: name,
+          from: names.optionName(field.id, from),
+        });
+      }
+      return from === null
+        ? t("history.fieldSet", {
+            field: name,
+            to: names.optionName(field.id, to),
+          })
+        : t("history.fieldChanged", {
+            field: name,
+            from: names.optionName(field.id, from),
+            to: names.optionName(field.id, to),
           });
     }
     case "archived":

@@ -297,3 +297,72 @@ test("deleting an active project by typing its key removes it and its tasks for 
   ).toBeVisible();
   await close();
 });
+
+test("shift-click selects a run of cards, P sets their priority, and another tab sees it", async ({
+  browser,
+}) => {
+  const { admin, member, slug, close } = await twoPeople(browser, "Bulk");
+  await createProject(admin, slug, "Bulk project", "BLK");
+  await admin.goto(`/${slug}/projects/BLK/board`);
+  await createTasks(admin, "To Do", ["One", "Two", "Three", "Four"]);
+  await member.goto(`/${slug}/projects/BLK/board`);
+  await expect(card(lane(member, "To Do"), "BLK-4", "Four")).toBeVisible();
+
+  const todo = lane(admin, "To Do");
+  await card(todo, "BLK-1", "One").click({ modifiers: ["ControlOrMeta"] });
+  await card(todo, "BLK-3", "Three").click({ modifiers: ["Shift"] });
+  await expect(admin.getByText("3 selected")).toBeVisible();
+
+  await admin.keyboard.press("p");
+  await admin.getByRole("menuitemradio", { name: "High" }).click();
+
+  for (const page of [admin, member]) {
+    for (const [ticket, title] of [
+      ["BLK-1", "One"],
+      ["BLK-2", "Two"],
+      ["BLK-3", "Three"],
+    ]) {
+      await expect(
+        card(lane(page, "To Do"), ticket!, title!).getByRole("button", {
+          name: "High",
+        }),
+      ).toBeVisible();
+    }
+  }
+  await expect(
+    card(lane(member, "To Do"), "BLK-4", "Four").getByRole("button", {
+      name: "High",
+    }),
+  ).toHaveCount(0);
+
+  // Escape clears the selection.
+  await admin.keyboard.press("Escape");
+  await expect(admin.getByText("3 selected")).toBeHidden();
+  await close();
+});
+
+test("select all in the list and Mod+Backspace delete them for everyone", async ({
+  browser,
+}) => {
+  const { admin, member, slug, close } = await twoPeople(browser, "BulkDel");
+  await createProject(admin, slug, "Bulk delete", "BDL");
+  await admin.goto(`/${slug}/projects/BDL/board`);
+  await createTasks(admin, "To Do", ["Alpha", "Beta", "Gamma"]);
+  await member.goto(`/${slug}/projects/BDL/list`);
+  await expect(member.getByText("3 tasks")).toBeVisible();
+
+  await admin.goto(`/${slug}/projects/BDL/list`);
+  await card(admin, "BDL-1", "Alpha").focus();
+  await admin.keyboard.press("ControlOrMeta+a");
+  await expect(admin.getByText("3 selected")).toBeVisible();
+  await admin.keyboard.press("ControlOrMeta+Backspace");
+
+  const dialog = admin.getByRole("alertdialog");
+  await expect(dialog.getByText("Delete 3 tasks?")).toBeVisible();
+  await dialog.getByRole("button", { name: "Delete 3 tasks" }).click();
+
+  await expect(admin.getByText("Deleted 3 tasks")).toBeVisible();
+  await expect(card(member, "BDL-1", "Alpha")).toHaveCount(0);
+  await expect(member.getByText("0 tasks")).toBeVisible();
+  await close();
+});

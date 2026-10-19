@@ -50,8 +50,8 @@ const isMoved = (event: TaskEvent): event is Moved =>
  * changing the same field again within the window folds into their last event,
  * keeping its original "from"; folding it back to where it began deletes the
  * event, so the history shows only real changes. Label events fold their added
- * and removed sets, a label added then removed cancelling out; description
- * edits fold into one. Anything else (another person, another field, an older
+ * and removed sets, a label added then removed cancelling out; Field events
+ * fold per Field, by option id; description edits fold into one. Anything else (another person, another field, an older
  * event, a beginning or an archive) is a new event.
  */
 export function foldTaskEvent(
@@ -91,6 +91,23 @@ export function foldTaskEvent(
     };
   }
 
+  if (before.type === "field_changed" && after.type === "field_changed") {
+    // Another Field's change is its own entry.
+    if (before.data.field.id !== after.data.field.id) {
+      return { kind: "insert" };
+    }
+    if ((before.data.from?.id ?? null) === (after.data.to?.id ?? null)) {
+      return { kind: "delete" };
+    }
+    return {
+      kind: "merge",
+      data: {
+        field: after.data.field,
+        from: before.data.from,
+        to: after.data.to,
+      },
+    };
+  }
   if (isMoved(before) && isMoved(after)) {
     if (ends(before).from === ends(after).to) return { kind: "delete" };
     return {

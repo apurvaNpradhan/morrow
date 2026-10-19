@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/design-system/ui/dialog";
 import { Input } from "@/design-system/ui/input";
+import { useBulkActions } from "../actions/use-bulk-actions";
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
 import { formatDate } from "@/design-system/format";
@@ -18,19 +19,23 @@ import { parseDay } from "../lib/calendar-day";
 import { parseDateQuery } from "../lib/parse-date-query";
 import { useToday } from "../queries/use-today";
 import { closeDatePicker, useDatePickerTask } from "../lib/date-picker-store";
+import { SELECTION } from "../lib/selection-store";
 
 /** A calendar field for "Pick a date", opened from any due-date menu. */
 export function DueDateDialog() {
   const taskId = useDatePickerTask();
-  const task = taskId ? taskCollection.get(taskId) : undefined;
+  const forSelection = taskId === SELECTION;
+  const task = taskId && !forSelection ? taskCollection.get(taskId) : undefined;
   return (
     <Dialog
-      open={task !== undefined}
+      open={task !== undefined || forSelection}
       onOpenChange={(open) => {
         if (!open) closeDatePicker();
       }}
     >
-      {task ? (
+      {forSelection ? (
+        <DueDateForm key={SELECTION} taskId={SELECTION} initial="" />
+      ) : task ? (
         <DueDateForm
           // A new task starts the field afresh.
           key={task.id}
@@ -45,6 +50,7 @@ export function DueDateDialog() {
 function DueDateForm({ taskId, initial }: { taskId: string; initial: string }) {
   const { t } = useTranslation("tasks");
   const actions = useTaskActions();
+  const bulk = useBulkActions();
   const [value, setValue] = useState(initial);
   const [query, setQuery] = useState("");
   const today = useToday();
@@ -54,7 +60,8 @@ function DueDateForm({ taskId, initial }: { taskId: string; initial: string }) {
   async function save(day: string) {
     const task = taskCollection.get(taskId);
     closeDatePicker();
-    if (task) await actions.setDueDate(task, day);
+    if (taskId === SELECTION) await bulk.setDueDate(day);
+    else if (task) await actions.setDueDate(task, day);
   }
 
   return (

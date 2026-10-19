@@ -9,6 +9,7 @@ import {
   Flag,
   Link2,
   ListTree,
+  SlidersHorizontal,
   Pencil,
   Tag,
   TextAlignStart,
@@ -54,6 +55,8 @@ export function TaskEventIcon({
       return <Calendar aria-hidden="true" className={icon} />;
     case "labels":
       return <Tag aria-hidden="true" className={icon} />;
+    case "field_changed":
+      return <SlidersHorizontal aria-hidden="true" className={icon} />;
     case "title":
       return <Pencil aria-hidden="true" className={icon} />;
     case "description":

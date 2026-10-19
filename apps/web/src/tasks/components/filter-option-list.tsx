@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-to-interactive-role, jsx-a11y/click-events-have-key-events -- A combobox over a listbox: focus stays in the search box, which handles the keys. */
-import { Check, Search } from "lucide-react";
+import { Check, Minus, Search } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
@@ -15,6 +15,7 @@ const CREATE_VALUE = "\u0000create";
 export function FilterOptionList({
   options,
   selected,
+  indeterminate,
   onPick,
   label,
   create,
@@ -22,6 +23,8 @@ export function FilterOptionList({
 }: {
   options: FilterOption[];
   selected?: ReadonlySet<string>;
+  /** Options some but not all of a batch have: shown with a dash, between checked and empty. */
+  indeterminate?: ReadonlySet<string>;
   onPick: (value: string) => void;
   label: string;
   /** Adds a last row that makes a new option from what was typed, when nothing matches it exactly. */
@@ -120,12 +123,14 @@ export function FilterOptionList({
         ) : null}
         {shown.map((option, index) => {
           const checked = selected?.has(option.value) ?? false;
+          const partial = indeterminate?.has(option.value) ?? false;
           return (
             <li
               key={option.value}
               id={`${listId}-${index}`}
               role="option"
               aria-selected={selected ? checked : index === current}
+              aria-checked={selected && partial ? "mixed" : undefined}
               ref={(node) => {
                 if (index === current)
                   node?.scrollIntoView({ block: "nearest" });
@@ -144,11 +149,12 @@ export function FilterOptionList({
                   aria-hidden="true"
                   className={cn(
                     "flex size-3.5 shrink-0 items-center justify-center rounded-[4px] border",
-                    checked &&
+                    (checked || partial) &&
                       "border-primary bg-primary text-primary-foreground",
                   )}
                 >
                   {checked ? <Check className="size-3" /> : null}
+                  {partial ? <Minus className="size-3" /> : null}
                 </span>
               ) : null}
               {option.glyph ? (

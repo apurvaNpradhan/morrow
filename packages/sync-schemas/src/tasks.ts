@@ -90,3 +90,6 @@ export function checklistCounts(markdown: string) {
   }
   return { done, total };
 }
+
+/** The most Tasks one bulk action may touch; past it the actions are refused. */
+export const MAX_BULK_TASKS = 200;

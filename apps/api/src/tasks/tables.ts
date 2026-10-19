@@ -72,6 +72,13 @@ export const taskTable = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),
+    // Custom Field values keyed by Field id (option id for a choice Field). A
+    // value not set is a missing key, never null. No foreign key, like
+    // `label_ids`: Field and option delete keep it consistent.
+    fieldValues: jsonb("field_values")
+      .$type<Record<string, string>>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     position: text("position").notNull(),
     completedAt: timestamp("completed_at", { mode: "date" }),
     archivedAt: timestamp("archived_at", { mode: "date" }),
