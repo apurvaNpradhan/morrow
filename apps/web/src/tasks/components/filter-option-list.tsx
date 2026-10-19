@@ -18,6 +18,7 @@ export function FilterOptionList({
   onPick,
   label,
   create,
+  onSearch,
 }: {
   options: FilterOption[];
   selected?: ReadonlySet<string>;
@@ -28,6 +29,8 @@ export function FilterOptionList({
     label: (name: string) => string;
     onCreate: (name: string) => void;
   };
+  /** The options come from a search: typing is reported here and they are not narrowed again. */
+  onSearch?: (query: string) => void;
 }) {
   const { t } = useTranslation("tasks");
   const listId = useId();
@@ -36,9 +39,10 @@ export function FilterOptionList({
 
   const typed = query.trim();
   const needle = typed.toLowerCase();
-  const matching = needle
-    ? options.filter((option) => option.label.toLowerCase().includes(needle))
-    : options;
+  const matching =
+    needle && !onSearch
+      ? options.filter((option) => option.label.toLowerCase().includes(needle))
+      : options;
   const offerCreate =
     create !== undefined &&
     needle !== "" &&
@@ -84,6 +88,7 @@ export function FilterOptionList({
           className="h-8 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/72"
           onChange={(event) => {
             setQuery(event.target.value);
+            onSearch?.(event.target.value.trim());
             setActive(0);
           }}
           onKeyDown={(event) => {

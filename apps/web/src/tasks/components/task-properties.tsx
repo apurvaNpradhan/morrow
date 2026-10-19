@@ -21,6 +21,7 @@ import {
   DueDateItems,
   PriorityItems,
 } from "./task-field-items";
+import { TaskParentField } from "./task-parent-field";
 import { TaskLabelPicker } from "./task-label-picker";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { useTaskView } from "./task-view-context";
@@ -137,6 +138,9 @@ export function TaskProperties({ task }: { task: TaskRow }) {
             onPickDate={() => openDatePicker(task.id)}
           />
         </FieldChipMenu>
+      </Field>
+      <Field label={t("parent.field")}>
+        <TaskParentField task={task} />
       </Field>
       <RailHeading>{t("fields.labels")}</RailHeading>
       <Field label={t("fields.labels")}>

@@ -43,6 +43,8 @@ export type NewTask = {
   assigneeId?: string | null;
   dueDate?: string | null;
   labelIds?: string[];
+  /** Makes the new task a subtask of this one. */
+  parentId?: string;
   /** The signed-in user, recorded as the creator. */
   userId: string;
 };
@@ -56,7 +58,7 @@ export async function createTask(input: NewTask): Promise<TaskRow> {
       id,
       projectId: input.projectId,
       columnId: input.column.id,
-      parentId: null,
+      parentId: input.parentId ?? null,
       // The server numbers it; until then the card shows the key and an ellipsis.
       number: 0,
       title: input.title,
@@ -94,6 +96,7 @@ type TaskPatch = Partial<
     | "assigneeId"
     | "dueDate"
     | "labelIds"
+    | "parentId"
     | "columnId"
     | "position"
     | "completedAt"
@@ -171,6 +174,10 @@ export async function duplicateTask(task: TaskRow, userId: string) {
       number: 0,
       title: `${task.title} (copy)`,
       commentCount: 0,
+      // A copy has neither subtasks nor blockers.
+      subtaskDone: 0,
+      subtaskTotal: 0,
+      openBlockerCount: 0,
       position: await endOfColumn(task.columnId),
       archivedAt: null,
       createdBy: userId,

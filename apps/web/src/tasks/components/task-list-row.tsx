@@ -12,6 +12,7 @@ import { DueDateText } from "./due-date-chip-text";
 import { PersonAvatar } from "./person-avatar";
 import { TaskChip } from "./task-chip";
 import { TaskPriorityIcon } from "./task-priority-icon";
+import { TaskStructureChips } from "./task-structure-chips";
 import { useTaskView } from "./task-view-context";
 
 /**
@@ -117,6 +118,7 @@ export function TaskListRow({
           <LabelChips labels={labels} max={2} />
         </span>
       ) : null}
+      <TaskStructureChips task={task} closed={closed} />
       {task.commentCount > 0 ? (
         <TaskChip label={t("card.comments", { count: task.commentCount })}>
           <MessageSquare aria-hidden="true" className="size-3" />
