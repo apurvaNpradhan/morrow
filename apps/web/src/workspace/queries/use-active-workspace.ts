@@ -12,7 +12,8 @@ export function useActiveWorkspace() {
     from: "/_layout/_authenticated/$slug",
     shouldThrow: false,
   });
-  const workspaceId = match?.context.workspace.id;
+  // A slug that does not resolve leaves the route without a workspace.
+  const workspaceId = match?.context.workspace?.id;
 
   const { data } = useLiveQuery({
     query: (q) => {
