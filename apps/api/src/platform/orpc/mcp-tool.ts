@@ -10,6 +10,8 @@ export type McpTool<S extends z.ZodObject = z.ZodObject> = {
   name: string;
   description: string;
   inputSchema: S;
+  /** Never changes anything, so clients may run it without asking. */
+  readOnly?: true;
   run(args: z.output<S>, client: McpClient): Promise<unknown>;
 };
 

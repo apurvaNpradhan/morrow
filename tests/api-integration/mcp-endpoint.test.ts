@@ -147,7 +147,28 @@ describe("MCP endpoint", () => {
       "update_tasks",
       "whoami",
     ]);
-    expect((await rpc(second)).result?.tools).toHaveLength(23);
+    const advertised = (await rpc(second)).result?.tools as Array<{
+      name: string;
+      annotations?: { readOnlyHint?: boolean };
+    }>;
+    expect(advertised).toHaveLength(23);
+    // Reads say so, so a client can run them without asking; writes do not.
+    expect(
+      advertised
+        .filter((tool) => tool.annotations?.readOnlyHint)
+        .map((tool) => tool.name)
+        .sort(),
+    ).toEqual([
+      "get_task",
+      "list_activity",
+      "list_fields",
+      "list_labels",
+      "list_members",
+      "list_projects",
+      "list_tasks",
+      "list_workspaces",
+      "whoami",
+    ]);
   });
 
   it("runs tools as the token's user, concurrently", async () => {

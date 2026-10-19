@@ -4,6 +4,7 @@ import { mcpTool } from "#api/platform/orpc/mcp-tool";
 export const fieldsMcpTools = [
   mcpTool({
     name: "list_fields",
+    readOnly: true,
     description:
       "List a project's custom Fields in order, each with its type and options (name, colour). Set a Field's value on a task by name through create_tasks or update_tasks.",
     inputSchema: z.object({

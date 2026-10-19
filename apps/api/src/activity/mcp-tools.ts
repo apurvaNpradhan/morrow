@@ -4,6 +4,7 @@ import { mcpTool } from "#api/platform/orpc/mcp-tool";
 export const activityMcpTools = [
   mcpTool({
     name: "list_activity",
+    readOnly: true,
     description:
       "List a page of recent activity in a workspace. Pass nextCursor to read the next page.",
     inputSchema: z.object({

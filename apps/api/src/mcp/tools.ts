@@ -67,7 +67,11 @@ export function registerMcpTools(server: McpServer, userId: string): void {
   for (const tool of mcpTools) {
     server.registerTool(
       tool.name,
-      { description: tool.description, inputSchema: advertisedSchema(tool) },
+      {
+        description: tool.description,
+        inputSchema: advertisedSchema(tool),
+        ...(tool.readOnly && { annotations: { readOnlyHint: true } }),
+      },
       async (args: unknown) => {
         try {
           const parsed = (tool.inputSchema as z.ZodObject).safeParse(
