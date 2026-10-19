@@ -8,6 +8,7 @@ import {
 import { archiveColumn } from "./operations/archive-column";
 import { bulkRemoveTasks } from "./operations/bulk-remove-tasks";
 import { bulkUpdateTasks } from "./operations/bulk-update-tasks";
+import { countTasksByColumn } from "./operations/count-tasks-by-column";
 import { createTask } from "./operations/create-task";
 import { deleteTask } from "./operations/delete-task";
 import { duplicateTask } from "./operations/duplicate-task";
@@ -81,6 +82,14 @@ const list = authed
   .use(canRead)
   .output(z.array(taskListItem))
   .handler(({ input }) => listTasks(input.workspaceId, input.projectId));
+
+const columnCounts = authed
+  .input(forProject)
+  .use(canRead)
+  .output(z.array(z.object({ columnId: z.string(), count: z.number() })))
+  .handler(({ input }) =>
+    countTasksByColumn(input.workspaceId, input.projectId),
+  );
 
 const search = authed
   .input(
@@ -390,6 +399,7 @@ const importProject = authed
 
 export const tasksRouter = {
   list,
+  columnCounts,
   search,
   get,
   create,
