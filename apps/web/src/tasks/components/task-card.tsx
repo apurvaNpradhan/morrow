@@ -1,5 +1,5 @@
 import { isClosedCategory, type TaskRow } from "@morrow/sync-schemas";
-import { CalendarDays, ListChecks, MessageSquare } from "lucide-react";
+import { CalendarDays, MessageSquare } from "lucide-react";
 import { LabelChips, labelsOfTask } from "@/labels";
 import { type Ref, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -61,10 +61,6 @@ export function TaskCard({
   const assignee = task.assigneeId
     ? personById.get(task.assigneeId)
     : undefined;
-  const progress =
-    task.checklistTotal > 0
-      ? { done: task.checklistDone, total: task.checklistTotal }
-      : null;
   const editable = can.edit && !frozen;
   const selectable = editable || (can.delete && !frozen);
   const open = editable
@@ -74,14 +70,12 @@ export function TaskCard({
 
   const showPriority = display.priority;
   const showDue = display.dueDates && task.dueDate !== null && !closed;
-  const showProgress = display.checklist && progress !== null;
   const showComments = task.commentCount > 0;
   const showStructure =
     task.parentId !== null ||
     task.subtaskTotal > 0 ||
     (task.openBlockerCount > 0 && !closed);
-  const showChips =
-    showPriority || showDue || showProgress || showComments || showStructure;
+  const showChips = showPriority || showDue || showComments || showStructure;
   const ticket = displayTicketId(project.key, task.number);
 
   return (
@@ -163,12 +157,6 @@ export function TaskCard({
             <TaskChip label={t("card.comments", { count: task.commentCount })}>
               <MessageSquare aria-hidden="true" className="size-3" />
               {task.commentCount}
-            </TaskChip>
-          ) : null}
-          {showProgress && progress ? (
-            <TaskChip label={t("card.checklist")}>
-              <ListChecks aria-hidden="true" className="size-3" />
-              {progress.done}/{progress.total}
             </TaskChip>
           ) : null}
         </div>

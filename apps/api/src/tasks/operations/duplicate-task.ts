@@ -67,8 +67,6 @@ export async function duplicateTask(
           columnId: source.columnId,
           number: counter.number,
           title: `${source.title.slice(0, TASK_TITLE_MAX - COPY_SUFFIX.length)}${COPY_SUFFIX}`,
-          checklistDone: source.checklistDone,
-          checklistTotal: source.checklistTotal,
           priority: source.priority,
           assigneeId,
           dueDate: source.dueDate,

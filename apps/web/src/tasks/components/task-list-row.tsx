@@ -20,7 +20,7 @@ import { TaskStructureChips } from "./task-structure-chips";
 import { useTaskView } from "./task-view-context";
 
 /**
- * A task in the list: priority, ticket id, title with checklist progress, due
+ * A task in the list: priority, ticket id, title, due
  * date and assignee, the same facts as a card on one line.
  */
 export function TaskListRow({
@@ -57,10 +57,6 @@ export function TaskListRow({
   const assignee = task.assigneeId
     ? personById.get(task.assigneeId)
     : undefined;
-  const progress =
-    display.checklist && task.checklistTotal > 0
-      ? { done: task.checklistDone, total: task.checklistTotal }
-      : null;
   const editable = can.edit && !frozen;
   const selectable = editable || (can.delete && !frozen);
   const open = editable
@@ -123,11 +119,6 @@ export function TaskListRow({
       ) : null}
       <span className="min-w-0 flex-1 truncate font-semibold">
         {task.title}
-        {progress ? (
-          <span className="ms-2 text-xs tabular-nums text-muted-foreground">
-            {progress.done}/{progress.total}
-          </span>
-        ) : null}
       </span>
       <span className="hidden shrink-0 items-center gap-1 empty:hidden sm:flex">
         <LabelChips labels={labels} max={2} />

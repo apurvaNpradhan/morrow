@@ -22,7 +22,6 @@ const FIELDS = [
   ["showTaskAssignees", "assignees"],
   ["showTaskDueDates", "dueDates"],
   ["showTaskPriority", "priority"],
-  ["showTaskChecklist", "checklist"],
 ] as const;
 
 /**
@@ -93,7 +92,6 @@ export function TaskDetailsSection() {
                 showTaskAssignees: true,
                 showTaskDueDates: true,
                 showTaskPriority: true,
-                showTaskChecklist: true,
               })
             }
           >

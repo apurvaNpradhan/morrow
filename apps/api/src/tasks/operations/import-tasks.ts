@@ -22,7 +22,6 @@ import {
 } from "#api/projects/index";
 import { taskError } from "#api/tasks/errors";
 import type { TaskActor } from "#api/tasks/lib/assignee";
-import { checklistColumns } from "#api/tasks/lib/description";
 import {
   importDocument,
   MAX_IMPORT_BYTES,
@@ -287,7 +286,6 @@ export async function importTasks(
         columnId: column.id,
         number: numberOf.get(index)!,
         title: task.title,
-        ...checklistColumns(task.description),
         priority: task.priority,
         assigneeId,
         dueDate: task.dueDate,

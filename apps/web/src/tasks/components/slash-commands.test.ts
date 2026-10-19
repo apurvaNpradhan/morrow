@@ -13,7 +13,7 @@ describe("filterSlashCommands", () => {
       "Heading 3",
       "Bulleted list",
       "Numbered list",
-      "Task list",
+      "Checklist",
       "Quote",
       "Code block",
       "Divider",
@@ -26,7 +26,7 @@ describe("filterSlashCommands", () => {
   });
 
   it("matches the search words as well as the label", () => {
-    expect(labelsFor("todo")).toEqual(["Task list"]);
+    expect(labelsFor("checkbox")).toEqual(["Checklist"]);
     expect(labelsFor("h2")).toEqual(["Heading 2"]);
   });
 

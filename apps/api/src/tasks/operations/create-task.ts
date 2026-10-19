@@ -17,7 +17,7 @@ import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import { checkFieldValues } from "#api/tasks/lib/field-values";
 import { freePosition } from "#api/tasks/lib/free-position";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
-import { checklistColumns, saveDescription } from "#api/tasks/lib/description";
+import { saveDescription } from "#api/tasks/lib/description";
 import { findParent } from "#api/tasks/lib/find-parent";
 import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { recordParentChange } from "#api/tasks/history/record-parent-change";
@@ -102,7 +102,6 @@ export async function createTask(
           columnId: input.columnId,
           number: counter.number,
           title: input.title,
-          ...checklistColumns(input.description ?? ""),
           priority: input.priority ?? "none",
           assigneeId: input.assigneeId ?? null,
           dueDate: input.dueDate ?? null,

@@ -1378,7 +1378,6 @@
 		},
 		"card": {
 			"label": "{{id}}: {{title}}",
-			"checklist": "Checklist progress",
 			"subtasks": "Subtasks done",
 			"parent": "Subtask of {{id}}",
 			"blockedMark": "Blocked",
@@ -1472,8 +1471,7 @@
 				"numbers": "Task numbers",
 				"assignees": "Assignees",
 				"dueDates": "Due dates",
-				"priority": "Priority",
-				"checklist": "Checklist progress"
+				"priority": "Priority"
 			},
 			"background": "Project background",
 			"reset": "Reset",

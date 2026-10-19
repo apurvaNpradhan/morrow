@@ -1,4 +1,4 @@
-import { checklistCounts, type TaskDescriptionRow } from "@morrow/sync-schemas";
+import type { TaskDescriptionRow } from "@morrow/sync-schemas";
 import { debounceStrategy, usePacedMutations } from "@tanstack/react-db";
 import { rpc } from "@/app/lib/orpc";
 import { taskCollection } from "../collections/task-collection";
@@ -20,19 +20,10 @@ export function useDescriptionAutosave(taskId: string) {
       taskDescriptionCollection.update(taskId, (draft) => {
         draft.description = description;
       });
-      // The card's checklist progress follows the text at once; the server
-      // writes the same counts with the description.
-      if (taskCollection.has(taskId)) {
-        const { done, total } = checklistCounts(description);
-        taskCollection.update(taskId, (draft) => {
-          draft.checklistDone = done;
-          draft.checklistTotal = total;
-        });
-      }
     },
     mutationFn: async ({ transaction }) => {
       for (const mutation of transaction.mutations) {
-        // Only description edits are sent; the task's counts come back with them.
+        // Only description edits are sent.
         if (
           mutation.type !== "update" ||
           mutation.collection !== taskDescriptionCollection
