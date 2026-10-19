@@ -3,7 +3,7 @@ import "./app/lib/instrument";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { recordLocation } from "./app/navigation/return-location";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { lazy, StrictMode, Suspense } from "react";
+import { lazy, StrictMode, Suspense, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { useTranslation } from "react-i18next";
 import { queryClient } from "./app/query-client";
@@ -18,6 +18,10 @@ import { readDevicePreferences } from "./app/preferences/use-device-preferences"
 import { ErrorBoundary } from "./design-system/ui/error-boundary";
 import { AppHotkeysProvider } from "./app/commands";
 import { AppI18nProvider } from "./app/i18n/provider";
+import {
+  removeSplash,
+  removeSplashOnFirstResolve,
+} from "./app/splash/remove-splash";
 import { routeTree } from "./routeTree.gen";
 import { preloadTaskDescriptionEditor } from "./tasks";
 
@@ -60,6 +64,8 @@ const router = createRouter({
   },
 });
 
+removeSplashOnFirstResolve(router);
+
 router.subscribe("onResolved", ({ toLocation }) =>
   recordLocation({
     pathname: toLocation.pathname,
@@ -83,6 +89,9 @@ function RootCrashFallback({
   resetError: () => void;
 }) {
   const { t } = useTranslation();
+
+  // The splash must not cover the crash message.
+  useEffect(removeSplash, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6">

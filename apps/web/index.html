@@ -52,10 +52,66 @@
       document.head.appendChild(script);
     }
   </script>
+
+  <style>
+    /* The first paint, before any script: keep these colours in step with the
+       tokens in src/index.css (a test checks they match). */
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483647;
+      background: #ffffff;
+    }
+    #splash i {
+      display: none;
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: 0;
+      width: 15rem;
+      background: #ffffff;
+      border-inline-end: 1px solid #eaeaea;
+    }
+    #splash[data-theme="dark"] {
+      background: #0a0a0a;
+    }
+    #splash[data-theme="dark"] i {
+      background: #0a0a0a;
+      border-inline-end-color: #1f1f1f;
+    }
+    @media (min-width: 768px) {
+      #splash[data-sidebar] i {
+        display: block;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <div id="splash" data-theme="dark" aria-hidden="true"><i></i></div>
   <div id="root"></div>
+  <script id="splash-script">
+    (function () {
+      var splash = document.getElementById('splash');
+      try {
+        var prefs = JSON.parse(localStorage.getItem('device-preferences') || 'null');
+        var device = (prefs && prefs['s:device'] && prefs['s:device'].data) || {};
+        var theme = device.theme || 'dark';
+        if (theme === 'system') {
+          theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        splash.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+        // The sidebar outline needs a known user, a page that has a sidebar
+        // and the sidebar open by default; the stylesheet adds the width check.
+        var stamp = JSON.parse(localStorage.getItem('morrow:owner-stamp') || 'null');
+        var noSidebar = /^\/(auth|invitation|mcp|privacy|onboarding|test-error)(\/|$)/.test(location.pathname);
+        if (stamp && typeof stamp.userId === 'string' && !noSidebar && device.sidebarDefaultOpen !== false) {
+          splash.setAttribute('data-sidebar', '');
+        }
+      } catch (e) {
+        // Blocked or malformed storage: the dark default stays.
+      }
+    })();
+  </script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 
