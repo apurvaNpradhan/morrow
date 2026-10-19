@@ -11,7 +11,7 @@ export const relationsMcpTools = [
   mcpTool({
     name: "manage_relation",
     description:
-      'Add or remove a relation between two tasks of a workspace, which may be in different projects. type blocks: ticketId blocks otherTicketId (which then reads "blocked by"). type duplicate: ticketId is a duplicate of otherTicketId (which reads "duplicated by"). type related: the pair is the same whichever you name first. Adding a pair that is already linked, a task to itself, or a loop of blocks is refused with a code. Removing names the same pair and type. get_task lists a task\'s relations.',
+      'Add or remove a relation between two tasks of a workspace, which may be in different projects. type blocks: ticketId blocks otherTicketId (which then reads "blocked by"). type duplicate: ticketId is a duplicate of otherTicketId (which reads "duplicated by"); adding it also moves ticketId to the first canceled column of its project, if there is one (removing it does not move it back). type related: the pair is the same whichever you name first. Adding a pair that is already linked, a task to itself, or a loop of blocks is refused with a code. Removing names the same pair and type. get_task lists a task\'s relations.',
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       action: z.enum(["add", "remove"]),

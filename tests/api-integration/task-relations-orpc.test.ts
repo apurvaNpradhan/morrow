@@ -1,4 +1,4 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { db, schema } from "../../apps/api/src/platform/database";
 import { createWorkspaceMember } from "./helpers/fixtures";
@@ -113,6 +113,51 @@ describe("adding a relation", () => {
 
     await relate("blocks", a.id, far.id);
 
+    expect(await relationRows()).toHaveLength(1);
+  });
+
+  it("moves the duplicate to the end of the canceled column, not the original", async () => {
+    const { addTask, relate, projectId } = await setup();
+    const canceled = (await columnsOf(projectId)).find(
+      (column) => column.category === "canceled",
+    )!;
+    const earlier = await addTask("Canceled");
+    const a = await addTask("In Progress");
+    const b = await addTask("In Progress");
+
+    await relate("duplicate", a.id, b.id);
+
+    const rows = await db.select().from(schema.taskTable);
+    const row = (id: string) => rows.find((task) => task.id === id)!;
+    expect(row(a.id).columnId).toBe(canceled.id);
+    expect(row(a.id).completedAt).not.toBeNull();
+    expect(row(a.id).position > row(earlier.id).position).toBe(true);
+    expect(row(b.id).columnId).not.toBe(canceled.id);
+    expect((await storyOf(a.id)).map((event) => event.type)).toContain(
+      "column",
+    );
+  });
+
+  it("leaves a duplicate in place when the project has no canceled column", async () => {
+    const { addTask, relate, projectId } = await setup();
+    const a = await addTask();
+    const b = await addTask();
+    await db
+      .delete(schema.projectColumnTable)
+      .where(
+        and(
+          eq(schema.projectColumnTable.projectId, projectId),
+          eq(schema.projectColumnTable.category, "canceled"),
+        ),
+      );
+
+    await relate("duplicate", a.id, b.id);
+
+    const [row] = await db
+      .select()
+      .from(schema.taskTable)
+      .where(eq(schema.taskTable.id, a.id));
+    expect(row!.completedAt).toBeNull();
     expect(await relationRows()).toHaveLength(1);
   });
 

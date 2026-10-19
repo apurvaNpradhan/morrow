@@ -4,6 +4,7 @@ import { withTxid } from "#api/platform/sync/with-txid";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
 import { refreshOpenBlockerCounts } from "#api/tasks/lib/open-blocker-counts";
 import { taskRelationTable, taskTable } from "#api/tasks/tables";
+import { cancelDuplicate } from "../lib/cancel-duplicate";
 import { lockRelationTasks } from "../lib/lock-relation-tasks";
 import { recordRelationChange } from "../lib/record-relation-change";
 
@@ -14,7 +15,8 @@ import { recordRelationChange } from "../lib/record-relation-change";
  * Self-relations and a pair already linked with the type are refused (the
  * unique index decides, no SELECT first), and so is a `blocks` loop of any
  * length: those are checked under a Workspace-wide lock, since a loop can run
- * through Projects. Written to the history of both tasks.
+ * through Projects. Written to the history of both tasks. A `duplicate` also
+ * moves its source to a canceled Column of its Project (see `cancelDuplicate`).
  */
 export async function addRelation(
   workspaceId: string,
@@ -88,6 +90,14 @@ export async function addRelation(
         source,
         target,
       );
+      if (input.type === "duplicate") {
+        await cancelDuplicate(
+          tx,
+          workspaceId,
+          { id: source.projectId, key: source.projectKey },
+          source.id,
+        );
+      }
     });
     return { txid };
   } catch (error) {
