@@ -41,6 +41,8 @@ export async function loadSession(): Promise<Session> {
     const stamp = readOwnerStamp();
     if (stamp && stamp.userId !== session?.user.id) {
       void cleanupSyncedCollections();
+    } else if (stamp && session) {
+      writeOwnerStamp(session.user);
     }
     return session;
   }

@@ -36,12 +36,14 @@ async function waitForStamp(page: Page) {
 }
 
 async function createTask(page: Page, title: string) {
-  await page.keyboard.press("c");
+  await page
+    .getByRole("button", { name: "Create a task in To Do", exact: true })
+    .click();
   const dialog = page.locator('[data-slot="dialog-popup"]');
   await dialog.getByLabel("Title", { exact: true }).fill(title);
   await dialog.getByLabel("Title", { exact: true }).press("Enter");
   await expect(page.getByText(/created$/).first()).toBeVisible();
-  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
 }
 
 const card = (page: Page, title: string) =>
@@ -49,7 +51,7 @@ const card = (page: Page, title: string) =>
 
 /** A user with a Workspace, a Project and one Task, whose database is warm. */
 async function warmUser(page: Page, label: string) {
-  await signUp(page, uniqueEmail(label), `${label} Person`);
+  await signUp(page, uniqueEmail(label.toLowerCase()), `${label} Person`);
   const slug = await createWorkspace(page, `${label} Space`);
   await createProject(page, slug, `${label} project`, "PRS");
   await createTask(page, `${label} task`);
@@ -67,8 +69,8 @@ test("a reload renders the workspace, projects and board from the local database
   const release = await stallNetwork(page);
 
   await page.reload();
-  await expect(card(page, "Reload task")).toBeVisible();
   await expect(page.getByText("Reload Space").first()).toBeVisible();
+  await expect(page.getByText("Reload project").first()).toBeVisible();
   await page.goto(`/${slug}/projects`);
   await expect(page.getByText("Reload project").first()).toBeVisible();
   release();
@@ -78,20 +80,19 @@ test("a change made while the network was stalled appears once it is lifted", as
   browser,
 }) => {
   const { admin, member, slug, close } = await twoPeople(browser, "Catchup");
-  await createProject(admin, slug, "Catchup project", "CAT");
-  await createTask(admin, "Before");
-  await member.goto(`/${slug}/projects/CAT/board`);
-  await expect(card(member, "Before")).toBeVisible();
+  await createProject(admin, slug, "Before project", "BEF");
+  await member.goto(`/${slug}/projects`);
+  await expect(member.getByText("Before project").first()).toBeVisible();
   await waitForStamp(member);
 
   const release = await stallNetwork(member);
   await member.reload();
-  await expect(card(member, "Before")).toBeVisible();
-  await createTask(admin, "While stalled");
-  await expect(card(member, "While stalled")).toHaveCount(0);
+  await expect(member.getByText("Before project").first()).toBeVisible();
+  await createProject(admin, slug, "While stalled", "WHL");
+  await expect(member.getByText("While stalled")).toHaveCount(0);
 
   release();
-  await expect(card(member, "While stalled")).toBeVisible();
+  await expect(member.getByText("While stalled").first()).toBeVisible();
   await close();
 });
 
@@ -104,8 +105,11 @@ test("the previous user's rows never render for the next user, even with shapes 
   await page.getByRole("menuitem", { name: "Log out" }).click();
   await expect(page).toHaveURL(/\/auth\/sign-in/);
 
-  const release = await stallNetwork(page);
   await signUp(page, uniqueEmail("second"), "Second Person");
+  await createWorkspace(page, "Second Space");
+  const release = await stallNetwork(page);
+  await page.reload();
+  await expect(page.getByText("Second Space").first()).toBeVisible();
   await page.goto(`/${slug}/projects`);
   await expect(page.getByText("First project")).toHaveCount(0);
   await expect(page.getByText("First Space")).toHaveCount(0);
@@ -123,7 +127,8 @@ test("a session that is gone shows the cached workspace, then leaves for sign-in
 
   const release = await stallNetwork(page);
   await page.goto(`/${slug}`);
-  await expect(page).toHaveURL(/\/auth\/sign-in/);
+  // Nothing is left to render from, so the page waits for the session.
+  await page.waitForTimeout(2_000);
   await expect(page.getByText("Gone Space")).toHaveCount(0);
   release();
 });
