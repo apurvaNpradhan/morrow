@@ -10,6 +10,10 @@ import {
 } from "#api/projects/index";
 import { taskNotFound } from "#api/tasks/errors";
 import {
+  fieldsOfProjects,
+  namedFieldValues,
+} from "#api/tasks/lib/named-field-values";
+import {
   taskCommentTable,
   taskDescriptionTable,
   taskLinkTable,
@@ -72,6 +76,7 @@ export async function getTask(
         .where(eq(taskTable.id, task.parentId))
     : [];
 
+  const fieldById = await fieldsOfProjects([projectId]);
   const labels = await db
     .select({
       id: labelTable.id,
@@ -158,6 +163,7 @@ export async function getTask(
     completedAt: task.completedAt,
     archivedAt: task.archivedAt,
     createdAt: task.createdAt,
+    fields: namedFieldValues(task.fieldValues, fieldById),
     labels: labels
       .filter((label) => task.labelIds.includes(label.id))
       .map(({ name, color }) => ({ name, color })),

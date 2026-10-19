@@ -103,6 +103,10 @@ export const taskListItem = z.object({
   updatedAt: z.date(),
 });
 
+const namedFields = z
+  .record(z.string(), z.string())
+  .describe("Option name by Field name; Fields without a value are absent.");
+
 export const taskSearchResult = z.object({
   truncated: z.boolean().describe("More tasks matched than were returned."),
   tasks: z.array(
@@ -122,6 +126,7 @@ export const taskSearchResult = z.object({
       assigneeName: z.string().nullable(),
       dueDate: z.string().nullable(),
       labels: z.array(z.string()),
+      fields: namedFields,
       completedAt: z.date().nullable(),
       archivedAt: z.date().nullable(),
     }),
@@ -186,6 +191,7 @@ export const taskDetail = z.object({
   completedAt: z.date().nullable(),
   archivedAt: z.date().nullable(),
   createdAt: z.date(),
+  fields: namedFields,
   labels: z.array(z.object({ name: z.string(), color: colorHex })),
   links: z.array(
     z.object({ id: z.string(), url: z.string(), title: z.string().nullable() }),
