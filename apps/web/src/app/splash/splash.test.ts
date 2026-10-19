@@ -44,14 +44,16 @@ describe("splash colours", () => {
       expect(splashCss).toContain(
         `background: ${background}; color: ${foreground};`,
       );
-      expect(splashCss).toContain(`border: 1px solid ${border};`);
+      expect(splashCss).toContain(
+        `border: 1px solid color-mix(in oklab, ${border} 80%, transparent);`,
+      );
       expect(splashCss).toContain(`margin: 0; color: ${muted};`);
     } else {
       expect(splashCss).toContain(
         `#splash[data-theme="dark"] { background: ${background}; color: ${foreground}; }`,
       );
       expect(splashCss).toContain(
-        `#splash[data-theme="dark"] i { border-color: ${border}; }`,
+        `#splash[data-theme="dark"] i { border-color: color-mix(in oklab, ${border} 80%, transparent); }`,
       );
       expect(splashCss).toContain(
         `#splash[data-theme="dark"] p { color: ${muted}; }`,
@@ -151,7 +153,7 @@ describe("splash script", () => {
 
   it("leaves the narrow-screen rule to the stylesheet", () => {
     expect(splashCss).toContain(
-      "@media (min-width: 768px) { #splash[data-sidebar] { padding-inline-start: 15rem; } #splash[data-sidebar] i { display: block; } }",
+      "@media (min-width: 768px) { #splash[data-sidebar] { padding-inline-start: 14.5rem; } #splash[data-sidebar] i { display: block; } }",
     );
   });
 });
