@@ -448,6 +448,13 @@ describe("MCP endpoint", () => {
       { kind: "blocked_by", ticketId: "MOR-1", title: "Blocker" },
       { kind: "related", ticketId: "MOR-2", title: "Twin" },
     ]);
+    expect(waiting.body.openBlockerCount).toBe(1);
+    const listedBlocked = await run("list_tasks", {});
+    expect(
+      listedBlocked.body.tasks.find(
+        (t: { ticketId: string }) => t.ticketId === "OTH-1",
+      ),
+    ).toMatchObject({ openBlockers: 1 });
     const loop = await run("manage_relation", {
       action: "add",
       type: "blocks",
@@ -466,6 +473,7 @@ describe("MCP endpoint", () => {
     expect(removed.failed).toBe(false);
     const after = await run("get_task", { ticketId: "OTH-1" });
     expect(after.body.relations).toMatchObject([{ kind: "related" }]);
+    expect(after.body.openBlockerCount).toBe(0);
     const missing = await run("manage_relation", {
       action: "remove",
       type: "blocks",

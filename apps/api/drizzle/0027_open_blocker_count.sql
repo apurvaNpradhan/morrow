@@ -1,0 +1,1 @@
+ALTER TABLE "task" ADD COLUMN "open_blocker_count" integer DEFAULT 0 NOT NULL;

@@ -119,6 +119,7 @@ export const tasksMcpTools = [
           dueDate: task.dueDate,
           parent: task.parentTicketId,
           subtasks: { done: task.subtaskDone, total: task.subtaskTotal },
+          openBlockers: task.openBlockerCount,
           labels: task.labels,
           completedAt: task.completedAt,
           archivedAt: task.archivedAt,

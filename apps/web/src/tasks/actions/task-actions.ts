@@ -62,6 +62,7 @@ export async function createTask(input: NewTask): Promise<TaskRow> {
       title: input.title,
       subtaskDone: 0,
       subtaskTotal: 0,
+      openBlockerCount: 0,
       // The server counts them from the description and sends them back.
       checklistDone: 0,
       checklistTotal: 0,

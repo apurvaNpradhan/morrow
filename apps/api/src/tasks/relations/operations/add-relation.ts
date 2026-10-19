@@ -1,8 +1,9 @@
 import { RELATION_ID_PATTERN, type RelationType } from "@morrow/sync-schemas";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
-import { taskRelationTable } from "#api/tasks/tables";
+import { refreshOpenBlockerCounts } from "#api/tasks/lib/open-blocker-counts";
+import { taskRelationTable, taskTable } from "#api/tasks/tables";
 import { lockRelationTasks } from "../lib/lock-relation-tasks";
 import { recordRelationChange } from "../lib/record-relation-change";
 
@@ -58,6 +59,15 @@ export async function addRelation(
           SELECT 1 FROM blocked WHERE id = ${sourceTaskId} LIMIT 1`);
         if (loop.rows.length > 0) throw taskError("RELATION_CYCLE");
       }
+      if (input.type === "blocks") {
+        // A blocker closing at this moment waits for us, then recomputes with
+        // the relation in view; one that closed first is seen here.
+        await tx
+          .select({ id: taskTable.id })
+          .from(taskTable)
+          .where(eq(taskTable.id, sourceTaskId!))
+          .for("share");
+      }
       await tx.insert(taskRelationTable).values({
         id: input.id,
         workspaceId,
@@ -66,6 +76,9 @@ export async function addRelation(
         targetTaskId: targetTaskId!,
         createdBy: userId,
       });
+      if (input.type === "blocks") {
+        await refreshOpenBlockerCounts(tx, [targetTaskId!]);
+      }
       const source = tasks.find((task) => task.id === sourceTaskId)!;
       const target = tasks.find((task) => task.id === targetTaskId)!;
       await recordRelationChange(

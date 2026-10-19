@@ -53,6 +53,9 @@ export const taskTable = pgTable(
     // `refreshSubtaskCounts`): those not archived, and those of them closed.
     subtaskDone: integer("subtask_done").notNull().default(0),
     subtaskTotal: integer("subtask_total").notNull().default(0),
+    // Recomputed from the `blocks` relations targeting the task whose source is
+    // open (see `refreshBlockedCounts`); a card shows "blocked" above 0.
+    openBlockerCount: integer("open_blocker_count").notNull().default(0),
     // Kept by the Procedures that create and delete comments, so a card shows
     // a badge without the comments themselves.
     commentCount: integer("comment_count").notNull().default(0),

@@ -137,6 +137,7 @@ export const tasksShape = shape(
     title: z.string(),
     subtaskDone: z.number(),
     subtaskTotal: z.number(),
+    openBlockerCount: z.number(),
     checklistDone: z.number(),
     checklistTotal: z.number(),
     priority: z.enum(TASK_PRIORITIES),

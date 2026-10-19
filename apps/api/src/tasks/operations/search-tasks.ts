@@ -125,6 +125,7 @@ export async function searchTasks(workspaceId: string, search: TaskSearch) {
           parentTicketId: parent == null ? null : ticketId(projectKey, parent),
           subtaskDone: task.subtaskDone,
           subtaskTotal: task.subtaskTotal,
+          openBlockerCount: task.openBlockerCount,
           projectKey,
           title: task.title,
           description,

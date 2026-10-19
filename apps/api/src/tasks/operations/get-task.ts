@@ -144,6 +144,7 @@ export async function getTask(
       : null,
     subtaskDone: task.subtaskDone,
     subtaskTotal: task.subtaskTotal,
+    openBlockerCount: task.openBlockerCount,
     title: task.title,
     description: found.description,
     column: column.name,
