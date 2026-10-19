@@ -1,6 +1,6 @@
 # Instant first load
 
-Status: ready-for-agent
+Status: shipped
 
 Tickets: MOR-41. Follow-up: MOR-52 (service-worker precache, decided after the measurements here).
 
@@ -57,6 +57,7 @@ The work lands as five commits, in this order, with a cold-load measurement post
    - Inline CSS in the HTML paints it. A small inline script reads the theme and the sidebar-open preference from the stored device preferences, which are kept as one row under a keyed wrapper in local storage. The system theme resolves from the operating system's colour scheme.
    - The sidebar outline shows only when all of these hold: the owner stamp is in local storage (the same signal used to seed the session), the path is not an auth route, the viewport is at least the `md` breakpoint, and the sidebar-open preference is on. Otherwise only the themed background paints.
    - The outline is 15rem wide, matching the app sidebar's own override (not the 16rem default in the sidebar component). There is no stored sidebar width, so none is read.
+   - The app stylesheet loads without blocking the first paint (a `media="print"` swap with a `noscript` copy), since the splash has its own inline CSS and covers the page.
    - The splash is removed on the router's first resolved navigation, which covers every route in one place.
    - Only the background, sidebar and border colours, for light and dark, are copied into the inline CSS.
    - Storage reads are wrapped so blocked or malformed storage falls back to the dark default and the themed background only.
