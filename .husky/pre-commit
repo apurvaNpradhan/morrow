@@ -1,3 +1,7 @@
 set -e
 pnpm exec varlock scan --staged
-pnpm lint
+# Check what is staged, not the whole tree: other agents' unfinished edits in
+# the working tree must not block this commit.
+git diff --cached --name-only --diff-filter=ACMR -z |
+  xargs -0 -r pnpm exec vp check --no-error-on-unmatched-pattern
+node --test scripts/lint/*.test.mjs
