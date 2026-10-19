@@ -163,6 +163,11 @@ export function FilterOptionList({
                 </span>
               ) : null}
               <span className="truncate">{option.label}</span>
+              {option.count ? (
+                <span className="ms-auto ps-3 text-xs tabular-nums text-muted-foreground">
+                  {t("filter.taskCount", { count: option.count })}
+                </span>
+              ) : null}
             </li>
           );
         })}

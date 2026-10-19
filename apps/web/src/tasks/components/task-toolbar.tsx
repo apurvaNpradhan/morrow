@@ -1,3 +1,4 @@
+import type { TaskRow } from "@morrow/sync-schemas";
 import { Search, X } from "lucide-react";
 import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,6 +31,7 @@ export function TaskToolbar({
   displayOpen,
   onDisplayOpenChange,
   hasBackground,
+  tasks,
 }: {
   shown: number;
   total: number;
@@ -44,6 +46,8 @@ export function TaskToolbar({
   displayOpen: boolean;
   onDisplayOpenChange: (open: boolean) => void;
   hasBackground: boolean;
+  /** The loaded tasks, for the counts beside filter values. */
+  tasks: readonly TaskRow[];
 }) {
   const { t } = useTranslation("tasks");
   const bar = useFilterBar({
@@ -100,6 +104,7 @@ export function TaskToolbar({
           onOpenChange={onFilterOpenChange}
           filters={filters}
           onToggleValue={bar.toggleValue}
+          tasks={tasks}
           includeColumn={preferences.layout === "list"}
         />
         <DisplayMenu

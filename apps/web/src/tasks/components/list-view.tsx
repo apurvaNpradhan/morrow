@@ -75,6 +75,7 @@ export function ListView({
         displayOpen={toolbar.displayOpen}
         onDisplayOpenChange={toolbar.setDisplayOpen}
         hasBackground={project.backgroundUrl !== null}
+        tasks={[...openTasks, ...closed.tasks]}
       />
       <div className="min-h-0 flex-1">
         <TaskList
