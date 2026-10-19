@@ -41,11 +41,16 @@ export function useBulkActions() {
         return false;
       }
     }
+    /** Whether the batch may go: not empty, and within the cap (said so when not). */
+    function allowed(count: number) {
+      if (count > MAX_BULK_TASKS) {
+        toast.error(t("selection.capped", { max: MAX_BULK_TASKS }));
+      }
+      return count > 0 && count <= MAX_BULK_TASKS;
+    }
     const update = (change: BulkChange) => {
       const { tasks, input } = batch();
-      if (tasks.length === 0 || tasks.length > MAX_BULK_TASKS) {
-        return Promise.resolve(false);
-      }
+      if (!allowed(tasks.length)) return Promise.resolve(false);
       return attempt(() => bulkUpdateTasks(input, change));
     };
 
@@ -61,16 +66,20 @@ export function useBulkActions() {
       removeLabel: (labelId: string) =>
         update({ type: "removeLabel", labelId }),
       archive: (archived: boolean) => update({ type: "archive", archived }),
+      /** Whether a batch of this size may go; tells the user when it is over the cap. */
+      allowed,
       /** Deletes the given tasks as one write; shows "Deleted N tasks". */
       remove: async (tasks: { id: string }[]) => {
-        const done = await attempt(() =>
-          bulkRemoveTasks({
+        if (!allowed(tasks.length)) return false;
+        let deleted = 0;
+        const done = await attempt(async () => {
+          deleted = await bulkRemoveTasks({
             projectId: project.id,
             taskIds: tasks.map((task) => task.id),
             columnById,
-          }),
-        );
-        if (done) toast.success(t("delete.bulkDone", { count: tasks.length }));
+          });
+        });
+        if (done) toast.success(t("delete.bulkDone", { count: deleted }));
         return done;
       },
     };

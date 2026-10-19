@@ -54,7 +54,6 @@ export function SelectionMenuItems({ anchor }: { anchor: Element | null }) {
             </MenuSubTrigger>
             <MenuSubPopup>
               <PriorityItems
-                value={"" as never}
                 onSelect={(priority) => void bulk.setPriority(priority)}
               />
             </MenuSubPopup>
@@ -67,7 +66,6 @@ export function SelectionMenuItems({ anchor }: { anchor: Element | null }) {
             <MenuSubPopup>
               <ColumnItems
                 columns={columns}
-                value=""
                 onSelect={(columnId) => void bulk.setColumn(columnId)}
               />
             </MenuSubPopup>
@@ -98,7 +96,6 @@ export function SelectionMenuItems({ anchor }: { anchor: Element | null }) {
                 people={people}
                 meId={meId}
                 canAssign={can.assign}
-                value={null}
                 onSelect={(assigneeId) => void bulk.setAssignee(assigneeId)}
               />
             </MenuSubPopup>

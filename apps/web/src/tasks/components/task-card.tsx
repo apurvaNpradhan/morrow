@@ -66,6 +66,7 @@ export function TaskCard({
       ? { done: task.checklistDone, total: task.checklistTotal }
       : null;
   const editable = can.edit && !frozen;
+  const selectable = editable || (can.delete && !frozen);
   const open = editable
     ? (field: "priority" | "dueDate") => (anchor: HTMLElement) =>
         openFieldPicker(task.id, field, anchor)
@@ -99,7 +100,7 @@ export function TaskCard({
         selected && "border-primary bg-accent/60",
       )}
       onClick={(event) => {
-        if (selectByClick(project.id, task.id, event)) return;
+        if (selectable && selectByClick(project.id, task.id, event)) return;
         view.openTask(task);
       }}
       onPointerDown={() => setPressed(true)}
@@ -113,7 +114,7 @@ export function TaskCard({
         }
       }}
     >
-      {editable || can.delete ? (
+      {selectable ? (
         <TaskSelectBox task={task} className="absolute end-1.5 bottom-1.5" />
       ) : null}
       {display.numbers || (display.assignees && assignee) ? (

@@ -10,7 +10,7 @@ import { useTaskView } from "./task-view-context";
  * them; picking any other puts it on all of them.
  */
 export function SelectionLabelPicker() {
-  const { project, workspace, labels, can } = useTaskView();
+  const { project, workspace, labels } = useTaskView();
   const bulk = useBulkActions();
   const tasks = useSelectedTasks(project.id);
   const states = new Map(
@@ -27,7 +27,7 @@ export function SelectionLabelPicker() {
       indeterminate={labels
         .filter((l) => states.get(l.id) === "some")
         .map((l) => l.id)}
-      canCreate={can.createLabel}
+      canCreate={false}
       onToggle={(labelId) =>
         void (states.get(labelId) === "all"
           ? bulk.removeLabel(labelId)

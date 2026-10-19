@@ -62,6 +62,7 @@ export function TaskListRow({
       ? { done: task.checklistDone, total: task.checklistTotal }
       : null;
   const editable = can.edit && !frozen;
+  const selectable = editable || (can.delete && !frozen);
   const open = editable
     ? (field: "priority" | "column" | "dueDate") => (anchor: HTMLElement) =>
         openFieldPicker(task.id, field, anchor)
@@ -83,7 +84,7 @@ export function TaskListRow({
         selected && "bg-accent/60",
       )}
       onClick={(event) => {
-        if (selectByClick(project.id, task.id, event)) return;
+        if (selectable && selectByClick(project.id, task.id, event)) return;
         view.openTask(task);
       }}
       onKeyDown={(event) => {
@@ -93,7 +94,7 @@ export function TaskListRow({
         }
       }}
     >
-      {editable || can.delete ? (
+      {selectable ? (
         <TaskSelectBox
           task={task}
           className="absolute start-1 top-1/2 -translate-y-1/2"
