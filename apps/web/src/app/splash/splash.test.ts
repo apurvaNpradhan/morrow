@@ -34,22 +34,27 @@ describe("splash colours", () => {
     ["dark", "\\.dark"],
   ])("match the %s theme tokens", (theme, selector) => {
     const background = token(selector, "background");
-    const sidebar = token(selector, "sidebar");
-    const border = token(selector, "sidebar-border");
+    const foreground = token(selector, "foreground");
+    const border = token(selector, "border");
+    const muted = token(selector, "sidebar-foreground");
+    // The splash paints one colour behind the sidebar and the page.
+    expect(token(selector, "sidebar")).toBe(background);
 
     if (theme === "light") {
       expect(splashCss).toContain(
-        `z-index: 2147483647; background: ${background};`,
+        `background: ${background}; color: ${foreground};`,
       );
-      expect(splashCss).toContain(
-        `width: 15rem; background: ${sidebar}; border-inline-end: 1px solid ${border};`,
-      );
+      expect(splashCss).toContain(`border: 1px solid ${border};`);
+      expect(splashCss).toContain(`margin: 0; color: ${muted};`);
     } else {
       expect(splashCss).toContain(
-        `#splash[data-theme="dark"] { background: ${background}; }`,
+        `#splash[data-theme="dark"] { background: ${background}; color: ${foreground}; }`,
       );
       expect(splashCss).toContain(
-        `background: ${sidebar}; border-inline-end-color: ${border};`,
+        `#splash[data-theme="dark"] i { border-color: ${border}; }`,
+      );
+      expect(splashCss).toContain(
+        `#splash[data-theme="dark"] p { color: ${muted}; }`,
       );
     }
   });
@@ -146,7 +151,7 @@ describe("splash script", () => {
 
   it("leaves the narrow-screen rule to the stylesheet", () => {
     expect(splashCss).toContain(
-      "@media (min-width: 768px) { #splash[data-sidebar] i { display: block; } }",
+      "@media (min-width: 768px) { #splash[data-sidebar] { padding-inline-start: 15rem; } #splash[data-sidebar] i { display: block; } }",
     );
   });
 });
