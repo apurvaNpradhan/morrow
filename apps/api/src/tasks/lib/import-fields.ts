@@ -65,11 +65,32 @@ export async function importFields(
     (max, row) => (max === null || row.position > max ? row.position : max),
     null,
   );
-  const droppedFields = new Map<string, number>();
+  // What could not be matched or created, with how many Tasks named it. A
+  // declared Field or option no Task uses is still reported, with a count of 0.
+  const droppedFields = new Map<string, { field: string; count: number }>();
   const droppedOptions = new Map<
     string,
     { field: string; option: string; count: number }
   >();
+
+  function noteFieldDropped(field: string, tasks: 0 | 1) {
+    const key = normalizeFieldName(field);
+    const known = droppedFields.get(key);
+    droppedFields.set(key, {
+      field: known?.field ?? field,
+      count: (known?.count ?? 0) + tasks,
+    });
+  }
+
+  function noteOptionDropped(field: Working, option: string, tasks: 0 | 1) {
+    const key = `${field.id}\u0000${normalizeFieldName(option)}`;
+    const known = droppedOptions.get(key);
+    droppedOptions.set(key, {
+      field: field.name,
+      option: known?.option ?? option,
+      count: (known?.count ?? 0) + tasks,
+    });
+  }
 
   function findOrCreateField(name: string, type = "single_choice") {
     const known = byName.get(normalizeFieldName(name));
@@ -130,10 +151,20 @@ export async function importFields(
   }
 
   for (const definition of declared) {
-    const field = findOrCreateField(definition.name.trim(), definition.type);
-    if (!field) continue;
+    const name = definition.name.trim();
+    const field = findOrCreateField(name, definition.type);
+    if (!field) {
+      if (name !== "") noteFieldDropped(name, 0);
+      continue;
+    }
     for (const option of definition.options) {
-      findOrCreateOption(field, option.name.trim(), option.color);
+      const optionName = option.name.trim();
+      if (
+        !findOrCreateOption(field, optionName, option.color) &&
+        optionName !== ""
+      ) {
+        noteOptionDropped(field, optionName, 0);
+      }
     }
   }
 
@@ -152,7 +183,7 @@ export async function importFields(
       const optionName = rawOption.trim();
       const field = findOrCreateField(fieldName);
       if (!field) {
-        droppedFields.set(fieldName, (droppedFields.get(fieldName) ?? 0) + 1);
+        noteFieldDropped(fieldName, 1);
         continue;
       }
       const option = findOrCreateOption(
@@ -161,13 +192,7 @@ export async function importFields(
         colorOf(fieldName, optionName),
       );
       if (!option) {
-        const key = `${field.id}\u0000${normalizeFieldName(optionName)}`;
-        const known = droppedOptions.get(key);
-        droppedOptions.set(key, {
-          field: field.name,
-          option: optionName,
-          count: (known?.count ?? 0) + 1,
-        });
+        noteOptionDropped(field, optionName, 1);
         continue;
       }
       values[field.id] = option.id;
@@ -198,10 +223,9 @@ export async function importFields(
 
   function warnings(): ImportWarning[] {
     return [
-      ...[...droppedFields].map(([field, count]): ImportWarning => ({
+      ...[...droppedFields.values()].map((dropped): ImportWarning => ({
         kind: "field_dropped",
-        field,
-        count,
+        ...dropped,
       })),
       ...[...droppedOptions.values()].map((dropped): ImportWarning => ({
         kind: "option_dropped",

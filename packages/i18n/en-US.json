@@ -1610,7 +1610,9 @@
 				"fieldDropped_one": "The field “{{field}}” was left off {{count}} task: you can't create fields.",
 				"fieldDropped_other": "The field “{{field}}” was left off {{count}} tasks: you can't create fields.",
 				"optionDropped_one": "The option “{{option}}” of “{{field}}” was left off {{count}} task: you can't create options.",
-				"optionDropped_other": "The option “{{option}}” of “{{field}}” was left off {{count}} tasks: you can't create options."
+				"optionDropped_other": "The option “{{option}}” of “{{field}}” was left off {{count}} tasks: you can't create options.",
+				"fieldDroppedUnused": "The field “{{field}}” was not imported: you can't create fields.",
+				"optionDroppedUnused": "The option “{{option}}” of “{{field}}” was not imported: you can't create options."
 			}
 		},
 		"preferences": {
