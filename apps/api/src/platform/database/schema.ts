@@ -29,6 +29,7 @@ export {
   taskDescriptionTable,
   taskEventTable,
   taskLinkTable,
+  taskRelationTable,
   taskTable,
 } from "#api/tasks/tables";
 export { assetTable } from "#api/storage/tables";

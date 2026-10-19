@@ -1,4 +1,9 @@
-import { colorHex, TASK_PRIORITIES } from "@morrow/sync-schemas";
+import {
+  colorHex,
+  RELATION_DIRECTIONS,
+  RELATION_TYPES,
+  TASK_PRIORITIES,
+} from "@morrow/sync-schemas";
 import { z } from "zod";
 
 export const txid = z
@@ -79,6 +84,10 @@ export const taskListItem = z.object({
   title: z.string(),
   description: z.string(),
   columnId: z.string(),
+  parentId: z.string().nullable(),
+  subtaskDone: z.number(),
+  subtaskTotal: z.number(),
+  openBlockerCount: z.number(),
   columnName: z.string(),
   category: z.string(),
   priority: z.enum(TASK_PRIORITIES),
@@ -99,6 +108,10 @@ export const taskSearchResult = z.object({
   tasks: z.array(
     z.object({
       ticketId: z.string(),
+      parentTicketId: z.string().nullable(),
+      subtaskDone: z.number(),
+      subtaskTotal: z.number(),
+      openBlockerCount: z.number(),
       projectKey: z.string(),
       title: z.string(),
       description: z.string(),
@@ -159,6 +172,10 @@ export const exportDocument = z.object({
 export const taskDetail = z.object({
   id: z.string(),
   ticketId: z.string(),
+  parent: z.object({ ticketId: z.string(), title: z.string() }).nullable(),
+  subtaskDone: z.number(),
+  subtaskTotal: z.number(),
+  openBlockerCount: z.number(),
   title: z.string(),
   description: z.string(),
   column: z.string(),
@@ -172,6 +189,24 @@ export const taskDetail = z.object({
   labels: z.array(z.object({ name: z.string(), color: colorHex })),
   links: z.array(
     z.object({ id: z.string(), url: z.string(), title: z.string().nullable() }),
+  ),
+  relations: z.array(
+    z.object({
+      id: z.string(),
+      type: z.enum(RELATION_TYPES),
+      direction: z
+        .enum(RELATION_DIRECTIONS)
+        .describe("outgoing: this task blocks / is the duplicate."),
+      kind: z.enum([
+        "blocks",
+        "blocked_by",
+        "related",
+        "duplicate_of",
+        "duplicated_by",
+      ]),
+      ticketId: z.string().describe("The other task's."),
+      title: z.string().describe("The other task's."),
+    }),
   ),
   comments: z.array(
     z.object({

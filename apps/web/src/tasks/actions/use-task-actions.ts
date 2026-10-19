@@ -47,6 +47,9 @@ export function useTaskActions() {
         attempt(() => updateTask(task.id, { dueDate })),
       setAssignee: (task: TaskRow, assigneeId: string | null) =>
         attempt(() => updateTask(task.id, { assigneeId })),
+      /** `null` makes the task a top-level one again. */
+      setParent: (task: TaskRow, parentId: string | null) =>
+        attempt(() => updateTask(task.id, { parentId })),
       /** Sets a Field's value to an option id, or clears it with null. */
       setFieldValue: (
         task: TaskRow,

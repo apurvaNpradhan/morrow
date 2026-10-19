@@ -5,7 +5,11 @@ import { rethrowViolation } from "#api/projects/errors";
 import { assertValidPosition } from "#api/projects/lib/position";
 import { lockProject } from "#api/projects/lib/lock-project";
 import { projectColumnTable } from "#api/projects/tables";
-import { taskTable } from "#api/tasks/index";
+import {
+  refreshBlockedCounts,
+  refreshSubtaskCounts,
+  taskTable,
+} from "#api/tasks/index";
 import { findColumn } from "../lib/find-column";
 import { assertNotLastRequiredColumn } from "../lib/required-columns";
 
@@ -34,14 +38,23 @@ export async function moveColumn(
         .set({ category: target.category, position: target.position })
         .where(eq(projectColumnTable.id, columnId));
       if (column.category !== target.category) {
-        await tx
+        const moved = await tx
           .update(taskTable)
           .set({
             completedAt: isClosedCategory(target.category)
               ? sql`coalesce(${taskTable.completedAt}, now() AT TIME ZONE 'utc')`
               : null,
           })
-          .where(eq(taskTable.columnId, columnId));
+          .where(eq(taskTable.columnId, columnId))
+          .returning({ id: taskTable.id, parentId: taskTable.parentId });
+        await refreshSubtaskCounts(
+          tx,
+          moved.map((task) => task.parentId),
+        );
+        await refreshBlockedCounts(
+          tx,
+          moved.map((task) => task.id),
+        );
       }
     });
     return { txid };
