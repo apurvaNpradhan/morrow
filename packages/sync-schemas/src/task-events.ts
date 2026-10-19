@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
+import { RELATION_DIRECTIONS, RELATION_TYPES } from "./relations.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
 /**
@@ -21,6 +22,12 @@ const labelRef = z.object({
   color: colorHex,
 });
 const none = z.object({});
+// The other Task's ticket id is a snapshot; the direction is as this Task sees it.
+const relationData = z.object({
+  type: z.enum(RELATION_TYPES),
+  direction: z.enum(RELATION_DIRECTIONS),
+  ticketId: z.string(),
+});
 
 function event<Type extends string, Data extends z.ZodObject>(
   type: Type,
@@ -57,6 +64,8 @@ export const taskEventSchema = z.discriminatedUnion("type", [
   ),
   event("subtask_added", z.object({ ticketId: z.string() })),
   event("subtask_removed", z.object({ ticketId: z.string() })),
+  event("relation_added", relationData),
+  event("relation_removed", relationData),
 ]);
 
 export type TaskEvent = z.infer<typeof taskEventSchema>;

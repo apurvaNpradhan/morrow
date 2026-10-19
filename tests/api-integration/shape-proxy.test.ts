@@ -252,6 +252,33 @@ describe("shape proxy", () => {
     expect(upstream.searchParams.get("params[1]")).toBe(user.id);
   });
 
+  it("serves the relations of the user's workspaces only, never widened", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await app.request(
+      "/api/shapes/task-relations?" +
+        new URLSearchParams({
+          offset: "-1",
+          table: "user",
+          columns: "id,email",
+          where: "true",
+          "params[1]": "someone-else",
+        }),
+    );
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("task_relation");
+    expect(upstream.searchParams.get("columns")).toBe(
+      "id,workspace_id,type,source_task_id,target_task_id,created_by,created_at",
+    );
+    expect(upstream.searchParams.get("where")).toContain(
+      "workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",
+    );
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
   it("serves only pending invitations of the user's workspaces", async () => {
     const { user } = await createWorkspaceMember();
     mockAuthenticatedSession(user);

@@ -139,6 +139,7 @@ describe("MCP endpoint", () => {
       "manage_column",
       "manage_label",
       "manage_link",
+      "manage_relation",
       "move_task",
       "update_project",
       "update_tasks",
@@ -387,6 +388,91 @@ describe("MCP endpoint", () => {
     ]);
     const after = await run("get_task", { projectId, ticketId: "MOR-1" });
     expect(after.body.subtaskTotal).toBe(0);
+  });
+
+  it("adds, reports and removes relations across projects, refusing loops", async () => {
+    const owner = await signUp("Owner");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Links", slug: "relation-writes", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const run = async (name: string, args: Record<string, unknown>) => {
+      const response = await call(owner.token, name, {
+        workspaceId: workspace.id,
+        ...args,
+      });
+      return {
+        failed: response.result?.isError === true,
+        body: JSON.parse(response.result!.content[0].text),
+      };
+    };
+    const { body: first } = await run("create_project", {
+      name: "Morrow",
+      key: "MOR",
+    });
+    const { body: second } = await run("create_project", {
+      name: "Other",
+      key: "OTH",
+    });
+    await run("create_tasks", {
+      projectId: first.projectId,
+      items: [{ title: "Blocker" }, { title: "Twin" }],
+    });
+    await run("create_tasks", {
+      projectId: second.projectId,
+      items: [{ title: "Waiting" }],
+    });
+
+    const added = await run("manage_relation", {
+      action: "add",
+      type: "blocks",
+      ticketId: "MOR-1",
+      otherTicketId: "OTH-1",
+    });
+    await run("manage_relation", {
+      action: "add",
+      type: "related",
+      ticketId: "OTH-1",
+      otherTicketId: "MOR-2",
+    });
+    expect(added.failed).toBe(false);
+
+    const waiting = await run("get_task", { ticketId: "OTH-1" });
+    expect(waiting.body.relations).toMatchObject([
+      { kind: "blocked_by", ticketId: "MOR-1", title: "Blocker" },
+      { kind: "related", ticketId: "MOR-2", title: "Twin" },
+    ]);
+    const loop = await run("manage_relation", {
+      action: "add",
+      type: "blocks",
+      ticketId: "OTH-1",
+      otherTicketId: "MOR-1",
+    });
+    expect(loop.failed).toBe(true);
+    expect(loop.body.code).toBe("RELATION_CYCLE");
+
+    const removed = await run("manage_relation", {
+      action: "remove",
+      type: "blocks",
+      ticketId: "MOR-1",
+      otherTicketId: "OTH-1",
+    });
+    expect(removed.failed).toBe(false);
+    const after = await run("get_task", { ticketId: "OTH-1" });
+    expect(after.body.relations).toMatchObject([{ kind: "related" }]);
+    const missing = await run("manage_relation", {
+      action: "remove",
+      type: "blocks",
+      ticketId: "MOR-1",
+      otherTicketId: "OTH-1",
+    });
+    expect(missing.failed).toBe(true);
   });
 
   it("creates and changes tasks in batches, creating missing labels", async () => {

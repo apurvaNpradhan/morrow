@@ -1,5 +1,6 @@
-import { parseTicketId, ticketId } from "@morrow/sync-schemas";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { parseTicketId, relationKind, ticketId } from "@morrow/sync-schemas";
+import { alias } from "drizzle-orm/pg-core";
+import { and, asc, eq, or, sql } from "drizzle-orm";
 import { labelTable } from "#api/labels/index";
 import { db, schema } from "#api/platform/database/index";
 import {
@@ -12,6 +13,7 @@ import {
   taskCommentTable,
   taskDescriptionTable,
   taskLinkTable,
+  taskRelationTable,
   taskTable,
 } from "#api/tasks/tables";
 
@@ -106,6 +108,34 @@ export async function getTask(
     .where(eq(taskLinkTable.taskId, task.id))
     .orderBy(asc(taskLinkTable.createdAt), asc(taskLinkTable.id));
 
+  // The other end of each relation, which may be in another Project.
+  const other = alias(taskTable, "other");
+  const relationRows = await db
+    .select({
+      id: taskRelationTable.id,
+      type: taskRelationTable.type,
+      outgoing: eq(taskRelationTable.sourceTaskId, task.id),
+      number: other.number,
+      title: other.title,
+      key: projectTable.key,
+    })
+    .from(taskRelationTable)
+    .innerJoin(
+      other,
+      eq(
+        other.id,
+        sql`CASE WHEN ${taskRelationTable.sourceTaskId} = ${task.id} THEN ${taskRelationTable.targetTaskId} ELSE ${taskRelationTable.sourceTaskId} END`,
+      ),
+    )
+    .innerJoin(projectTable, eq(projectTable.id, other.projectId))
+    .where(
+      or(
+        eq(taskRelationTable.sourceTaskId, task.id),
+        eq(taskRelationTable.targetTaskId, task.id),
+      ),
+    )
+    .orderBy(asc(taskRelationTable.createdAt), asc(taskRelationTable.id));
+
   return {
     id: task.id,
     ticketId: ticketId(project.key, task.number),
@@ -131,6 +161,17 @@ export async function getTask(
       .filter((label) => task.labelIds.includes(label.id))
       .map(({ name, color }) => ({ name, color })),
     links,
+    relations: relationRows.map((row) => {
+      const direction = row.outgoing ? "outgoing" : "incoming";
+      return {
+        id: row.id,
+        type: row.type,
+        direction,
+        kind: relationKind(row.type, direction),
+        ticketId: ticketId(row.key, row.number),
+        title: row.title,
+      } as const;
+    }),
     comments: comments.map((comment) => ({
       id: comment.id,
       author:

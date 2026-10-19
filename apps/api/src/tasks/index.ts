@@ -2,6 +2,8 @@ export { tasksRouter } from "./procedures";
 export { commentsRouter } from "./comments/procedures";
 export { linksRouter } from "./links/procedures";
 export { linksMcpTools } from "./links/mcp-tools";
+export { relationsRouter } from "./relations/procedures";
+export { relationsMcpTools } from "./relations/mcp-tools";
 export { tasksShapes } from "./shapes";
 export { tasksMcpTools } from "./mcp-tools";
 export { commentsMcpTools } from "./comments/mcp-tools";

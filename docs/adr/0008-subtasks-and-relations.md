@@ -22,6 +22,18 @@ Large work could not be broken into Tasks, and nothing recorded that one Task wa
 
 **MCP.** `create_tasks` and `update_tasks` take `parentId` as a ticket id (`null` clears); `get_task` returns the parent and counts; `list_tasks` returns the parent and counts.
 
+## Decision: relations
+
+**One table, synced.** `task_relation` (`blocks`, `related`, `duplicate`; source and target tasks cascade on delete; `workspace_id` scopes the shape by membership). `blocks`: the source blocks the target. `duplicate`: the source is a duplicate of the target. `related` is stored with the ids sorted, so a pair has one row; the Procedure normalises the order. A unique index on (type, source, target) refuses repeats (`RELATION_EXISTS`, no SELECT first); CHECKs refuse self-relations.
+
+**Across Projects.** Both tasks must be in the caller's Workspace (`RELATION_TASK_NOT_IN_WORKSPACE`). Both Projects are locked in id order, so an archived Project refuses the write and two relations cannot deadlock.
+
+**`blocks` loops.** Adding a `blocks` relation takes a Workspace-scoped `pg_advisory_xact_lock`; a recursive CTE refuses it (`RELATION_CYCLE`) if the target already reaches the source through `blocks` edges, since a loop can run through Projects.
+
+**Writes.** `relations.add` and `relations.delete` (`task: update`) return `{ txid }`. The history gets `relation_added` / `relation_removed` on both tasks, each with the type, the direction as that task sees it and the other task's ticket id. Duplicating a task copies no relations; deleting a task removes its relations without history on the other task.
+
+**MCP.** `manage_relation` (add, remove) by ticket id; `get_task` returns each relation with the other task's ticket id and title.
+
 ## Not enforced
 
 A parent can close with open subtasks and nothing moves when the last subtask closes.

@@ -7,6 +7,7 @@ import {
   CirclePlus,
   Copy,
   Flag,
+  Link2,
   ListTree,
   Pencil,
   Tag,
@@ -68,6 +69,9 @@ export function TaskEventIcon({
     case "subtask_added":
     case "subtask_removed":
       return <ListTree aria-hidden="true" className={icon} />;
+    case "relation_added":
+    case "relation_removed":
+      return <Link2 aria-hidden="true" className={icon} />;
     case "duplicated":
       return <Copy aria-hidden="true" className={icon} />;
   }
