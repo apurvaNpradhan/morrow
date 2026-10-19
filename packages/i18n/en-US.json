@@ -1604,6 +1604,20 @@
 			"parentCleared": "removed this from {{from}}",
 			"subtaskAdded": "added the subtask {{ticket}}",
 			"subtaskRemoved": "removed the subtask {{ticket}}",
+			"relationAdded": {
+				"blocks": "marked this as blocking {{ticket}}",
+				"blocked_by": "marked this as blocked by {{ticket}}",
+				"related": "linked this to {{ticket}}",
+				"duplicate_of": "marked this as a duplicate of {{ticket}}",
+				"duplicated_by": "marked this as duplicated by {{ticket}}"
+			},
+			"relationRemoved": {
+				"blocks": "removed the block on {{ticket}}",
+				"blocked_by": "removed the block by {{ticket}}",
+				"related": "unlinked this from {{ticket}}",
+				"duplicate_of": "removed the duplicate link to {{ticket}}",
+				"duplicated_by": "removed the duplicate link from {{ticket}}"
+			},
 			"more_one": "{{count}} more change",
 			"more_other": "{{count}} more changes"
 		}

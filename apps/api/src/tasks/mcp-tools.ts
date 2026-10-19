@@ -130,7 +130,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "get_task",
     description:
-      "Get one task by ticket id (for example MOR-12): its parent (ticket id and title), subtask counts (done of total, archived left out, canceled counted as done), description, labels (names and colours), external links (id, url, title) and comments, oldest first, with the fields list_tasks gives.",
+      "Get one task by ticket id (for example MOR-12): its parent (ticket id and title), subtask counts (done of total, archived left out, canceled counted as done), description, labels (names and colours), external links (id, url, title), relations (id, type, direction, kind: blocks, blocked_by, related, duplicate_of or duplicated_by, and the other task's ticket id and title) and comments, oldest first, with the fields list_tasks gives.",
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       projectId: z.string().trim().min(1),

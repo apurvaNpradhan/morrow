@@ -24,6 +24,12 @@ const CODES = {
   TOO_MANY_LINKS: "CONFLICT",
   PARENT_NOT_IN_PROJECT: "BAD_REQUEST",
   PARENT_CYCLE: "BAD_REQUEST",
+  INVALID_RELATION_ID: "BAD_REQUEST",
+  RELATION_ID_TAKEN: "CONFLICT",
+  RELATION_EXISTS: "CONFLICT",
+  RELATION_SELF: "BAD_REQUEST",
+  RELATION_TASK_NOT_IN_WORKSPACE: "BAD_REQUEST",
+  RELATION_CYCLE: "BAD_REQUEST",
 } as const;
 
 export type TaskErrorCode = keyof typeof CODES;
@@ -41,6 +47,9 @@ export const commentNotFound = () =>
 export const linkNotFound = () =>
   new ORPCError("NOT_FOUND", { message: "Link not found" });
 
+export const relationNotFound = () =>
+  new ORPCError("NOT_FOUND", { message: "Relation not found" });
+
 /** Turns the unique-index violations a task write can hit into their typed refusals. */
 export function rethrowTaskViolation(error: unknown): never {
   const violated = violatedConstraint(error);
@@ -49,6 +58,10 @@ export function rethrowTaskViolation(error: unknown): never {
   if (violated === "task_link_pkey") throw taskError("LINK_ID_TAKEN");
   if (violated === "task_link_task_url_uidx") {
     throw taskError("LINK_URL_TAKEN");
+  }
+  if (violated === "task_relation_pkey") throw taskError("RELATION_ID_TAKEN");
+  if (violated === "task_relation_type_source_target_uidx") {
+    throw taskError("RELATION_EXISTS");
   }
   if (violated === "task_column_position_uidx") {
     throw projectError("POSITION_TAKEN");

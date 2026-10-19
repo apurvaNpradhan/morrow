@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
+import { RELATION_TYPES } from "./relations.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
 export * from "./comments.js";
@@ -7,6 +8,7 @@ export * from "./task-events.js";
 export * from "./labels.js";
 export * from "./links.js";
 export * from "./projects.js";
+export * from "./relations.js";
 export * from "./search.js";
 export * from "./tasks.js";
 
@@ -245,3 +247,22 @@ export const taskEventsShape = shape(
 );
 
 export type TaskEventRow = z.infer<typeof taskEventsShape.schema>;
+
+/**
+ * A relation between two Tasks of a Workspace (possibly of different
+ * Projects). Read on demand with a `where` on the Task it concerns.
+ */
+export const taskRelationsShape = shape(
+  "task-relations",
+  z.object({
+    id: z.string(),
+    workspaceId: z.string(),
+    type: z.enum(RELATION_TYPES),
+    sourceTaskId: z.string(),
+    targetTaskId: z.string(),
+    createdBy: z.string().nullable(),
+    createdAt: z.date(),
+  }),
+);
+
+export type TaskRelationRow = z.infer<typeof taskRelationsShape.schema>;

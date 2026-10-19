@@ -1,4 +1,4 @@
-import type { TaskEvent } from "@morrow/sync-schemas";
+import { relationKind, type TaskEvent } from "@morrow/sync-schemas";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -145,5 +145,14 @@ function sentence(t: TFunction, event: TaskEvent, names: Names): string {
       return t("history.subtaskAdded", { ticket: event.data.ticketId });
     case "subtask_removed":
       return t("history.subtaskRemoved", { ticket: event.data.ticketId });
+    case "relation_added":
+    case "relation_removed": {
+      const { type, direction, ticketId } = event.data;
+      const verb =
+        event.type === "relation_added" ? "relationAdded" : "relationRemoved";
+      return t(`history.${verb}.${relationKind(type, direction)}`, {
+        ticket: ticketId,
+      });
+    }
   }
 }
