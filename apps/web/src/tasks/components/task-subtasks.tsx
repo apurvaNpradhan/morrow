@@ -1,8 +1,10 @@
 import { TASK_TITLE_MAX, type TaskRow } from "@morrow/sync-schemas";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
 import { toast } from "@/design-system/toast";
+import { Button } from "@/design-system/ui/button";
 import { Input } from "@/design-system/ui/input";
 import { createTask } from "../actions/task-actions";
 import { displayTicketId } from "../lib/task-links";
@@ -20,6 +22,7 @@ export function TaskSubtasks({ task }: { task: TaskRow }) {
   const { project, columns, columnById, meId, can, frozen } = useTaskView();
   const subtasks = useSubtasks(task.id);
   const [title, setTitle] = useState("");
+  const [adding, setAdding] = useState(false);
   const editable = can.create && !frozen;
 
   if (subtasks.length === 0 && !editable) return null;
@@ -46,14 +49,26 @@ export function TaskSubtasks({ task }: { task: TaskRow }) {
 
   return (
     <section aria-label={t("subtasks.title")} className="space-y-1.5">
-      <h2 className="text-xs font-medium text-muted-foreground">
-        {t("subtasks.title")}
-        {task.subtaskTotal > 0 ? (
-          <span className="ms-2 tabular-nums">
-            {task.subtaskDone}/{task.subtaskTotal}
-          </span>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-medium text-muted-foreground">
+          {t("subtasks.title")}
+          {task.subtaskTotal > 0 ? (
+            <span className="ms-2 tabular-nums">
+              {task.subtaskDone}/{task.subtaskTotal}
+            </span>
+          ) : null}
+        </h2>
+        {editable && !adding ? (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={t("subtasks.add")}
+            onClick={() => setAdding(true)}
+          >
+            <Plus aria-hidden="true" />
+          </Button>
         ) : null}
-      </h2>
+      </div>
       {subtasks.length > 0 ? (
         <ul className="space-y-0.5">
           {subtasks.map((subtask) => (
@@ -66,7 +81,7 @@ export function TaskSubtasks({ task }: { task: TaskRow }) {
           ))}
         </ul>
       ) : null}
-      {editable ? (
+      {editable && adding ? (
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -79,7 +94,17 @@ export function TaskSubtasks({ task }: { task: TaskRow }) {
             maxLength={TASK_TITLE_MAX}
             placeholder={t("subtasks.placeholder")}
             aria-label={t("subtasks.add")}
+            autoFocus
             onChange={(event) => setTitle(event.target.value)}
+            onBlur={() => {
+              if (title.trim() === "") setAdding(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "Escape") return;
+              event.stopPropagation();
+              setTitle("");
+              setAdding(false);
+            }}
           />
         </form>
       ) : null}

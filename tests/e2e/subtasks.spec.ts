@@ -38,6 +38,7 @@ test("subtasks: add inline, progress with Done collapsed, set and clear a parent
   // Add a subtask by typing its title; it starts in To Do and the parent counts it.
   await admin.goto(`/${slug}/tasks/PLN-1`);
   const sheet = sheetOf(admin);
+  await sheet.getByRole("button", { name: "Add a sub-task" }).click();
   await sheet.getByLabel("Add a sub-task", { exact: true }).fill("Write tests");
   await sheet.getByLabel("Add a sub-task", { exact: true }).press("Enter");
   const subtasks = sheet.getByRole("region", { name: "Sub-tasks" });
