@@ -53,7 +53,10 @@ export async function updateTask(
             .where(eq(taskDescriptionTable.taskId, taskId));
     // `updatedAt` always changes, so the write reaches sync even when the
     // value did not.
-    await tx.update(taskTable).set(fields).where(eq(taskTable.id, taskId));
+    await tx
+      .update(taskTable)
+      .set({ ...fields, updatedAt: new Date() })
+      .where(eq(taskTable.id, taskId));
     if (description !== undefined) {
       await saveDescription(tx, projectId, taskId, description);
     }
