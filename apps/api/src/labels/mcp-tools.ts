@@ -8,6 +8,7 @@ import { labelColor, labelName } from "./schemas";
 export const labelsMcpTools = [
   mcpTool({
     name: "list_labels",
+    readOnly: true,
     description:
       "List the labels of a workspace in their order, with name and colour. Tasks carry these labels.",
     inputSchema: z.object({ workspaceId: z.string().trim().min(1) }),

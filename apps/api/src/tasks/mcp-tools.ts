@@ -106,6 +106,7 @@ async function runBatch<Item, Result extends object>(
 export const tasksMcpTools = [
   mcpTool({
     name: "list_tasks",
+    readOnly: true,
     description:
       'List tasks in board order. Without projectId it lists every project of the workspace (each task then carries its project key). Filter by assignee ("me" or an email), label name, column name (needs projectId), priority, state (open or closed), text in title or description, and archived state. Each task carries its custom Field values by name when it has any. Descriptions are left out unless withDescription is true. At most limit tasks (default 50, max 200); truncated says when more matched, so narrow the query or raise limit.',
     inputSchema: z.object({
@@ -158,6 +159,7 @@ export const tasksMcpTools = [
   }),
   mcpTool({
     name: "get_task",
+    readOnly: true,
     description:
       "Get one task by ticket id (for example MOR-12): its parent (ticket id and title), subtask counts (done of total, archived left out, canceled counted as done), description, labels (names and colours), custom Field values (option name by Field name), external links (id, url, title), relations (id, type, direction, kind: blocks, blocked_by, related, duplicate_of or duplicated_by, and the other task's ticket id and title) and comments, oldest first, with the fields list_tasks gives.",
     inputSchema: z.object({
