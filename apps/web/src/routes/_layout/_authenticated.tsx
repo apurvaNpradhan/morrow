@@ -16,6 +16,12 @@ import {
   workspaceCollection,
   WorkspaceError,
 } from "@/workspace";
+import { loadSyncedCollection } from "@/app/sync/synced-collections";
+import {
+  localPersistence,
+  localDatabaseWiped,
+} from "@/app/sync/local-database";
+import { readOwnerStamp, writeOwnerStamp } from "@/app/sync/owner-stamp";
 import { loadSession } from "@/auth";
 import { needsOnboarding } from "@/onboarding";
 import { getOnboardingReturnTo } from "@/onboarding";
@@ -46,6 +52,12 @@ export const Route = createFileRoute("/_layout/_authenticated")({
         },
       });
     }
+    // This page wiped its local database (another account signed in, or a
+    // session ended): its collections cannot start again, a new page can.
+    if (session && localDatabaseWiped()) {
+      window.location.assign(location.href);
+      return new Promise<never>(() => {});
+    }
     // Onboarding only guides the web app; an unknown session never sends
     // anyone into it, and the API does not enforce it.
     if (session && needsOnboarding(session.user, location.pathname)) {
@@ -67,13 +79,16 @@ export const Route = createFileRoute("/_layout/_authenticated")({
         projectColumnCollection,
         projectFieldCollection,
       ]) {
-        void collection.preload();
+        void loadSyncedCollection(collection);
       }
       await Promise.all([
-        workspaceCollection.preload(),
-        workspaceMemberCollection.preload(),
-        myInvitationCollection.preload(),
+        loadSyncedCollection(workspaceCollection),
+        loadSyncedCollection(workspaceMemberCollection),
+        loadSyncedCollection(myInvitationCollection),
       ]);
+      // The first sync as this user is done: from now on this browser's
+      // database is theirs and the next boot renders from it.
+      if (localPersistence && !readOwnerStamp()) writeOwnerStamp(session.user);
     }
     return { session, sessionError };
   },

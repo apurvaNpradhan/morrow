@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { Route } from "./_authenticated";
 
 import { queryClient } from "@/app/query-client";
-import { forgetSession } from "@/auth/lib/session";
+import { forgetSession, seedSessionFromOwnerStamp } from "@/auth/lib/session";
+import { writeOwnerStamp } from "@/app/sync/owner-stamp";
 const getSession = vi.fn();
 const handleUnauthorized = vi.hoisted(() => vi.fn());
 vi.mock("@/app/lib/http-error", () => ({ handleUnauthorized }));
@@ -47,6 +48,7 @@ const finished = { user: { id: "u1", onboardingCompletedAt: new Date() } };
 afterEach(() => {
   vi.clearAllMocks();
   forgetSession();
+  localStorage.clear();
 });
 
 describe("authenticated layout guard", () => {
@@ -119,6 +121,43 @@ describe("authenticated layout guard", () => {
     await expect(
       beforeLoad({ location: { href: "/acme", pathname: "/acme" } }),
     ).resolves.toMatchObject({ session: finished });
+  });
+
+  describe("on a boot with an owner stamp", () => {
+    const location = { href: "/acme", pathname: "/acme" };
+
+    it("renders from the stamped user without waiting on the session", async () => {
+      writeOwnerStamp({ id: "u1", onboardingCompletedAt: "2026-01-01" });
+      seedSessionFromOwnerStamp();
+      getSession.mockReturnValue(new Promise(() => {}));
+      await expect(beforeLoad({ location })).resolves.toMatchObject({
+        session: { user: { id: "u1" } },
+        sessionError: false,
+      });
+    });
+
+    it("sends the user to sign-in when the session turns out to be gone", async () => {
+      writeOwnerStamp({ id: "u1", onboardingCompletedAt: "2026-01-01" });
+      seedSessionFromOwnerStamp();
+      getSession.mockResolvedValue({ data: null });
+      await beforeLoad({ location });
+      await vi.waitFor(() => expect(handleUnauthorized).toHaveBeenCalled());
+    });
+  });
+
+  describe("without an owner stamp", () => {
+    it("waits for the session", async () => {
+      let answer: (value: unknown) => void = () => {};
+      getSession.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+      const settled = vi.fn();
+      void beforeLoad({
+        location: { href: "/acme", pathname: "/acme" },
+      }).then(settled);
+      await Promise.resolve();
+      expect(settled).not.toHaveBeenCalled();
+      answer({ data: finished });
+      await vi.waitFor(() => expect(settled).toHaveBeenCalled());
+    });
   });
 
   describe("with a cached session", () => {
