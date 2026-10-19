@@ -61,9 +61,11 @@ export function getSlugIssue(slug: string): WorkspaceSlugIssue | null {
   return isReservedWorkspaceSlug(slug) ? "reserved" : null;
 }
 
-/** Suggests a slug from a workspace name. Never adds suffixes; may return "". */
+/** Suggests a slug from a workspace name, folding accents to ASCII. Never adds suffixes; may return "". */
 export function createDefaultSlug(name: string): string {
   return name
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+/, "")
