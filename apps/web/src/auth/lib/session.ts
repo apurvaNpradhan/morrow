@@ -1,4 +1,7 @@
 import { handleUnauthorized } from "@/app/lib/http-error";
+import { localDatabaseWiped } from "@/app/sync/local-database";
+import { readOwnerStamp, writeOwnerStamp } from "@/app/sync/owner-stamp";
+import { cleanupSyncedCollections } from "@/app/sync/synced-collections";
 import { queryClient } from "@/app/query-client";
 import { authClient } from "./auth-client";
 
@@ -31,13 +34,27 @@ type Session = Awaited<ReturnType<typeof sessionQuery.queryFn>>;
  */
 export async function loadSession(): Promise<Session> {
   const cached = queryClient.getQueryData<Session>(SESSION_KEY);
-  if (!cached) return queryClient.fetchQuery(sessionQuery);
+  if (!cached) {
+    const session = await queryClient.fetchQuery(sessionQuery);
+    // The local database belongs to the user in the owner stamp; anyone else
+    // signing in on this browser starts from an empty one.
+    const stamp = readOwnerStamp();
+    if (stamp && stamp.userId !== session?.user.id) {
+      void cleanupSyncedCollections();
+    } else if (stamp && session) {
+      writeOwnerStamp(session.user);
+    }
+    return session;
+  }
   void queryClient
     .fetchQuery(sessionQuery)
     .then((fresh) => {
       if (fresh?.user.id !== cached.user.id) {
         forgetSession();
         handleUnauthorized();
+      } else if (readOwnerStamp()) {
+        // Keep the stamp's copy of the user current (name, onboarding state).
+        writeOwnerStamp(fresh.user);
       }
     })
     .catch(() => {
@@ -49,4 +66,21 @@ export async function loadSession(): Promise<Session> {
 /** Drops the cached session; call after anything that changes the user or session. */
 export function forgetSession() {
   queryClient.removeQueries({ queryKey: SESSION_KEY });
+}
+
+/**
+ * On a boot whose browser holds a signed-in user's database, the session cache
+ * starts from the owner stamp's copy of that user, so the app renders before
+ * the network confirms the session. The first `loadSession` then refreshes it
+ * in the background and treats a refusal like a 401.
+ */
+export function seedSessionFromOwnerStamp() {
+  const stamp = readOwnerStamp();
+  if (!stamp || localDatabaseWiped()) return;
+  if (queryClient.getQueryData(SESSION_KEY)) return;
+  queryClient.setQueryData(
+    SESSION_KEY,
+    { user: stamp.user, session: null },
+    { updatedAt: 0 },
+  );
 }

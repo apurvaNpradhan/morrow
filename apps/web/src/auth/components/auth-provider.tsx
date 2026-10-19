@@ -7,6 +7,7 @@ import {
 } from "react";
 import { authClient } from "@/auth/lib/auth-client";
 import { forgetSession } from "@/auth/lib/session";
+import { readOwnerStamp } from "@/app/sync/owner-stamp";
 import type { User } from "@/app/lib/user";
 import { LoadingSkeleton } from "@/design-system/ui/loading-skeleton";
 
@@ -45,14 +46,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [error]);
 
-  if (isPending && !hasLoadedOnce.current) {
+  // A browser that holds a signed-in user's database renders from the owner
+  // stamp's copy of the user while the session is checked.
+  const stamped = isPending ? readOwnerStamp() : null;
+  if (isPending && !hasLoadedOnce.current && !stamped) {
     return <LoadingSkeleton />;
   }
 
   return (
     <AuthContext.Provider
       value={{
-        user: (data?.user as User | null | undefined) ?? null,
+        user:
+          ((data?.user ?? stamped?.user) as User | null | undefined) ?? null,
         isLoading: isPending,
         refetchUser: async () => {
           forgetSession();

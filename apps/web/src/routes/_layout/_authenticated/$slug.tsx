@@ -21,6 +21,7 @@ import { resolveWorkspaceBySlug, useActiveWorkspace } from "@/workspace";
 import { canonicalWorkspaceHref } from "@/workspace";
 import { errorCode } from "@/app/lib/orpc-error";
 import { toNavigation } from "@/onboarding";
+import { loadSyncedCollection } from "@/app/sync/synced-collections";
 import { TicketWorkspaceProvider } from "@/tasks";
 
 export const Route = createFileRoute("/_layout/_authenticated/$slug")({
@@ -57,12 +58,12 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
   // early. (Workspaces and my own members come from the layout above.)
   loader: async () => {
     await Promise.all([
-      workspaceMemberUserCollection.preload(),
-      workspaceInvitationCollection.preload(),
-      projectCollection.preload(),
-      projectColumnCollection.preload(),
-      projectFieldCollection.preload(),
-      labelCollection.preload(),
+      loadSyncedCollection(workspaceMemberUserCollection),
+      loadSyncedCollection(workspaceInvitationCollection),
+      loadSyncedCollection(projectCollection),
+      loadSyncedCollection(projectColumnCollection),
+      loadSyncedCollection(projectFieldCollection),
+      loadSyncedCollection(labelCollection),
     ]);
   },
   component: WorkspaceLayout,

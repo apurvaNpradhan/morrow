@@ -12,6 +12,7 @@ export * from "./links.js";
 export * from "./projects.js";
 export * from "./relations.js";
 export * from "./search.js";
+export * from "./shape-schema-version.js";
 export * from "./tasks.js";
 
 /**

@@ -8,7 +8,8 @@ import { createRoot } from "react-dom/client";
 import { useTranslation } from "react-i18next";
 import { queryClient } from "./app/query-client";
 import "@/index.css";
-import { useAuth } from "./auth";
+import { useAuth, seedSessionFromOwnerStamp } from "./auth";
+import { watchLocalDatabaseLifecycle } from "./app/sync/local-database-lifecycle";
 import { KeyboardShortcutsHelp } from "./app/components/keyboard-shortcuts-help";
 import { AuthProvider } from "./auth";
 import { ThemeProvider } from "./app/components/theme-provider";
@@ -105,6 +106,11 @@ function RootCrashFallback({
 
 // Before the first render, so the page never paints in the wrong theme.
 applyTheme(readDevicePreferences().theme);
+
+// A browser with a signed-in user's local database renders from it before the
+// session is confirmed.
+seedSessionFromOwnerStamp();
+watchLocalDatabaseLifecycle();
 
 const rootElement = document.getElementById("root") as HTMLElement;
 if (!rootElement.innerHTML) {
