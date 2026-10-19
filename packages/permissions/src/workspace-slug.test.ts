@@ -60,6 +60,10 @@ describe("createDefaultSlug", () => {
     expect(slug.endsWith("-")).toBe(false);
   });
 
+  it("transliterates accented letters", () => {
+    expect(createDefaultSlug("Café Müller")).toBe("cafe-muller");
+  });
+
   it("returns an empty string when nothing usable remains", () => {
     expect(createDefaultSlug("!!!")).toBe("");
   });
