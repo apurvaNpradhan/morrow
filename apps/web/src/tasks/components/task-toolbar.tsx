@@ -8,6 +8,7 @@ import type { TaskFilter } from "../lib/filters";
 import type { useTaskViewPreferences } from "../lib/use-task-view-preferences";
 import { DisplayMenu } from "./display-menu";
 import { FilterAddPopover } from "./filter-add-popover";
+import { ProjectProgress } from "./project-progress";
 import { FilterBar } from "./filter-bar";
 import { useFilterBar } from "./use-filter-bar";
 
@@ -58,13 +59,16 @@ export function TaskToolbar({
     <div className="border-b">
       <div className="flex flex-wrap items-center gap-2 px-4 py-2">
         <p
-          className="me-auto text-xs tabular-nums text-muted-foreground"
+          className="text-xs tabular-nums text-muted-foreground"
           aria-live="polite"
         >
           {shown === total
             ? t("toolbar.count", { count: total })
             : t("toolbar.countOf", { shown, total })}
         </p>
+        <div className="me-auto">
+          <ProjectProgress />
+        </div>
         <div className="relative">
           <Search
             aria-hidden="true"
