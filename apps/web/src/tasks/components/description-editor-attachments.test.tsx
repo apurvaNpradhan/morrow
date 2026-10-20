@@ -354,3 +354,65 @@ describe("an editor inside a parent that re-renders with new callbacks", () => {
     expect(settled).toBeLessThan(10);
   });
 });
+
+describe("several files added together", () => {
+  it("become separate cards, in the order they were added", async () => {
+    const { surface, onChange } = await mountEditor();
+    const names = ["a.zip", "b.zip", "c.zip"];
+    const uploads = names.map(() => pendingUpload());
+
+    paste(
+      surface,
+      names.map((name) => file(name, "application/zip")),
+    );
+    await waitFor(() =>
+      expect(
+        surface.querySelectorAll(".morrow-upload-placeholder"),
+      ).toHaveLength(3),
+    );
+    names.forEach((name, i) =>
+      uploads[i]!.resolve({ ...zip, id: `id${i}`, filename: name }),
+    );
+
+    await waitFor(() =>
+      expect(
+        surface.querySelectorAll("[data-type='attachment-card']"),
+      ).toHaveLength(3),
+    );
+    const saved = onChange.mock.calls.at(-1)![0] as string;
+    expect(saved.match(/\[(.)\.zip\]/g)).toEqual([
+      "[a.zip]",
+      "[b.zip]",
+      "[c.zip]",
+    ]);
+    expect(saved.match(/\n\n\[/g)).toHaveLength(3);
+  });
+});
+
+describe("clicking a file card", () => {
+  it("acts once: a viewable file opens one tab, a download assigns the URL once", async () => {
+    const { editor, surface } = await mountEditor();
+    editor.commands.setContent(
+      '[r.pdf](/api/asset/def456 "application/pdf 10")',
+      { contentType: "markdown" },
+    );
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    const card = await waitFor(() => {
+      const found = surface.querySelector<HTMLElement>(
+        "button.morrow-attachment-card",
+      );
+      if (!found) throw new Error("no card");
+      return found;
+    });
+
+    fireEvent.click(card);
+
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith(
+      "/api/asset/def456",
+      "_blank",
+      "noopener,noreferrer",
+    );
+    expect(surface.querySelector("a[href*='/api/asset/']")).toBeNull();
+  });
+});
