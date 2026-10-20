@@ -1,6 +1,6 @@
 # Attachments in descriptions and comments
 
-Status: shipped
+Status: ready-for-agent
 
 ## Problem Statement
 
