@@ -60,6 +60,37 @@ describe("asking for an upload", () => {
     expect((await rejection(ask(0))).data?.code).toBe("UPLOAD_INVALID");
   });
 
+  it("refuses a 21st open draft, and lets go of one once it is gone", async () => {
+    const { client, workspace } = await setupWorkspace();
+    const ask = () =>
+      client.assets.createUpload({
+        workspaceId: workspace.id,
+        filename: "a.png",
+        contentType: "image/png",
+        size: 10,
+      });
+    const first = await ask();
+    for (let i = 1; i < 20; i++) await ask();
+
+    const refused = await rejection(ask());
+    expect(refused.data?.code).toBe("TOO_MANY_UPLOADS");
+
+    // Someone else's drafts do not count against this user.
+    const teammate = as(await addWorkspaceMember(workspace.id, "member"));
+    await teammate.assets.createUpload({
+      workspaceId: workspace.id,
+      filename: "b.png",
+      contentType: "image/png",
+      size: 10,
+    });
+
+    // A draft that expires or is claimed no longer counts.
+    await db
+      .delete(schema.assetTable)
+      .where(eq(schema.assetTable.id, first.assetId));
+    await expect(ask()).resolves.toBeTruthy();
+  });
+
   it("refuses someone who is not a member of the workspace", async () => {
     const { workspace } = await setupWorkspace();
     const other = await setupWorkspace();

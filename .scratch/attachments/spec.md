@@ -66,7 +66,7 @@ The decisions are recorded in [ADR 0010](../../docs/adr/0010-attachments.md).
 ### Upload procedures (in `storage`)
 
 1. **`assets.createUpload`** `{ workspaceId, filename, size, contentType }`:
-   - checks `size` ≤ 100 MB;
+   - checks `size` ≤ 100 MB, and that the caller has fewer than 20 open drafts in the Workspace (`TOO_MANY_UPLOADS`);
    - inserts the draft row;
    - returns `{ assetId, uploadUrl, headers }`. The presign covers `content-length` and `content-type`, with the existing TTL (`S3_PRESIGN_TTL_SECONDS`).
    - **Permission:** `workspace: read` here. The content permission is checked when the draft is claimed.
@@ -149,6 +149,7 @@ All are translated in `en-US.json`:
 
 - `UPLOAD_TOO_LARGE`
 - `UPLOAD_MISSING`
+- `TOO_MANY_UPLOADS`
 - `UPLOAD_INVALID`
 - `STORAGE_UNAVAILABLE`
 - `ASSET_NOT_FOUND`
@@ -156,7 +157,7 @@ All are translated in `en-US.json`:
 ## Testing Decisions
 
 - **API integration (`storage`):**
-  - `createUpload` refuses over 100 MB and a non-member;
+  - `createUpload` refuses over 100 MB, a non-member and a 21st open draft;
   - `finalize` by another user is refused;
   - `finalize` with a missing object is `UPLOAD_MISSING`;
   - a size mismatch deletes the object and is `UPLOAD_INVALID`;
