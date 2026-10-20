@@ -204,7 +204,7 @@ These are follow-up tickets:
 Not planned at all:
 
 - Image resizing, thumbnails or re-encoding.
-- Inline PDF or video players.
+- Inline players inside the editor. (A PDF, text, video or audio file opens in a frame preview instead, using the browser's own viewer.)
 - Captions, and resize handles.
 - Per-workspace quotas.
 - Deleting files when their reference is removed from the text.

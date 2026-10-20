@@ -1,20 +1,22 @@
-import { isInlineViewable } from "@morrow/sync-schemas";
+import { isPreviewable } from "@morrow/sync-schemas";
 import { Download } from "lucide-react";
 import {
   NodeViewWrapper,
   type NodeViewProps,
   ReactNodeViewRenderer,
 } from "@tiptap/react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { assetPath } from "./asset-markdown";
 import { AttachmentCard } from "./attachment-card";
+import { FilePreview } from "./file-preview";
 import { FileTypeIcon } from "./file-type-icon";
 import { formatBytes } from "./format-bytes";
 
 /**
- * A file card: type icon, name and size. The card opens the file (in a new tab
- * when a browser can show it, otherwise the download starts); the button always
- * downloads. The look is the `.morrow-attachment-*` rules in `index.css`.
+ * A file card: type icon, name and size. A file a browser can show (PDF, text,
+ * video, audio) previews in a frame; any other starts its download. The button
+ * always downloads. The look is the `.morrow-attachment-*` rules in `index.css`.
  */
 export function AttachmentCardView({ node }: NodeViewProps) {
   const { t } = useTranslation("tasks");
@@ -25,7 +27,8 @@ export function AttachmentCardView({ node }: NodeViewProps) {
     size: number;
   };
   const url = assetPath(id);
-  const viewable = isInlineViewable(mimeType);
+  const previewable = isPreviewable(mimeType);
+  const [previewing, setPreviewing] = useState(false);
 
   return (
     <NodeViewWrapper
@@ -36,7 +39,9 @@ export function AttachmentCardView({ node }: NodeViewProps) {
       <button
         type="button"
         className="morrow-attachment-card"
-        onClick={() => openAsset(url, viewable)}
+        onClick={() =>
+          previewable ? setPreviewing(true) : download(`${url}?download=1`)
+        }
       >
         <span className="morrow-attachment-card-icon">
           <FileTypeIcon mimeType={mimeType} />
@@ -52,21 +57,26 @@ export function AttachmentCardView({ node }: NodeViewProps) {
         type="button"
         aria-label={t("attachments.download", { name: filename })}
         className="morrow-attachment-download"
-        onClick={() => openAsset(`${url}?download=1`, false)}
+        onClick={() => download(`${url}?download=1`)}
       >
         <Download aria-hidden="true" />
       </button>
+      {previewable ? (
+        <FilePreview
+          file={previewing ? { id, filename } : null}
+          onClose={() => setPreviewing(false)}
+        />
+      ) : null}
     </NodeViewWrapper>
   );
 }
 
 /**
- * Opens or downloads a file. The cards are buttons, not links: the editor's link
+ * Starts a download. The cards are buttons, not links: the editor's link
  * extension also opens any link that is clicked, so a link here would act twice.
  */
-function openAsset(url: string, inNewTab: boolean) {
-  if (inNewTab) window.open(url, "_blank", "noopener,noreferrer");
-  else window.location.assign(url);
+function download(url: string) {
+  window.location.assign(url);
 }
 
 /** The card node as the editor shows it. */

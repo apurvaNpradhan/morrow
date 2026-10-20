@@ -3,6 +3,7 @@ import {
   absoluteAssetUrls,
   assetIdsIn,
   isInlineViewable,
+  isPreviewable,
   replaceAssetIds,
 } from "./assets.js";
 
@@ -92,6 +93,30 @@ describe("isInlineViewable", () => {
       "application/octet-stream",
     ]) {
       expect(isInlineViewable(type)).toBe(false);
+    }
+  });
+});
+
+describe("isPreviewable", () => {
+  it("previews what a browser shows in a frame: PDF, text, video and audio", () => {
+    for (const type of [
+      "application/pdf",
+      "text/plain",
+      "video/mp4",
+      "audio/mpeg",
+    ]) {
+      expect(isPreviewable(type)).toBe(true);
+    }
+  });
+
+  it("leaves images to the image viewer and everything unsafe to downloading", () => {
+    for (const type of [
+      "image/png",
+      "image/svg+xml",
+      "text/html",
+      "application/zip",
+    ]) {
+      expect(isPreviewable(type)).toBe(false);
     }
   });
 });

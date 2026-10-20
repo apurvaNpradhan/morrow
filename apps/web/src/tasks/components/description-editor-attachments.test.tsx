@@ -390,13 +390,9 @@ describe("several files added together", () => {
 });
 
 describe("clicking a file card", () => {
-  it("acts once: a viewable file opens one tab, a download assigns the URL once", async () => {
+  async function cardFor(markdown: string) {
     const { editor, surface } = await mountEditor();
-    editor.commands.setContent(
-      '[r.pdf](/api/asset/def456 "application/pdf 10")',
-      { contentType: "markdown" },
-    );
-    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    editor.commands.setContent(markdown, { contentType: "markdown" });
     const card = await waitFor(() => {
       const found = surface.querySelector<HTMLElement>(
         "button.morrow-attachment-card",
@@ -404,15 +400,48 @@ describe("clicking a file card", () => {
       if (!found) throw new Error("no card");
       return found;
     });
+    return card;
+  }
+
+  it("previews a PDF in a frame, once, with ways to open or download it", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    const card = await cardFor(
+      '[r.pdf](/api/asset/def456 "application/pdf 10")',
+    );
 
     fireEvent.click(card);
 
-    expect(open).toHaveBeenCalledTimes(1);
-    expect(open).toHaveBeenCalledWith(
-      "/api/asset/def456",
-      "_blank",
-      "noopener,noreferrer",
+    const frame = await waitFor(() => {
+      const found = document.body.querySelector<HTMLIFrameElement>(
+        "[data-slot='dialog-popup'] iframe",
+      );
+      if (!found) throw new Error("no preview");
+      return found;
+    });
+    expect(frame.getAttribute("src")).toBe("/api/asset/def456");
+    expect(frame.getAttribute("title")).toBe("r.pdf");
+    const popup = document.body.querySelector("[data-slot='dialog-popup']")!;
+    expect(
+      popup.querySelector("a[target='_blank']")?.getAttribute("href"),
+    ).toBe("/api/asset/def456");
+    expect(popup.querySelector("a[download]")?.getAttribute("href")).toBe(
+      "/api/asset/def456?download=1",
     );
-    expect(surface.querySelector("a[href*='/api/asset/']")).toBeNull();
+    expect(open).not.toHaveBeenCalled();
+    expect(document.body.querySelectorAll("iframe")).toHaveLength(1);
+  });
+
+  it("downloads a file a browser cannot show, without a preview", async () => {
+    const card = await cardFor(
+      '[logs.zip](/api/asset/zip789 "application/zip 4096")',
+    );
+    const assign = vi.fn();
+    vi.stubGlobal("location", { ...window.location, assign });
+
+    fireEvent.click(card);
+
+    expect(assign).toHaveBeenCalledWith("/api/asset/zip789?download=1");
+    expect(document.body.querySelector("iframe")).toBeNull();
+    vi.unstubAllGlobals();
   });
 });

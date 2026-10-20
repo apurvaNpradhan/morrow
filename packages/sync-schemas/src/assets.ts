@@ -53,3 +53,8 @@ export function isInlineViewable(mimeType: string): boolean {
     mimeType.startsWith("audio/")
   );
 }
+
+/** Whether a file can be shown in a frame: the viewable types that are not images (those have their own viewer). */
+export function isPreviewable(mimeType: string): boolean {
+  return isInlineViewable(mimeType) && !mimeType.startsWith("image/");
+}
