@@ -115,6 +115,10 @@
 			"commentInvalidId": "That comment id isn't valid. Try again.",
 			"commentIdTaken": "That comment already exists. Try again.",
 			"commentNotYours": "You can only change your own comments.",
+			"uploadTooLarge": "That file is too large. The limit is 100 MB.",
+			"uploadInvalid": "The upload didn't arrive intact. Try again.",
+			"uploadMissing": "The upload didn't finish. Try again.",
+			"assetNotFound": "That upload has expired. Try again.",
 			"taskParentCycle": "A task can't be under itself or one of its own subtasks.",
 			"taskParentNotInProject": "A parent has to be in the same project.",
 			"relationExists": "Those tasks are already linked that way.",
@@ -858,7 +862,6 @@
 			"setTaskDueDate": "Set due date",
 			"deleteTask": "Delete task",
 			"setTaskLabels": "Set labels",
-			"copyTaskBranch": "Copy branch name",
 			"search": "Search",
 			"setTaskField": "Set field",
 			"toggleTaskSelection": "Select task",
@@ -1439,7 +1442,16 @@
 				"priority": "Priority",
 				"dueDate": "Due date",
 				"column": "Status",
-				"label": "Label"
+				"label": "Label",
+				"relation": "Relations"
+			},
+			"relation": {
+				"parentTask": "Parent tasks",
+				"subtask": "Sub-tasks",
+				"blocked": "Blocked tasks",
+				"blocking": "Blocking tasks",
+				"hasRelations": "Tasks with relations",
+				"duplicate": "Duplicates"
 			},
 			"operator": {
 				"is": "is",
@@ -1577,12 +1589,10 @@
 			"done": "Copied",
 			"failed": "Couldn't copy",
 			"group": "Copy",
-			"branch": "Copy branch name",
 			"id": "Copy ID",
 			"title": "Copy title",
 			"link": "Copy link",
 			"markdown": "Copy as Markdown",
-			"branchDone": "Branch name copied",
 			"idDone": "ID copied",
 			"titleDone": "Title copied",
 			"linkDone": "Link copied",
@@ -1684,6 +1694,14 @@
 			"save": "Save",
 			"cancel": "Cancel",
 			"error": "Couldn't save that comment."
+		},
+		"attachments": {
+			"uploading": "Uploading {{name}}",
+			"attach": "Attach files",
+			"download": "Download {{name}}",
+			"uploadFailed": "Couldn't upload {{name}}.",
+			"imagePreview": "Image preview",
+			"openOriginal": "Open original"
 		},
 		"history": {
 			"created": "created the task",

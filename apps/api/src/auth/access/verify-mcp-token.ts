@@ -1,7 +1,7 @@
 import { createLocalJWKSet, jwtVerify } from "jose";
 import { eq } from "drizzle-orm";
-import { auth, isBanActive, MCP_RESOURCE, OAUTH_ISSUER } from "#api/auth/index";
-import type { BanState } from "#api/auth/index";
+import { auth, MCP_RESOURCE, OAUTH_ISSUER } from "../config";
+import { type BanState, isBanActive } from "./user-ban";
 import { db } from "#api/platform/database/index";
 import { userTable } from "#api/platform/database/schema";
 

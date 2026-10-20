@@ -2,6 +2,7 @@ import type { EditorState } from "@tiptap/pm/state";
 import { Extension } from "@tiptap/react";
 import Suggestion, { type SuggestionProps } from "@tiptap/suggestion";
 import type { CSSProperties } from "react";
+import { canUpload } from "../attachments/attachment-uploads";
 import { filterSlashCommands, type SlashCommand } from "./slash-commands";
 import { mountSlashMenu } from "./slash-menu";
 
@@ -117,7 +118,10 @@ export const SlashCommands = Extension.create({
           editor.isEditable &&
           startsWord(state, range.from) &&
           !state.doc.resolve(range.from).parent.type.spec.code,
-        items: ({ query }) => filterSlashCommands(query),
+        items: ({ editor, query }) =>
+          filterSlashCommands(query).filter(
+            (command) => !command.needsUploads || canUpload(editor),
+          ),
         command: ({ editor, range, props }) => props.run(editor, range),
         render: createSlashRenderer,
       }),

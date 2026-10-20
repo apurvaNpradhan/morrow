@@ -31,9 +31,10 @@ export function TaskComment({
   highlighted?: boolean;
 }) {
   const { t } = useTranslation("tasks");
-  const { personById, meId, can, frozen } = useTaskView();
+  const { personById, meId, can, frozen, workspace } = useTaskView();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
+  const [uploading, setUploading] = useState(false);
   const author = comment.authorId
     ? personById.get(comment.authorId)
     : undefined;
@@ -142,6 +143,8 @@ export function TaskComment({
               onSubmit={() => void save()}
               className="min-h-10"
               limit={COMMENT_BODY_MAX}
+              workspaceId={workspace.id}
+              onUploadingChange={(running) => setUploading(running > 0)}
             />
             <div className="flex justify-end gap-2">
               <Button
@@ -153,7 +156,7 @@ export function TaskComment({
               </Button>
               <Button
                 size="xs"
-                disabled={draft.trim() === ""}
+                disabled={draft.trim() === "" || uploading}
                 onClick={() => void save()}
               >
                 {t("comments.save")}

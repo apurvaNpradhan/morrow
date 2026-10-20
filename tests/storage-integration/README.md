@@ -22,4 +22,4 @@ MORROW_STORAGE_TEST_ENDPOINT=http://127.0.0.1:59039 pnpm --filter @morrow/api ex
 docker stop morrow-storage-contract-test
 ```
 
-The suite checks signed size/content-type enforcement, chunked-transfer rejection, actual object metadata, missing objects and oversized-object cleanup. The regular API integration suite separately covers endpoint authorization and database writes with mocked storage calls. No real cloud account or email provider is required.
+The suite checks signed size/content-type enforcement (the 100 MB cap rests on it), chunked-transfer rejection, missing objects, ranged reads and in-bucket copies. The regular API integration suite separately covers endpoint authorization and database writes with mocked storage calls. No real cloud account or email provider is required.

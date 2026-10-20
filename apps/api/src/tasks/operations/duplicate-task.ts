@@ -88,8 +88,7 @@ export async function duplicateTask(
         .where(eq(taskDescriptionTable.taskId, sourceId));
       await saveDescription(
         tx,
-        projectId,
-        task.id,
+        { workspaceId, projectId, taskId: task.id, userId: actor.userId },
         sourceDescription?.description ?? "",
       );
       await recordTaskActivity(tx, "task.created", workspaceId, project, task);

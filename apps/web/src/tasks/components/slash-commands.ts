@@ -1,4 +1,5 @@
 import type { Editor, Range } from "@tiptap/react";
+import { pickFiles } from "../attachments/attachment-uploads";
 
 export type SlashGroup = "text" | "lists" | "insert";
 
@@ -8,6 +9,8 @@ export type SlashCommand = {
   group: SlashGroup;
   /** Other words the query matches, such as "h1" or "todo". */
   search: string;
+  /** Shown only in an editor that can upload files. */
+  needsUploads?: boolean;
   /** Replaces the typed `/query` at `range` with the block. */
   run: (editor: Editor, range: Range) => void;
 };
@@ -101,6 +104,17 @@ export const slashCommands: SlashCommand[] = [
     search: "divider rule hr line separator",
     run: (editor, range) => {
       editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+    },
+  },
+  {
+    id: "attach",
+    label: "Attach file",
+    group: "insert",
+    search: "attach file upload image picture photo document pdf",
+    needsUploads: true,
+    run: (editor, range) => {
+      editor.chain().focus().deleteRange(range).run();
+      pickFiles(editor);
     },
   },
   {

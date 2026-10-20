@@ -1,9 +1,13 @@
 import { isJsonContentType } from "@modelcontextprotocol/server";
 import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
 import { Hono } from "hono";
-import { auth, MCP_RESOURCE, OAUTH_ISSUER } from "#api/auth/index";
+import {
+  auth,
+  MCP_RESOURCE,
+  OAUTH_ISSUER,
+  verifyMcpToken,
+} from "#api/auth/index";
 import { createMcpRequestHandler } from "./handler";
-import { verifyMcpToken } from "./verify-token";
 
 const origin = new URL(MCP_RESOURCE).origin;
 const resourceMetadataUrl = `${origin}/.well-known/oauth-protected-resource/api/mcp`;

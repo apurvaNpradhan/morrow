@@ -1,39 +1,21 @@
-import { Readable } from "node:stream";
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
-  type HeadObjectCommandOutput,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
   type S3ClientConfig,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { createId } from "@paralleldrive/cuid2";
 import { config as appConfig } from "#api/platform/config";
-import { logFailure } from "#api/platform/logger";
 import {
-  describeStorageError,
   headUploadedObject,
   isMissingObjectError,
 } from "./head-uploaded-object";
 
-const allowedImageMimeTypes = new Set([
-  "image/apng",
-  "image/avif",
-  "image/gif",
-  "image/heic",
-  "image/heif",
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-]);
-
-export function isImageContentType(contentType: string) {
-  return allowedImageMimeTypes.has(contentType.toLowerCase());
-}
-
-type UploadSurface = "draft";
+/** How long a presigned download link works; the browser follows it at once. */
+const DOWNLOAD_URL_TTL_SECONDS = 60;
 
 type StorageConfig = {
   endpoint: string;
@@ -44,30 +26,7 @@ type StorageConfig = {
   publicBaseUrl?: string;
   keyPrefix: string;
   forcePathStyle: boolean;
-  maxImageUploadBytes: number;
   presignTtlSeconds: number;
-};
-
-type DraftAssetUploadContext = {
-  workspaceId: string;
-  userId: string;
-  surface: UploadSurface;
-  filename: string;
-  contentType: string;
-};
-
-type DraftAssetUploadUrl = {
-  key: string;
-  uploadUrl: string;
-  headers: Record<string, string>;
-};
-
-type AssetObject = {
-  body: unknown;
-  contentType: string | undefined;
-  contentLength: number | undefined;
-  etag: string | undefined;
-  lastModified: Date | undefined;
 };
 
 let clientCache:
@@ -126,10 +85,6 @@ function getStorageConfig(): StorageConfig {
   return { endpoint, bucket, accessKeyId, secretAccessKey, ...rest };
 }
 
-function getMaxImageUploadBytes() {
-  return appConfig.s3.maxImageUploadBytes;
-}
-
 function getClient(config: StorageConfig) {
   const cacheKey = JSON.stringify({
     endpoint: config.endpoint,
@@ -170,49 +125,9 @@ function getClient(config: StorageConfig) {
   return client;
 }
 
-export function sanitizePathSegment(value: string) {
-  return (
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]+/g, "-")
-      .replace(/-{2,}/g, "-")
-      .replace(/^-+|-+$/g, "") || "file"
-  );
-}
-
-export function getFileExtension(filename: string) {
-  const normalized = filename.trim();
-  const extension = normalized.includes(".")
-    ? normalized.split(".").pop() || ""
-    : "";
-
-  return sanitizePathSegment(extension).slice(0, 12);
-}
-
-export function buildDraftAssetObjectKeyPrefix(
-  context: Pick<DraftAssetUploadContext, "workspaceId" | "userId" | "surface">,
-) {
-  return [
-    "workspace",
-    sanitizePathSegment(context.workspaceId),
-    "user",
-    sanitizePathSegment(context.userId),
-    context.surface,
-  ].join("/");
-}
-
-export function buildDraftAssetObjectKey(context: DraftAssetUploadContext) {
-  const extension = getFileExtension(context.filename);
-  const objectKeyPrefix = buildDraftAssetObjectKeyPrefix(context);
-  const timestamp = Date.now();
-  const randomId = createId();
-  const baseName = sanitizePathSegment(
-    context.filename.replace(/\.[^/.]+$/, "") || "image",
-  ).slice(0, 64);
-  const fileName = extension
-    ? `${baseName}-${timestamp}-${randomId}.${extension}`
-    : `${baseName}-${timestamp}-${randomId}`;
-  return `${objectKeyPrefix}/${fileName}`;
+/** Whether private assets can be stored: endpoint and bucket are set. */
+export function isStorageConfigured(): boolean {
+  return Boolean(appConfig.s3.endpoint && appConfig.s3.bucket);
 }
 
 export function applyKeyPrefix(prefix: string, key: string) {
@@ -221,154 +136,121 @@ export function applyKeyPrefix(prefix: string, key: string) {
   return `${trimmed}/${key}`;
 }
 
-export function validateDraftAssetUploadInput(
-  contentType: string,
-  size: number,
-) {
-  const maxImageUploadBytes = getMaxImageUploadBytes();
-  if (!contentType.trim()) {
-    throw new Error("A valid content type is required.");
-  }
-  if (!isImageContentType(contentType)) {
-    throw new Error(
-      `Unsupported content type "${contentType}". Upload a supported image.`,
-    );
-  }
-  if (!Number.isSafeInteger(size) || size <= 0) {
-    throw new Error("Upload size must be a positive safe integer.");
-  }
-  if (size > maxImageUploadBytes) {
-    throw new Error(
-      `Upload exceeds the maximum upload size of ${Math.floor(maxImageUploadBytes / (1024 * 1024))}MB.`,
-    );
-  }
+/** Every private asset lives under this prefix; the sweep lists it. */
+export function assetKeyPrefix() {
+  return applyKeyPrefix(appConfig.s3.keyPrefix, "assets/");
 }
 
-export async function createDraftAssetUploadUrl(
-  context: DraftAssetUploadContext & { size: number },
-): Promise<DraftAssetUploadUrl> {
-  validateDraftAssetUploadInput(context.contentType, context.size);
+/** The object key of an asset. It never reaches the client. */
+export function assetObjectKey(workspaceId: string, assetId: string) {
+  return `${assetKeyPrefix()}${workspaceId}/${assetId}`;
+}
+
+/** A presigned PUT the browser uploads the file to; size and type are signed. */
+export async function createAssetUploadUrl(options: {
+  key: string;
+  size: number;
+  contentType: string;
+}) {
   const config = getStorageConfig();
-  const client = getClient(config);
-  const key = applyKeyPrefix(
-    config.keyPrefix,
-    buildDraftAssetObjectKey(context),
-  );
   const command = new PutObjectCommand({
     Bucket: config.bucket,
-    Key: key,
-    ContentType: context.contentType,
-    ContentLength: context.size,
+    Key: options.key,
+    ContentType: options.contentType,
+    ContentLength: options.size,
   });
-  const uploadUrl = await getSignedUrl(client, command, {
+  const uploadUrl = await getSignedUrl(getClient(config), command, {
     expiresIn: config.presignTtlSeconds,
     signableHeaders: new Set(["content-length", "content-type"]),
   });
-  return {
-    key,
-    uploadUrl,
-    headers: { "Content-Type": context.contentType },
-  };
+  return { uploadUrl, headers: { "Content-Type": options.contentType } };
 }
 
-export class InvalidUploadedAssetError extends Error {}
-
-/** Call only after checking the object's workspace and user key prefix. */
-export async function verifyDraftAssetUpload(
-  key: string,
-  expected: { size: number; contentType: string },
-) {
+/** The stored size of an object, or null when it is not there. */
+export async function headAssetObject(key: string) {
   const config = getStorageConfig();
-  const client = getClient(config);
-  const abortSignal = AbortSignal.timeout(10_000);
-  let object: HeadObjectCommandOutput;
   try {
-    object = await headUploadedObject(client, config.bucket, key, abortSignal);
+    const head = await headUploadedObject(
+      getClient(config),
+      config.bucket,
+      key,
+      AbortSignal.timeout(10_000),
+    );
+    return { size: head.ContentLength ?? 0 };
   } catch (error) {
-    if (isMissingObjectError(error)) {
-      throw new InvalidUploadedAssetError("Uploaded object was not found.");
-    }
-    logFailure("storage.verify-upload", describeStorageError(error));
-    // Provider errors may include endpoints, signed URLs or other secrets.
-    throw new Error("Unable to verify uploaded object.");
+    if (isMissingObjectError(error)) return null;
+    throw error;
   }
-
-  const size = object.ContentLength;
-  if (typeof size === "number" && size > config.maxImageUploadBytes) {
-    // Also remove oversized objects made with a still-valid older upload URL.
-    // Invalid client size claims never cause deletion of an in-limit object.
-    try {
-      await client.send(
-        new DeleteObjectCommand({ Bucket: config.bucket, Key: key }),
-        { abortSignal },
-      );
-    } catch (error) {
-      logFailure(
-        "storage.remove-oversized-upload",
-        describeStorageError(error),
-      );
-      throw new Error("Unable to remove oversized uploaded object.");
-    }
-    throw new InvalidUploadedAssetError(
-      "Uploaded object exceeds the maximum upload size.",
-    );
-  }
-  if (
-    !Number.isSafeInteger(size) ||
-    !size ||
-    size !== expected.size ||
-    !object.ContentType ||
-    object.ContentType.toLowerCase() !== expected.contentType.toLowerCase()
-  ) {
-    throw new InvalidUploadedAssetError(
-      "Uploaded object does not match the declared size and content type.",
-    );
-  }
-  return { size, contentType: object.ContentType };
 }
 
-export function assertStorageConfigured() {
-  return getStorageConfig();
-}
-
-export function assertDraftAssetKeyMatchesContext(
-  key: string,
-  context: Pick<DraftAssetUploadContext, "workspaceId" | "userId" | "surface">,
-) {
+/** The first `length` bytes of an object. */
+export async function readAssetHead(key: string, length: number) {
   const config = getStorageConfig();
-  const objectPrefix = buildDraftAssetObjectKeyPrefix(context);
-  const fullPrefix = `${applyKeyPrefix(config.keyPrefix, objectPrefix)}/`;
-  if (!key.startsWith(fullPrefix)) return false;
-  const suffix = key.slice(fullPrefix.length);
-  return /^[A-Za-z0-9._-]+$/.test(suffix) && !suffix.startsWith(".");
-}
-
-export async function getPrivateObject(key: string): Promise<AssetObject> {
-  const config = getStorageConfig();
-  const client = getClient(config);
-  const response = await client.send(
+  const response = await getClient(config).send(
     new GetObjectCommand({
       Bucket: config.bucket,
       Key: key,
+      Range: `bytes=0-${length - 1}`,
     }),
   );
+  return response.Body?.transformToByteArray() ?? new Uint8Array();
+}
 
-  if (!response.Body) {
-    throw new Error("Storage object body is missing.");
-  }
+/** Copies an object inside the bucket; the bytes never leave the storage service. */
+export async function copyAssetObject(sourceKey: string, targetKey: string) {
+  const config = getStorageConfig();
+  const source = sourceKey.split("/").map(encodeURIComponent).join("/");
+  await getClient(config).send(
+    new CopyObjectCommand({
+      Bucket: config.bucket,
+      Key: targetKey,
+      CopySource: `${config.bucket}/${source}`,
+    }),
+  );
+}
 
-  const body =
-    "transformToWebStream" in response.Body
-      ? response.Body.transformToWebStream()
-      : Readable.toWeb(response.Body as Readable);
+/**
+ * A short-lived link to download an object. The response headers are signed
+ * in, so the storage service answers with the disposition and type chosen here.
+ */
+export function createAssetDownloadUrl(options: {
+  key: string;
+  contentDisposition: string;
+  contentType: string;
+}) {
+  const config = getStorageConfig();
+  return getSignedUrl(
+    getClient(config),
+    new GetObjectCommand({
+      Bucket: config.bucket,
+      Key: options.key,
+      ResponseContentDisposition: options.contentDisposition,
+      ResponseContentType: options.contentType,
+    }),
+    { expiresIn: DOWNLOAD_URL_TTL_SECONDS },
+  );
+}
 
-  return {
-    body,
-    contentType: response.ContentType,
-    contentLength: response.ContentLength,
-    etag: response.ETag,
-    lastModified: response.LastModified,
-  };
+/** Every object under a prefix, page by page. */
+export async function* listObjects(prefix: string) {
+  const config = getStorageConfig();
+  const client = getClient(config);
+  let token: string | undefined;
+  do {
+    const page = await client.send(
+      new ListObjectsV2Command({
+        Bucket: config.bucket,
+        Prefix: prefix,
+        ContinuationToken: token,
+      }),
+    );
+    for (const object of page.Contents ?? []) {
+      if (object.Key && object.LastModified) {
+        yield { key: object.Key, lastModified: object.LastModified };
+      }
+    }
+    token = page.NextContinuationToken;
+  } while (token);
 }
 
 export async function deleteS3Object(key: string): Promise<void> {

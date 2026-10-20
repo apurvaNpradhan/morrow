@@ -25,7 +25,7 @@ Postgres is a separate Dokploy database service. Configure in Dokploy:
 1. **Destinations** → add the Cloudflare R2 bucket (`S3_ENDPOINT` of the form `https://<account>.r2.cloudflarestorage.com`, region `auto`) with a token scoped to that bucket.
 2. The database service → **Backups** → schedule `0 3 * * *` (daily) to that destination, retention **14**.
 
-Avatars live in the public R2 bucket (`S3_PUBLIC_BASE_URL`), not in Postgres, so these database backups do not cover them. A lost avatar is recoverable by uploading a new one; enable bucket versioning only if that is not enough.
+Avatars and attachments live in the R2 bucket, not in Postgres, so these database backups do not cover them. A lost avatar is recoverable by uploading a new one. Attachments are not: a lost file leaves a broken image or card in its task. Enable bucket versioning if that matters. Task exports carry the links to attachments, not the files.
 
 ## Electric (sync)
 
@@ -78,8 +78,8 @@ select name, retry_count, output from pgboss.job where state = 'failed' order by
 A job that ran out of retries logs `jobs.exhausted` with its queue and sends a
 Sentry message. Fix the cause, then re-run it with
 `select pgboss.retry(...)`-style tooling or by enqueueing the subject again.
-Cron monitors in Sentry (`storage-cleanup`, `draft-upload-cleanup`) show a
-schedule that stopped or ran degraded.
+Cron monitors in Sentry (`storage-cleanup`, `draft-upload-cleanup`,
+`asset-orphan-sweep`) show a schedule that stopped or ran degraded.
 
 ## Rotate secrets
 

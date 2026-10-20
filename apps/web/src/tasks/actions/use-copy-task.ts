@@ -4,18 +4,11 @@ import { useTranslation } from "react-i18next";
 import { copyToClipboard } from "@/design-system/copy-to-clipboard";
 import { toast } from "@/design-system/toast";
 import { taskDescriptionCollection } from "../collections/task-description-collection";
-import { branchName } from "../lib/branch-name";
 import { displayTicketId, taskUrl } from "../lib/task-links";
 import { taskAsMarkdown } from "../lib/task-markdown";
 import { useTaskView } from "../components/task-view-context";
 
-export const COPY_KINDS = [
-  "branch",
-  "id",
-  "title",
-  "link",
-  "markdown",
-] as const;
+export const COPY_KINDS = ["id", "title", "link", "markdown"] as const;
 export type CopyKind = (typeof COPY_KINDS)[number];
 
 /** Copies one thing about a task and says what was copied. */
@@ -28,7 +21,6 @@ export function useCopyTask() {
       const ticket = displayTicketId(project.key, task.number);
       const url = taskUrl(workspace.slug, project.key, task.number);
       const text = {
-        branch: () => branchName(ticket, task.title),
         id: () => ticket,
         title: () => task.title,
         link: () => url,

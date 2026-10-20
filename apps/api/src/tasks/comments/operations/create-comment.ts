@@ -4,6 +4,7 @@ import { recordWorkspaceActivity } from "#api/activity/index";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { lockProject } from "#api/projects/index";
 import { rethrowTaskViolation, taskError } from "#api/tasks/errors";
+import { claimAssets } from "#api/storage/index";
 import { findTask } from "#api/tasks/lib/find-task";
 import { taskCommentTable, taskTable } from "#api/tasks/tables";
 
@@ -31,7 +32,11 @@ export async function createComment(
         taskId,
         projectId,
         authorId,
-        body: input.body,
+        body: await claimAssets(
+          tx,
+          { workspaceId, taskId, userId: authorId },
+          input.body,
+        ),
       });
       await tx
         .update(taskTable)

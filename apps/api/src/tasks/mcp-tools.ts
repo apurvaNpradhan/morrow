@@ -2,6 +2,8 @@ import { createId } from "@paralleldrive/cuid2";
 import { generateKeyBetween } from "fractional-indexing";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
+import { absoluteAssetUrls } from "@morrow/sync-schemas";
+import { config } from "#api/platform/config";
 import { mcpTool } from "#api/platform/orpc/mcp-tool";
 import { resolveColumn } from "#api/projects/index";
 import { description, dueDate, priority, title } from "./schemas";
@@ -103,6 +105,10 @@ async function runBatch<Item, Result extends object>(
   return results;
 }
 
+/** Files attached to markdown are fetched with the agent's own token, so their links must be absolute. */
+const absoluteLinks = (markdown: string) =>
+  absoluteAssetUrls(markdown, config.apiUrl);
+
 export const tasksMcpTools = [
   mcpTool({
     name: "list_tasks",
@@ -152,7 +158,9 @@ export const tasksMcpTools = [
           ...(Object.keys(task.fields).length > 0 && { fields: task.fields }),
           completedAt: task.completedAt,
           archivedAt: task.archivedAt,
-          ...(withDescription && { description: task.description }),
+          ...(withDescription && {
+            description: absoluteLinks(task.description),
+          }),
         })),
       };
     },
@@ -167,7 +175,17 @@ export const tasksMcpTools = [
       projectId: z.string().trim().min(1),
       ticketId: z.string().trim().min(1),
     }),
-    run: (input, client) => client.tasks.get(input),
+    run: async (input, client) => {
+      const task = await client.tasks.get(input);
+      return {
+        ...task,
+        description: absoluteLinks(task.description),
+        comments: task.comments.map((comment) => ({
+          ...comment,
+          body: absoluteLinks(comment.body),
+        })),
+      };
+    },
   }),
   mcpTool({
     name: "create_tasks",

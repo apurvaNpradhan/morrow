@@ -1,11 +1,10 @@
 import type { TaskRow } from "@morrow/sync-schemas";
 import { Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { MenuHint } from "@/design-system/tooltip-label";
 import { MenuItem } from "@/design-system/ui/menu";
 import { COPY_KINDS, useCopyTask } from "../actions/use-copy-task";
 
-/** The five copy actions of a task as menu items; one group wherever it is shown. */
+/** The four copy actions of a task as menu items; one group wherever it is shown. */
 export function TaskCopyItems({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
   const copyTask = useCopyTask();
@@ -15,7 +14,6 @@ export function TaskCopyItems({ task }: { task: TaskRow }) {
         <MenuItem key={kind} onClick={() => void copyTask(kind, task)}>
           <Copy aria-hidden="true" />
           {t(`copy.${kind}`)}
-          {kind === "branch" ? <MenuHint hotkeyId="copyTaskBranch" /> : null}
         </MenuItem>
       ))}
     </>

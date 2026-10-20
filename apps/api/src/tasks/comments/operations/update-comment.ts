@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { lockProject } from "#api/projects/index";
+import { claimAssets } from "#api/storage/index";
 import { taskError } from "#api/tasks/errors";
 import { findTask } from "#api/tasks/lib/find-task";
 import { taskCommentTable } from "#api/tasks/tables";
@@ -25,7 +26,14 @@ export async function updateComment(
     if (comment.authorId !== editorId) throw taskError("COMMENT_NOT_YOURS");
     await tx
       .update(taskCommentTable)
-      .set({ body, editedAt: new Date() })
+      .set({
+        body: await claimAssets(
+          tx,
+          { workspaceId, taskId, userId: editorId },
+          body,
+        ),
+        editedAt: new Date(),
+      })
       .where(eq(taskCommentTable.id, commentId));
   });
   return { txid };

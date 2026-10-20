@@ -3,6 +3,7 @@ import { APIError } from "better-auth/api";
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "#api/auth/config";
+import { verifyMcpToken } from "../access/verify-mcp-token";
 
 // User is tagged on Sentry's isolation scope; the per-request isolation
 // scope is forked by Sentry.withIsolationScope in the api.use("*", ...)
@@ -98,6 +99,9 @@ export async function resolveAssetBearerOrCookie(c: Context): Promise<{
   }
 
   if (token) {
+    // An agent holds an MCP access token; a script may hold a session token.
+    const mcpUserId = await verifyMcpToken(c.req.header("Authorization"));
+    if (mcpUserId) return { userId: mcpUserId };
     const sessionResult = await getSessionFromBearerOnlyHeaders(c);
     if (sessionResult?.user?.id) {
       return { userId: sessionResult.user.id };

@@ -1,6 +1,7 @@
 import { accountRouter } from "#api/account/index";
 import { activityRouter } from "#api/activity/index";
 import { adminRouter } from "#api/admin/index";
+import { assetsRouter } from "#api/storage/index";
 import { authRouter } from "#api/auth/index";
 import { labelsRouter } from "#api/labels/index";
 import { membersRouter } from "#api/members/index";
@@ -19,6 +20,7 @@ import {
 export const appRouter = {
   account: accountRouter,
   admin: adminRouter,
+  assets: assetsRouter,
   auth: authRouter,
   comments: commentsRouter,
   links: linksRouter,

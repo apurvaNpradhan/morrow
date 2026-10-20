@@ -6,7 +6,7 @@ import { validateWorkspaceAccess } from "#api/platform/validate-workspace-access
 
 type AssetAccessTarget = {
   workspaceId: string;
-  surface: string;
+  attachedAt: Date | null;
   createdBy?: string | null;
 };
 
@@ -15,7 +15,7 @@ export async function authorizeAssetAccess(
   asset: AssetAccessTarget,
 ): Promise<void> {
   const { userId } = await resolveAssetBearerOrCookie(c);
-  if (asset.surface.startsWith("draft") && asset.createdBy !== userId) {
+  if (asset.attachedAt === null && asset.createdBy !== userId) {
     throw new HTTPException(403, {
       message: "Staged uploads are private to their owner",
     });
