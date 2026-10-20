@@ -28,6 +28,7 @@ const DOMAIN_KEYS = new Map(
     UPLOAD_TOO_LARGE: "common:errors.uploadTooLarge",
     UPLOAD_INVALID: "common:errors.uploadInvalid",
     UPLOAD_MISSING: "common:errors.uploadMissing",
+    TOO_MANY_UPLOADS: "common:errors.tooManyUploads",
     ASSET_NOT_FOUND: "common:errors.assetNotFound",
     ADMIN_ROLE_MANAGED: "common:errors.adminRoleManaged",
     INVITATION_EMAIL_FAILED: "common:errors.invitationEmailFailed",

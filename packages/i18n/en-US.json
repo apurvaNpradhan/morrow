@@ -118,6 +118,7 @@
 			"uploadTooLarge": "That file is too large. The limit is 100 MB.",
 			"uploadInvalid": "The upload didn't arrive intact. Try again.",
 			"uploadMissing": "The upload didn't finish. Try again.",
+			"tooManyUploads": "Too many files are waiting to be saved. Save or discard some first.",
 			"assetNotFound": "That upload has expired. Try again.",
 			"taskParentCycle": "A task can't be under itself or one of its own subtasks.",
 			"taskParentNotInProject": "A parent has to be in the same project.",

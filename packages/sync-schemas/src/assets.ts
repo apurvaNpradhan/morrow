@@ -1,6 +1,9 @@
 /** The largest file an attachment may be (100 MB). */
 export const ASSET_MAX_BYTES = 100 * 1024 * 1024;
 
+/** How many uploads one person may have waiting to be saved into a text. */
+export const ASSET_MAX_OPEN_DRAFTS = 20;
+
 /** An image above this size is shown as a file card, not inline (20 MB). */
 export const ASSET_INLINE_IMAGE_MAX_BYTES = 20 * 1024 * 1024;
 

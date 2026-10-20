@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
-import { ASSET_MAX_BYTES } from "@morrow/sync-schemas";
+import { ASSET_MAX_BYTES, ASSET_MAX_OPEN_DRAFTS } from "@morrow/sync-schemas";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { db } from "#api/platform/database/index";
 import { assetTable } from "#api/storage/tables";
 import { storageError } from "#api/storage/errors";
@@ -23,6 +24,21 @@ export async function createAssetUpload(
   if (input.size <= 0) throw storageError("UPLOAD_INVALID");
   if (input.size > ASSET_MAX_BYTES) throw storageError("UPLOAD_TOO_LARGE");
   if (!isStorageConfigured()) throw storageError("STORAGE_UNAVAILABLE");
+
+  // Drafts expire after a day, so the cap bounds what one person can park in storage.
+  const [open] = await db
+    .select({ n: count() })
+    .from(assetTable)
+    .where(
+      and(
+        eq(assetTable.createdBy, userId),
+        eq(assetTable.workspaceId, workspaceId),
+        isNull(assetTable.attachedAt),
+      ),
+    );
+  if ((open?.n ?? 0) >= ASSET_MAX_OPEN_DRAFTS) {
+    throw storageError("TOO_MANY_UPLOADS");
+  }
 
   const assetId = createId();
   const objectKey = assetObjectKey(workspaceId, assetId);
