@@ -47,7 +47,6 @@ export const appHotkeys = defineAppHotkeys({
     meta: { group: "tasks" },
     options: { ignoreInputs: true },
   },
-  copyTaskBranch: { hotkey: "Mod+Shift+.", meta: { group: "tasks" } },
   // Ctrl+Backspace also deletes a word, so never while typing.
   deleteTask: {
     hotkey: "Mod+Backspace",

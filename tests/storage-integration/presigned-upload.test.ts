@@ -4,16 +4,17 @@ import {
   CreateBucketCommand,
   DeleteBucketCommand,
   GetObjectCommand,
-  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from "../../apps/api/node_modules/@aws-sdk/client-s3";
 import {
-  copyTaskAssetObject,
-  createTaskImageUploadUrl,
+  assetObjectKey,
+  copyAssetObject,
+  createAssetUploadUrl,
   deleteS3Object,
-  verifyTaskAssetUpload,
+  headAssetObject,
+  readAssetHead,
 } from "../../apps/api/src/storage/lib/s3";
 
 // biome-ignore lint/suspicious/noUndeclaredEnvVars: This opt-in suite runs directly in Vitest, outside Turbo's task cache.
@@ -46,7 +47,6 @@ beforeAll(async () => {
   vi.stubEnv("S3_REGION", "us-east-1");
   vi.stubEnv("S3_FORCE_PATH_STYLE", "true");
   vi.stubEnv("S3_KEY_PREFIX", "");
-  vi.stubEnv("S3_MAX_IMAGE_UPLOAD_BYTES", "64");
   await client.send(new CreateBucketCommand({ Bucket: bucket }));
 });
 afterAll(async () => {
@@ -63,23 +63,18 @@ afterAll(async () => {
   }
 });
 
-function presign(size = 12) {
-  return createTaskImageUploadUrl({
-    workspaceId: "local",
-    projectId: "local",
-    taskId: "local",
-    surface: "description",
-    filename: "test.png",
-    contentType: "image/png",
-    size,
-  });
-}
-function head(key: string) {
-  return client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+const KEY_ID = "asset-id";
+async function presign(size = 12, contentType = "image/png") {
+  const key = assetObjectKey(
+    "local",
+    `${KEY_ID}-${Math.random().toString(36).slice(2)}`,
+  );
+  const upload = await createAssetUploadUrl({ key, size, contentType });
+  return { ...upload, key };
 }
 
 describe("presigned uploads against real local S3 storage", () => {
-  it("copies an attachment with reserved characters and survives source deletion", async () => {
+  it("copies an object with reserved characters and survives source deletion", async () => {
     const sourceKey = "source/report #1%.png";
     const body = Buffer.from("independent attachment");
     await client.send(
@@ -90,19 +85,11 @@ describe("presigned uploads against real local S3 storage", () => {
         ContentType: "image/png",
       }),
     );
-    const copiedKey = await copyTaskAssetObject({
-      sourceKey,
-      destination: {
-        workspaceId: "local",
-        projectId: "local",
-        taskId: "duplicate",
-        surface: "description",
-        filename: "report.png",
-        contentType: "image/png",
-      },
-    });
-    expect(copiedKey).toContain("/task/duplicate/");
+    const copiedKey = assetObjectKey("local", "copy");
+
+    await copyAssetObject(sourceKey, copiedKey);
     await deleteS3Object(sourceKey);
+
     const copied = await client.send(
       new GetObjectCommand({ Bucket: bucket, Key: copiedKey }),
     );
@@ -112,21 +99,17 @@ describe("presigned uploads against real local S3 storage", () => {
     );
   });
 
-  it("accepts an exact-size File upload and verifies stored metadata", async () => {
+  it("accepts an exact-size upload and reports its size", async () => {
     const upload = await presign(64);
     const response = await fetch(upload.uploadUrl, {
       method: "PUT",
       headers: upload.headers,
-      body: new File([new Uint8Array(64)], "test.png", { type: "image/png" }),
+      body: new Uint8Array(64),
     });
     expect(response.status).toBe(200);
-    expect(
-      await verifyTaskAssetUpload(upload.key, {
-        size: 64,
-        contentType: "image/png",
-      }),
-    ).toEqual({ size: 64, contentType: "image/png" });
+    expect(await headAssetObject(upload.key)).toEqual({ size: 64 });
   });
+
   it.each([1, 13, 65, 4096])(
     "rejects a body of %i bytes signed for 12 bytes without storing it",
     async (size) => {
@@ -138,11 +121,10 @@ describe("presigned uploads against real local S3 storage", () => {
       });
       expect(response.status).toBe(403);
       await response.body?.cancel();
-      await expect(head(upload.key)).rejects.toMatchObject({
-        $metadata: { httpStatusCode: 404 },
-      });
+      expect(await headAssetObject(upload.key)).toBeNull();
     },
   );
+
   it("rejects a changed Content-Type without storing the object", async () => {
     const upload = await presign();
     const response = await fetch(upload.uploadUrl, {
@@ -152,10 +134,9 @@ describe("presigned uploads against real local S3 storage", () => {
     });
     expect(response.status).toBe(403);
     await response.body?.cancel();
-    await expect(head(upload.key)).rejects.toMatchObject({
-      $metadata: { httpStatusCode: 404 },
-    });
+    expect(await headAssetObject(upload.key)).toBeNull();
   });
+
   it("rejects unsigned chunked transfer without Content-Length", async () => {
     const upload = await presign();
     const status = await new Promise<number>((resolve, reject) => {
@@ -175,28 +156,18 @@ describe("presigned uploads against real local S3 storage", () => {
     });
     expect(status).toBeGreaterThanOrEqual(400);
     expect(status).toBeLessThan(500);
-    await expect(head(upload.key)).rejects.toMatchObject({
-      $metadata: { httpStatusCode: 404 },
-    });
+    expect(await headAssetObject(upload.key)).toBeNull();
   });
-  it("rejects missing objects and removes old oversized objects during verification", async () => {
-    const { key } = await presign();
-    await expect(
-      verifyTaskAssetUpload(key, { size: 12, contentType: "image/png" }),
-    ).rejects.toThrow("Uploaded object was not found");
+
+  it("reads only the start of an object", async () => {
+    const key = assetObjectKey("local", "ranged");
     await client.send(
       new PutObjectCommand({
         Bucket: bucket,
         Key: key,
-        Body: Buffer.alloc(65),
-        ContentType: "image/png",
+        Body: Buffer.from("0123456789"),
       }),
     );
-    await expect(
-      verifyTaskAssetUpload(key, { size: 12, contentType: "image/png" }),
-    ).rejects.toThrow("exceeds the maximum");
-    await expect(head(key)).rejects.toMatchObject({
-      $metadata: { httpStatusCode: 404 },
-    });
+    expect(new TextDecoder().decode(await readAssetHead(key, 4))).toBe("0123");
   });
 });

@@ -20,6 +20,7 @@ import {
   projectColumnTable,
   projectTable,
 } from "#api/projects/index";
+import { claimAssets } from "#api/storage/index";
 import { taskError } from "#api/tasks/errors";
 import type { TaskActor } from "#api/tasks/lib/assignee";
 import {
@@ -305,29 +306,39 @@ export async function importTasks(
     for (let at = 0; at < rows.length; at += INSERT_CHUNK) {
       await tx.insert(taskTable).values(rows.slice(at, at + INSERT_CHUNK));
     }
-    const descriptions = rows.map((row, at) => ({
-      taskId: row.id,
-      projectId,
-      description: placed[at]!.task.description,
-    }));
+    // Files the imported text links to become the new task's own (see
+    // `claimAssets`); text without links costs no query.
+    const claim = (taskId: string, text: string) =>
+      claimAssets(tx, { workspaceId, taskId, userId: actor.userId }, text);
+    const descriptions = [];
+    for (const [at, row] of rows.entries()) {
+      descriptions.push({
+        taskId: row.id,
+        projectId,
+        description: await claim(row.id, placed[at]!.task.description),
+      });
+    }
     for (let at = 0; at < descriptions.length; at += INSERT_CHUNK) {
       await tx
         .insert(taskDescriptionTable)
         .values(descriptions.slice(at, at + INSERT_CHUNK));
     }
 
-    const commentRows = rows.flatMap((row, at) =>
-      placed[at]!.comments.map((comment) => ({
-        id: createId(),
-        taskId: row.id,
-        projectId,
-        authorId: comment.authorId,
-        body: comment.body,
-        createdAt: comment.createdAt ?? now,
-        editedAt: comment.editedAt,
-        updatedAt: comment.editedAt ?? comment.createdAt ?? now,
-      })),
-    );
+    const commentRows = [];
+    for (const [at, row] of rows.entries()) {
+      for (const comment of placed[at]!.comments) {
+        commentRows.push({
+          id: createId(),
+          taskId: row.id,
+          projectId,
+          authorId: comment.authorId,
+          body: await claim(row.id, comment.body),
+          createdAt: comment.createdAt ?? now,
+          editedAt: comment.editedAt,
+          updatedAt: comment.editedAt ?? comment.createdAt ?? now,
+        });
+      }
+    }
     for (let at = 0; at < commentRows.length; at += INSERT_CHUNK) {
       await tx
         .insert(taskCommentTable)

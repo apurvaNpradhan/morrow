@@ -1,11 +1,9 @@
-import { useAppHotkeys, useHotkeys } from "@tanstack/react-hotkeys";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { Command } from "@/app/commands/use-commands";
 import { useContributeCommands } from "@/app/commands/contributed-commands";
 import { taskCollection } from "../collections/task-collection";
-import { taskHotkeysAllowed } from "../lib/hotkey-scope";
 import { getActiveTaskId, useActiveTaskId } from "../lib/active-task-store";
 import { focusedTaskId, displayTicketId } from "../lib/task-links";
 import { useTaskView } from "../components/task-view-context";
@@ -19,13 +17,11 @@ function currentTask() {
 
 /**
  * The commands for the current task (the palette lists them while a task is
- * focused or open) and the shortcut that copies its branch name. Mounted by
- * the project page and by the task page.
+ * focused or open). Mounted by the project page and by the task page.
  */
 export function useTaskCommands() {
   const { t } = useTranslation("tasks");
   const navigate = useNavigate();
-  const hotkeys = useAppHotkeys();
   const { workspace, project } = useTaskView();
   const copyTask = useCopyTask();
   const activeId = useActiveTaskId();
@@ -58,21 +54,9 @@ export function useTaskCommands() {
         id: `task.copy.${kind}`,
         group: "task",
         label: t(`copy.${kind}`),
-        hotkey: kind === "branch" ? "copyTaskBranch" : undefined,
         run: run((task) => void copyTask(kind, task)),
       })),
     ];
   }, [activeId, t, navigate, workspace.slug, project.key, copyTask]);
   useContributeCommands("tasks", commands);
-
-  useHotkeys([
-    {
-      hotkey: hotkeys.copyTaskBranch,
-      callback: () => {
-        if (!taskHotkeysAllowed()) return;
-        const task = currentTask();
-        if (task) void copyTask("branch", task);
-      },
-    },
-  ]);
 }

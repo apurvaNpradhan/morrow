@@ -117,7 +117,11 @@ export async function createTask(
           title: taskTable.title,
         });
       if (!task) throw new Error("Task insert returned no row");
-      await saveDescription(tx, projectId, task.id, input.description ?? "");
+      await saveDescription(
+        tx,
+        { workspaceId, projectId, taskId: task.id, userId: actor.userId },
+        input.description ?? "",
+      );
       await recordTaskActivity(tx, "task.created", workspaceId, project, task);
       await recordTaskEvent(tx, projectId, task.id, {
         type: "created",

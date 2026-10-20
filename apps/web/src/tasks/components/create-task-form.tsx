@@ -204,6 +204,7 @@ export function CreateTaskForm({
           onSubmit={() => void submit()}
           className="min-h-24"
           limit={TASK_DESCRIPTION_MAX}
+          workspaceId={workspace.id}
         />
         <div className="flex flex-wrap items-center gap-1.5">
           {!insideProject ? (

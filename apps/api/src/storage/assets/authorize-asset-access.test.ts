@@ -60,7 +60,7 @@ describe("authorizeAssetAccess", () => {
       await statusOf(
         authorizeAssetAccess(context, {
           workspaceId: "workspace-1",
-          surface: "description",
+          attachedAt: new Date(),
         }),
       ),
     ).toBe(403);
@@ -71,7 +71,7 @@ describe("authorizeAssetAccess", () => {
       await statusOf(
         authorizeAssetAccess(context, {
           workspaceId: "workspace-1",
-          surface: "description",
+          attachedAt: new Date(),
         }),
       ),
     ).toBe(401);
@@ -84,7 +84,7 @@ describe("authorizeAssetAccess", () => {
       await statusOf(
         authorizeAssetAccess(context, {
           workspaceId: "workspace-1",
-          surface: "description",
+          attachedAt: new Date(),
         }),
       ),
     ).toBe(200);
@@ -99,7 +99,7 @@ describe("authorizeAssetAccess", () => {
       await statusOf(
         authorizeAssetAccess(context, {
           workspaceId: "workspace-1",
-          surface: "description",
+          attachedAt: new Date(),
         }),
       ),
     ).toBe(200);
@@ -114,7 +114,7 @@ describe("authorizeAssetAccess", () => {
       await statusOf(
         authorizeAssetAccess(context, {
           workspaceId: "workspace-1",
-          surface: "description",
+          attachedAt: new Date(),
         }),
       ),
     ).toBe(403);
@@ -124,7 +124,7 @@ describe("authorizeAssetAccess", () => {
     state.caller = "member";
     const draft = {
       workspaceId: "workspace-1",
-      surface: "draft-pending",
+      attachedAt: null,
       createdBy: "user-other-member",
     };
     expect(await statusOf(authorizeAssetAccess(context, draft))).toBe(403);

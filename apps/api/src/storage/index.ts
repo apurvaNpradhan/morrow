@@ -1,6 +1,10 @@
 export { queueStorageCleanup } from "./assets/cleanup-queue";
+export { claimAssets } from "./assets/claim-assets";
+export { cleanupDraftUploads } from "./assets/cleanup-drafts";
+export { sweepOrphanedAssets } from "./assets/sweep-orphans";
 export { storageQueues } from "./jobs";
 export { removeObjectOrQueue } from "./lib/remove-object";
+export { assetsRouter } from "./procedures";
 export { storageRoutes } from "./routes";
 export {
   isPublicStorageConfigured,

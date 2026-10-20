@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/node";
 import type { PgBoss } from "pg-boss";
 import { runLoggedJob } from "#api/platform/logger";
-import { cleanupDraftUploads } from "./draft-upload-cleanup";
+import { cleanupDraftUploads, sweepOrphanedAssets } from "#api/storage/index";
 
 type JobOutcome = { degraded?: boolean } | void;
 
@@ -13,6 +13,11 @@ const crons: Cron[] = [
     name: "draft-upload-cleanup",
     cron: "31 * * * *",
     run: cleanupDraftUploads,
+  },
+  {
+    name: "asset-orphan-sweep",
+    cron: "17 3 * * *",
+    run: () => sweepOrphanedAssets(),
   },
 ];
 

@@ -57,9 +57,14 @@ export async function updateTask(
       .update(taskTable)
       .set({ ...fields, updatedAt: new Date() })
       .where(eq(taskTable.id, taskId));
-    if (description !== undefined) {
-      await saveDescription(tx, projectId, taskId, description);
-    }
+    const storedDescription =
+      description === undefined
+        ? undefined
+        : await saveDescription(
+            tx,
+            { workspaceId, projectId, taskId, userId: actor.userId },
+            description,
+          );
 
     const record = (event: Parameters<typeof recordTaskEvent>[3]) =>
       recordTaskEvent(tx, projectId, taskId, event);
@@ -94,8 +99,8 @@ export async function updateTask(
       });
     }
     if (
-      description !== undefined &&
-      description !== (previous?.description ?? "")
+      storedDescription !== undefined &&
+      storedDescription !== (previous?.description ?? "")
     ) {
       await record({ type: "description", data: {} });
     }

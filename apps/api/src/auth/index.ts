@@ -5,3 +5,4 @@ export { authenticateApi, authRoutes } from "./routes";
 export { drainSignInEmails } from "./email/sign-in-email-tasks";
 export { isBanActive, type BanState } from "./access/user-ban";
 export { resolveAssetBearerOrCookie } from "./lib/authenticate-api-request";
+export { verifyMcpToken } from "./access/verify-mcp-token";

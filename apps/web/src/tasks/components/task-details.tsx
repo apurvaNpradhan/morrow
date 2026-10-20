@@ -37,7 +37,7 @@ export function TaskDetails({
   fullPage?: boolean;
 }) {
   const { t } = useTranslation("tasks");
-  const { can, frozen, project } = useTaskView();
+  const { can, frozen, project, workspace } = useTaskView();
   const actions = useTaskActions();
   const saveDescription = useDescriptionAutosave(task.id);
   const description = useTaskDescription(task.id);
@@ -127,6 +127,7 @@ export function TaskDetails({
                 onChange={(markdown) => saveDescription(markdown)}
                 className="min-h-40"
                 limit={TASK_DESCRIPTION_MAX}
+                workspaceId={workspace.id}
               />
             )}
             <TaskSubtasks task={task} />

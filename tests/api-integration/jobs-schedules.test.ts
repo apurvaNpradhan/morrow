@@ -16,6 +16,7 @@ describe("job schedules", () => {
 
     const names = (await boss.getSchedules()).map((entry) => entry.name);
     expect(names).toContain("draft-upload-cleanup");
+    expect(names).toContain("asset-orphan-sweep");
     expect(names).not.toContain("retired-cron");
   });
 });

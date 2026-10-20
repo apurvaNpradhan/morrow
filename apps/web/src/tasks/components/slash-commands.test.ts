@@ -17,6 +17,7 @@ describe("filterSlashCommands", () => {
       "Quote",
       "Code block",
       "Divider",
+      "Attach file",
       "Table",
     ]);
   });
@@ -28,6 +29,11 @@ describe("filterSlashCommands", () => {
   it("matches the search words as well as the label", () => {
     expect(labelsFor("checkbox")).toEqual(["Checklist"]);
     expect(labelsFor("h2")).toEqual(["Heading 2"]);
+  });
+
+  it("finds the attach command by what it does", () => {
+    expect(labelsFor("upload")).toEqual(["Attach file"]);
+    expect(labelsFor("pdf")).toEqual(["Attach file"]);
   });
 
   it("ignores spaces around the query", () => {

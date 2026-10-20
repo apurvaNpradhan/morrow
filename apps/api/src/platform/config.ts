@@ -119,7 +119,6 @@ export const config = {
       publicBaseUrl: text("S3_PUBLIC_BASE_URL"),
       keyPrefix: text("S3_KEY_PREFIX") ?? "",
       forcePathStyle: flag("S3_FORCE_PATH_STYLE", true),
-      maxImageUploadBytes: whole("S3_MAX_IMAGE_UPLOAD_BYTES", 10 * 1024 * 1024),
       presignTtlSeconds: whole("S3_PRESIGN_TTL_SECONDS", 300),
     };
   },

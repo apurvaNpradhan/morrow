@@ -4,6 +4,7 @@ import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
 import { RELATION_TYPES } from "./relations.js";
 import { TASK_PRIORITIES } from "./tasks.js";
 
+export * from "./assets.js";
 export * from "./comments.js";
 export * from "./fields.js";
 export * from "./task-events.js";

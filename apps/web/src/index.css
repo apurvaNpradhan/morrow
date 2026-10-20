@@ -1102,6 +1102,71 @@ input:-webkit-autofill:active {
     text-overflow: ellipsis;
   }
 
+  .morrow-attachment-node {
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .morrow-attachment-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    color: color-mix(in srgb, var(--foreground) 62%, transparent);
+  }
+
+  .morrow-attachment-download:hover,
+  .morrow-attachment-download:focus-visible {
+    background: color-mix(in srgb, var(--accent) 72%, transparent);
+    color: var(--foreground);
+    outline: none;
+  }
+
+  .morrow-attachment-download svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .morrow-upload-placeholder {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: min(16rem, 100%);
+    max-width: min(28rem, 100%);
+    margin: 0.2rem 0;
+    padding: 0.55rem 0.75rem;
+    border: 1px dashed color-mix(in srgb, var(--border) 90%, transparent);
+    border-radius: calc(var(--radius) - 2px);
+    font-size: 0.8rem;
+    vertical-align: middle;
+  }
+
+  .morrow-upload-placeholder-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--foreground) 78%, transparent);
+  }
+
+  .morrow-upload-placeholder-bar {
+    display: block;
+    height: 0.25rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+
+  .morrow-upload-placeholder-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+    transition: width 120ms linear;
+  }
+
   .morrow-tiptap-content .ProseMirror [data-type="morrow-embed"]:focus-within {
     border-color: color-mix(in srgb, var(--ring) 80%, var(--border));
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 34%, transparent);

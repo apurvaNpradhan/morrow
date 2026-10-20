@@ -217,6 +217,64 @@ describe("MCP endpoint", () => {
     expect(activity.result?.isError).toBe(false);
   });
 
+  it("gives agents absolute links to attached files", async () => {
+    const owner = await signUp("Owner");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Shared", slug: "shared-files", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const run = async (name: string, args: Record<string, unknown>) => {
+      const response = await call(owner.token, name, {
+        workspaceId: workspace.id,
+        ...args,
+      });
+      expect(response.result?.isError, response.result?.content[0].text).toBe(
+        false,
+      );
+      return JSON.parse(response.result!.content[0].text);
+    };
+    const { projectId } = await run("create_project", {
+      name: "Morrow",
+      key: "MOR",
+    });
+    await run("create_tasks", {
+      projectId,
+      items: [
+        {
+          title: "With a file",
+          description: "![x](/api/asset/abc123?w=1&h=2)",
+        },
+      ],
+    });
+    await run("comment_task", {
+      projectId,
+      ticketId: "MOR-1",
+      action: "create",
+      body: '[r.pdf](/api/asset/def456 "application/pdf 10")',
+    });
+    const absolute = `${config.apiUrl}/asset`;
+
+    const detail = await run("get_task", { projectId, ticketId: "MOR-1" });
+    const listed = await run("list_tasks", {
+      projectId,
+      withDescription: true,
+    });
+
+    expect(detail.description).toBe(`![x](${absolute}/abc123?w=1&h=2)`);
+    expect(detail.comments[0].body).toBe(
+      `[r.pdf](${absolute}/def456 "application/pdf 10")`,
+    );
+    expect(listed.tasks[0].description).toBe(
+      `![x](${absolute}/abc123?w=1&h=2)`,
+    );
+  });
+
   it("writes projects, columns, labels, tasks and comments by name", async () => {
     const owner = await signUp("Owner");
     const [workspace] = await db
