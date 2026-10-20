@@ -37,7 +37,7 @@ Kaneo uploads with a presigned PUT, tracks three states (`draft-pending`, `draft
 
 - An image is `![name](/api/asset/<id>?w=..&h=..)`. A file is a link alone in its paragraph, titled `"<mime> <bytes>"`. Only our own `/api/asset/` images load in the editor; any other image stays text, so a pasted remote image cannot phone home.
 - The editor renders both richly. MCP, export and any other reader see working links.
-- The markdown carries everything the editor shows, so the editor needs no shape. The Attachments list under the description does: `task-attachments` is the `asset` table read on demand one task at a time, attached rows only (a draft is its uploader's alone) and without the object key. Deleting a file there is the one way to free its storage; it removes the row, queues the object, and leaves links in the text to stop showing.
+- The markdown carries everything the editor shows, so the editor needs no shape. The Attachments list under the description does: `task-attachments` is the `asset` table read on demand one task at a time, attached rows only (a draft is its uploader's alone) and without the object key. Deleting a file there is the one way to free its storage; it removes the row, queues the object, and takes the file's images and cards out of the task's description and comments in the same transaction, so no broken link stays (comments are not marked edited).
 
 ## Consequences
 

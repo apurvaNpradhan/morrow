@@ -1705,7 +1705,7 @@
 			"addedBy": "Added by {{name}}",
 			"delete": "Delete {{name}}",
 			"deleteTitle": "Delete this file?",
-			"deleteWarning": "Anywhere the file is linked in the description or comments, it stops showing. This can't be undone.",
+			"deleteWarning": "The file is also removed from the description and comments. This can't be undone.",
 			"deleteConfirm": "Delete file",
 			"deleteError": "Couldn't delete the file.",
 			"openInTab": "Open in new tab",

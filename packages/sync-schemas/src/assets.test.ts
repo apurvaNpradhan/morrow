@@ -4,6 +4,7 @@ import {
   assetIdsIn,
   isInlineViewable,
   isPreviewable,
+  removeAssetLinks,
   replaceAssetIds,
 } from "./assets.js";
 
@@ -118,5 +119,40 @@ describe("isPreviewable", () => {
     ]) {
       expect(isPreviewable(type)).toBe(false);
     }
+  });
+});
+
+describe("removeAssetLinks", () => {
+  const card = (id: string) => `[r.pdf](/api/asset/${id} "application/pdf 10")`;
+  const image = (id: string) => `![s.png](/api/asset/${id}?w=1&h=2)`;
+
+  it("removes an image from a sentence and leaves the rest", () => {
+    expect(removeAssetLinks(`See ${image("abc")} here`, "abc")).toBe(
+      "See  here",
+    );
+  });
+
+  it("removes a card with its own paragraph, whether first, middle or last", () => {
+    expect(removeAssetLinks(`${card("abc")}\n\nAfter`, "abc")).toBe("After");
+    expect(removeAssetLinks(`Before\n\n${card("abc")}\n\nAfter`, "abc")).toBe(
+      "Before\n\nAfter",
+    );
+    expect(removeAssetLinks(`Before\n\n${card("abc")}`, "abc")).toBe("Before");
+    expect(removeAssetLinks(card("abc"), "abc")).toBe("");
+  });
+
+  it("removes absolute links too, and every occurrence", () => {
+    expect(
+      removeAssetLinks(
+        `![a](https://m.example.com/api/asset/abc) and ${image("abc")}`,
+        "abc",
+      ),
+    ).toBe(" and ");
+  });
+
+  it("keeps other files, other text, and blank paragraphs it did not touch", () => {
+    const text = `${card("keep")}\n\n\n\nSecond\n\n${image("keep2")}`;
+    expect(removeAssetLinks(text, "abc")).toBe(text);
+    expect(removeAssetLinks(`${image("abcdef")}`, "abc")).toBe(image("abcdef"));
   });
 });
