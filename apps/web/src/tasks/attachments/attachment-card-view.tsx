@@ -33,10 +33,10 @@ export function AttachmentCardView({ node }: NodeViewProps) {
       data-type="attachment-card"
       contentEditable={false}
     >
-      <a
-        href={url}
-        {...(viewable ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      <button
+        type="button"
         className="morrow-attachment-card"
+        onClick={() => openAsset(url, viewable)}
       >
         <span className="morrow-attachment-card-icon">
           <FileTypeIcon mimeType={mimeType} />
@@ -47,17 +47,26 @@ export function AttachmentCardView({ node }: NodeViewProps) {
             {formatBytes(size)}
           </span>
         </span>
-      </a>
-      <a
-        href={`${url}?download=1`}
-        download={filename}
+      </button>
+      <button
+        type="button"
         aria-label={t("attachments.download", { name: filename })}
         className="morrow-attachment-download"
+        onClick={() => openAsset(`${url}?download=1`, false)}
       >
         <Download aria-hidden="true" />
-      </a>
+      </button>
     </NodeViewWrapper>
   );
+}
+
+/**
+ * Opens or downloads a file. The cards are buttons, not links: the editor's link
+ * extension also opens any link that is clicked, so a link here would act twice.
+ */
+function openAsset(url: string, inNewTab: boolean) {
+  if (inNewTab) window.open(url, "_blank", "noopener,noreferrer");
+  else window.location.assign(url);
 }
 
 /** The card node as the editor shows it. */

@@ -1102,12 +1102,24 @@ input:-webkit-autofill:active {
     text-overflow: ellipsis;
   }
 
+  /* One card per line, however many files were added together. */
   .morrow-attachment-node {
+    display: flex;
+    width: fit-content;
     align-items: center;
     gap: 0.4rem;
   }
 
+  .morrow-attachment-card,
   .morrow-attachment-download {
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+  }
+
+  .morrow-attachment-download {
+    border: 0;
+    background: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;

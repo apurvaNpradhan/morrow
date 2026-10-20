@@ -81,8 +81,13 @@ function insertBlock(
     const atEnd = $pos.after() >= state.doc.content.size;
     tr.replaceWith($pos.before(), $pos.after(), atEnd ? [node, empty] : node);
   } else {
-    const atEnd = $pos.after() >= state.doc.content.size;
-    tr.insert($pos.after(), atEnd ? [node, empty] : node);
+    // After the cards already below this paragraph, so files that finish
+    // together keep the order they were added in.
+    let at = $pos.after();
+    while (state.doc.nodeAt(at)?.type.name === "attachmentCard") {
+      at += state.doc.nodeAt(at)!.nodeSize;
+    }
+    tr.insert(at, at >= state.doc.content.size ? [node, empty] : node);
   }
   return tr;
 }
