@@ -308,6 +308,37 @@ describe("shape proxy", () => {
     expect(upstream.searchParams.get("params[1]")).toBe(user.id);
   });
 
+  it("serves the attached files of the user's workspaces only, never drafts", async () => {
+    const { user } = await createWorkspaceMember();
+    mockAuthenticatedSession(user);
+    const electric = fakeElectric();
+
+    await app.request(
+      "/api/shapes/task-attachments?" +
+        new URLSearchParams({
+          offset: "-1",
+          table: "user",
+          columns: "id,email",
+          where: "true",
+          "params[1]": "someone-else",
+        }),
+    );
+    const upstream = electric.upstream();
+
+    expect(upstream.searchParams.get("table")).toBe("asset");
+    const columns = upstream.searchParams.get("columns")!;
+    expect(columns).toBe(
+      "id,workspace_id,task_id,filename,mime_type,size,kind,created_by,created_at,attached_at",
+    );
+    expect(columns).not.toContain("object_key");
+    const where = upstream.searchParams.get("where")!;
+    expect(where).toContain("attached_at IS NOT NULL");
+    expect(where).toContain(
+      "workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",
+    );
+    expect(upstream.searchParams.get("params[1]")).toBe(user.id);
+  });
+
   it("serves only pending invitations of the user's workspaces", async () => {
     const { user } = await createWorkspaceMember();
     mockAuthenticatedSession(user);

@@ -5,6 +5,8 @@ export { sweepOrphanedAssets } from "./assets/sweep-orphans";
 export { storageQueues } from "./jobs";
 export { removeObjectOrQueue } from "./lib/remove-object";
 export { assetsRouter } from "./procedures";
+export { storageError } from "./errors";
+export { assetTable } from "./tables";
 export { storageRoutes } from "./routes";
 export {
   isPublicStorageConfigured,

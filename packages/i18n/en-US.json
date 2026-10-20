@@ -1701,6 +1701,13 @@
 			"attach": "Attach files",
 			"download": "Download {{name}}",
 			"uploadFailed": "Couldn't upload {{name}}.",
+			"title": "Attachments",
+			"addedBy": "Added by {{name}}",
+			"delete": "Delete {{name}}",
+			"deleteTitle": "Delete this file?",
+			"deleteWarning": "Anywhere the file is linked in the description or comments, it stops showing. This can't be undone.",
+			"deleteConfirm": "Delete file",
+			"deleteError": "Couldn't delete the file.",
 			"imagePreview": "Image preview",
 			"openOriginal": "Open original"
 		},

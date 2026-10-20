@@ -251,6 +251,29 @@ export const taskLinksShape = shape(
 export type TaskLinkRow = z.infer<typeof taskLinksShape.schema>;
 
 /**
+ * The files attached to Tasks, read on demand one Task at a time. Only
+ * attached files: a draft is its uploader's alone, so it is never sent. The
+ * object key stays on the server.
+ */
+export const taskAttachmentsShape = shape(
+  "task-attachments",
+  z.object({
+    id: z.string(),
+    workspaceId: z.string(),
+    taskId: z.string(),
+    filename: z.string(),
+    mimeType: z.string(),
+    size: z.number(),
+    kind: z.enum(["image", "file"]),
+    createdBy: z.string().nullable(),
+    createdAt: z.date(),
+    attachedAt: z.date(),
+  }),
+);
+
+export type TaskAttachmentRow = z.infer<typeof taskAttachmentsShape.schema>;
+
+/**
  * The history of a Task, read on demand one Task at a time when it is opened.
  * Read-only: only the API writes it. `data` is the event's payload, shaped by
  * `taskEventSchema`.

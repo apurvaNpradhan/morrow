@@ -1,5 +1,6 @@
 import {
   taskCommentsShape,
+  taskAttachmentsShape,
   taskDescriptionsShape,
   taskEventsShape,
   taskLinksShape,
@@ -7,6 +8,7 @@ import {
   tasksShape,
 } from "@morrow/sync-schemas";
 import { defineShape } from "#api/platform/sync/define-shape";
+import { assetTable } from "#api/storage/index";
 import {
   taskCommentTable,
   taskDescriptionTable,
@@ -96,6 +98,20 @@ const taskRelations = defineShape({
   }),
 });
 
+/**
+ * The files attached to tasks of the Workspaces the user belongs to, read one
+ * task at a time when it is opened. Drafts are left out: they are private to
+ * their uploader.
+ */
+const taskAttachments = defineShape({
+  shape: taskAttachmentsShape,
+  table: assetTable,
+  where: ({ userId }) => ({
+    sql: "attached_at IS NOT NULL AND workspace_id IN (SELECT workspace_id FROM workspace_member WHERE user_id = $1)",
+    params: [userId],
+  }),
+});
+
 export const tasksShapes = [
   tasks,
   taskDescriptions,
@@ -103,4 +119,5 @@ export const tasksShapes = [
   taskEvents,
   taskLinks,
   taskRelations,
+  taskAttachments,
 ];

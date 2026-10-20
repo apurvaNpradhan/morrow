@@ -10,6 +10,7 @@ import { bulkRemoveTasks } from "./operations/bulk-remove-tasks";
 import { bulkUpdateTasks } from "./operations/bulk-update-tasks";
 import { countTasksByColumn } from "./operations/count-tasks-by-column";
 import { createTask } from "./operations/create-task";
+import { deleteAttachment } from "./operations/delete-attachment";
 import { deleteTask } from "./operations/delete-task";
 import { duplicateTask } from "./operations/duplicate-task";
 import { exportTasks } from "./operations/export-tasks";
@@ -344,6 +345,20 @@ const duplicate = authed
     ),
   );
 
+// A file belongs to its task, so deleting it takes the permission to edit the task.
+const deleteTaskAttachment = authed
+  .input(forTask.extend({ assetId: z.string().min(1).max(64) }))
+  .use(canUpdate)
+  .output(txidResult)
+  .handler(({ input }) =>
+    deleteAttachment(
+      input.workspaceId,
+      input.projectId,
+      input.taskId,
+      input.assetId,
+    ),
+  );
+
 const remove = authed
   .input(forTask)
   .use(canDelete)
@@ -422,6 +437,7 @@ export const tasksRouter = {
   archiveCompleted,
   duplicate,
   remove,
+  deleteAttachment: deleteTaskAttachment,
   bulkUpdate,
   bulkRemove,
   export: exportProject,
