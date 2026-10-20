@@ -9,6 +9,7 @@ import {
 } from "vite-plus/test";
 import { db, schema } from "../../apps/api/src/platform/database";
 import { startJobs, stopJobs } from "../../apps/api/src/platform/jobs";
+import { commentRows, newCommentId } from "./helpers/comments";
 import { addWorkspaceMember } from "./helpers/add-workspace-member";
 import {
   assetRow,
@@ -57,8 +58,27 @@ describe("deleting an attachment", () => {
     await waitFor(async () => ((await objectExists(objectKey)) ? null : true));
   });
 
-  it("leaves the text alone: the link just stops showing", async () => {
-    const { client, target, assetId, task } = await setup();
+  it("takes the file out of the description and the comments, and nothing else", async () => {
+    const { client, workspace, target, assetId, task } = await setup();
+    const other = await uploadAsset(client, workspace.id, {
+      filename: "other.png",
+      contentType: "image/png",
+      bytes: pngBytes(),
+    });
+    await client.assets.finalize({ workspaceId: workspace.id, assetId: other });
+    const keep = `![other.png](/api/asset/${other}?w=1200&h=800)`;
+    const mine = `![shot.png](/api/asset/${assetId}?w=1200&h=800)`;
+    await client.tasks.updateDescription({
+      ...target,
+      description: `Intro\n\n${mine}\n\n${keep}\n\nOutro`,
+    });
+    const commentId = newCommentId();
+    await client.comments.create({
+      ...target,
+      id: commentId,
+      body: `Look ${mine} and ${keep}`,
+    });
+    const [before] = await commentRows(task.id);
 
     await client.tasks.deleteAttachment({ ...target, assetId });
 
@@ -66,7 +86,14 @@ describe("deleting an attachment", () => {
       .select({ description: schema.taskDescriptionTable.description })
       .from(schema.taskDescriptionTable)
       .where(eq(schema.taskDescriptionTable.taskId, task.id));
-    expect(row?.description).toContain(`/api/asset/${assetId}`);
+    expect(row?.description).toBe(`Intro\n\n${keep}\n\nOutro`);
+    const [comment] = await commentRows(task.id);
+    expect(comment?.body).toBe(`Look  and ${keep}`);
+    expect(comment?.editedAt).toBeNull();
+    expect(comment?.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      before!.updatedAt.getTime(),
+    );
+    expect(await assetRow(other)).toBeDefined();
   });
 
   it("needs the right to edit the task", async () => {

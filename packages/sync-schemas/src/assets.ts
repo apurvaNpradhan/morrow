@@ -58,3 +58,25 @@ export function isInlineViewable(mimeType: string): boolean {
 export function isPreviewable(mimeType: string): boolean {
   return isInlineViewable(mimeType) && !mimeType.startsWith("image/");
 }
+
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * The markdown without any image or link to one asset: a file card goes with
+ * its own paragraph, an image or link inside a sentence is just taken out.
+ * Everything else, blank paragraphs included, is left as it was.
+ */
+export function removeAssetLinks(markdown: string, assetId: string): string {
+  const link = String.raw`!?\[(?:[^\]\\]|\\.)*\]\((?:https?:\/\/[^/\s)]+)?\/api\/asset\/${escapeRegExp(assetId)}(?![a-z0-9])(?:[?#][^\s)]*)?(?:\s+"[^"]*")?\)`;
+  const afterParagraph = new RegExp(
+    String.raw`\n\n${link}[ \t]*(?=\n\n|$)`,
+    "g",
+  );
+  const firstParagraph = new RegExp(String.raw`^${link}[ \t]*(?:\n\n|$)`);
+  const inline = new RegExp(link, "g");
+  return markdown
+    .replace(afterParagraph, "")
+    .replace(firstParagraph, "")
+    .replace(inline, "");
+}
