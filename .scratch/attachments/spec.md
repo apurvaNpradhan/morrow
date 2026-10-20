@@ -196,7 +196,7 @@ All are translated in `en-US.json`:
 
 These are follow-up tickets:
 
-- An Attachments section in the task sheet (with an `asset` shape and manual delete).
+- ~~An Attachments section in the task sheet~~ (MOR-57, done: `task-attachments` shape, list and delete).
 - An MCP upload tool.
 - Exports and imports that carry files.
 - Documents as a second container.
