@@ -1708,6 +1708,8 @@
 			"deleteWarning": "Anywhere the file is linked in the description or comments, it stops showing. This can't be undone.",
 			"deleteConfirm": "Delete file",
 			"deleteError": "Couldn't delete the file.",
+			"openInTab": "Open in new tab",
+			"downloadFile": "Download",
 			"imagePreview": "Image preview",
 			"openOriginal": "Open original"
 		},

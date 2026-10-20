@@ -46,3 +46,4 @@ Kaneo uploads with a presigned PUT, tracks three states (`draft-pending`, `draft
 - Freed storage comes back up to a day after a delete.
 - Links copied into another instance or Workspace render broken. Exports carry links, not files.
 - Database backups do not include files; bucket versioning is the option if that matters.
+- A file a browser can show (PDF, plain text, video, audio) previews in a frame inside the app, from the storage service's origin with no sandbox (a sandbox would stop the PDF viewer). Anything else downloads.

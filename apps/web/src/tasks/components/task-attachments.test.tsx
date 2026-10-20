@@ -67,7 +67,7 @@ describe("TaskAttachments", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("lists each file with its size and who added it, opening viewable ones in a tab", () => {
+  it("lists each file with its size and who added it", () => {
     files.current = [
       file({}),
       file({
@@ -82,11 +82,18 @@ describe("TaskAttachments", () => {
     expect(screen.getByText("report.pdf")).toBeTruthy();
     expect(screen.getByText(/2\.3 MB/)).toBeTruthy();
     expect(screen.getAllByText(/Ada Lovelace/)).toHaveLength(2);
-    const pdf = screen.getByRole("link", { name: /report\.pdf/ });
-    expect(pdf.getAttribute("href")).toBe("/api/asset/a1");
-    expect(pdf.getAttribute("target")).toBe("_blank");
     const zip = screen.getByRole("link", { name: /logs\.zip/ });
-    expect(zip.getAttribute("target")).toBeNull();
+    expect(zip.getAttribute("href")).toBe("/api/asset/a2?download=1");
+  });
+
+  it("previews a viewable file in a frame instead of leaving the page", () => {
+    files.current = [file({})];
+    render(<TaskAttachments task={task} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^report\.pdf/ }));
+
+    const frame = document.body.querySelector("iframe");
+    expect(frame?.getAttribute("src")).toBe("/api/asset/a1");
   });
 
   it("deletes only after the user confirms, warning that links will break", async () => {
