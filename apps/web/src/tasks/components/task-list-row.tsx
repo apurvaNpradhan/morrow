@@ -3,6 +3,7 @@ import { CalendarDays, MessageSquare } from "lucide-react";
 import { LabelChips, labelsOfTask } from "@/labels";
 import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
+import type { SubTaskView } from "@/app/preferences/device-preferences-collection";
 import { cn } from "@/design-system/cn";
 import { isOverdue } from "../lib/due-date";
 import {
@@ -25,13 +26,16 @@ import { useTaskView } from "./task-view-context";
 
 /**
  * A task in the list: priority, ticket id, title, due
- * date and assignee, the same facts as a card on one line.
+ * date and assignee, the same facts as a card on one line. In the task sheet's
+ * sub-task list (`subTask`) it is indented by `depth`, shows what that list's
+ * view switches on, and a Shift-click toggles instead of extending a range.
  */
 export function TaskListRow({
   task,
   rowRef,
   dragging = false,
   lifted = false,
+  subTask,
 }: {
   task: TaskRow;
   /** The sortable's ref, so the row itself is what is picked up. */
@@ -40,6 +44,7 @@ export function TaskListRow({
   dragging?: boolean;
   /** The copy that follows the pointer while it is dragged. */
   lifted?: boolean;
+  subTask?: { depth: number; show: SubTaskView["show"] };
 }) {
   const { t } = useTranslation("tasks");
   const view = useTaskView();
@@ -49,11 +54,20 @@ export function TaskListRow({
     labelById,
     statusFractions,
     personById,
-    display,
     can,
     frozen,
     today,
   } = view;
+  const display = subTask
+    ? {
+        numbers: subTask.show.id,
+        assignees: subTask.show.assignee,
+        dueDates: subTask.show.dueDate,
+        priority: subTask.show.priority,
+      }
+    : view.display;
+  const showStatus = subTask?.show.status ?? true;
+  const showLabels = subTask?.show.labels ?? true;
   const selected = useIsSelected(project.id, task.id);
   const labels = labelsOfTask(task.labelIds, labelById);
   const column = columnById.get(task.columnId);
@@ -77,14 +91,29 @@ export function TaskListRow({
       data-task-id={task.id}
       aria-label={t("card.label", { id: ticket, title: task.title })}
       className={cn(
-        "group/task relative flex h-9 cursor-pointer items-center gap-2 border-b px-4 text-sm outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+        "group/task relative flex h-9 cursor-pointer items-center gap-2 px-4 text-sm outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+        !subTask && "border-b",
+        selectable && "ps-8",
         closed && "opacity-60",
         dragging && "opacity-40",
         lifted && "bg-card shadow-lg",
         selected && "bg-accent/60",
       )}
+      style={
+        subTask && subTask.depth > 0
+          ? { paddingInlineStart: `${2 + subTask.depth * 1.5}rem` }
+          : undefined
+      }
       onClick={(event) => {
-        if (selectable && selectByClick(project.id, task.id, event)) return;
+        // A sub-task list has no range of its own to extend, so Shift toggles.
+        const gesture = subTask
+          ? {
+              ...event,
+              ctrlKey: event.ctrlKey || event.shiftKey,
+              shiftKey: false,
+            }
+          : event;
+        if (selectable && selectByClick(project.id, task.id, gesture)) return;
         view.openTask(task);
       }}
       onPointerEnter={preloadTaskDescriptionEditor}
@@ -97,10 +126,17 @@ export function TaskListRow({
         }
       }}
     >
+      {subTask && subTask.depth > 0 ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-2 h-6 w-3 rounded-bl-md border-b border-s"
+          style={{ insetInlineStart: `${1.5 + subTask.depth * 1.5}rem` }}
+        />
+      ) : null}
       {selectable ? (
         <TaskSelectBox
           task={task}
-          className="absolute start-1 top-1/2 -translate-y-1/2"
+          className="absolute start-3 top-1/2 -translate-y-1/2"
         />
       ) : null}
       {display.priority ? (
@@ -116,7 +152,7 @@ export function TaskListRow({
           {ticket}
         </span>
       ) : null}
-      {column ? (
+      {column && showStatus ? (
         <TaskChip label={column.name} onOpen={open?.("column")}>
           <ColumnMarker
             column={column}
@@ -128,8 +164,8 @@ export function TaskListRow({
         {task.title}
       </span>
       <span className="hidden shrink-0 items-center gap-1 empty:hidden sm:flex">
-        <LabelChips labels={labels} max={2} />
-        <FieldValueChips task={task} max={2} />
+        {showLabels ? <LabelChips labels={labels} max={2} /> : null}
+        {showLabels ? <FieldValueChips task={task} max={2} /> : null}
       </span>
       <TaskStructureChips task={task} closed={closed} />
       {task.commentCount > 0 ? (

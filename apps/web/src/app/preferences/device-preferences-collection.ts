@@ -17,6 +17,47 @@ import {
  */
 export const DEVICE_PREFERENCES_ID = "device";
 
+/** The properties a sub-task row can show in the task sheet. */
+export const SUB_TASK_PROPERTIES = [
+  "priority",
+  "id",
+  "status",
+  "labels",
+  "dueDate",
+  "assignee",
+] as const;
+export type SubTaskProperty = (typeof SUB_TASK_PROPERTIES)[number];
+
+/** How the sub-tasks of a task read in the sheet, the same for every task. */
+export const subTaskViewSchema = z.object({
+  sort: z.object({
+    field: z.custom<SortField>(
+      (value) => typeof value === "string" && isSortField(value),
+    ),
+    direction: z.enum(["asc", "desc"]),
+  }),
+  /** Closed sub-tasks: `all` lists them, `none` leaves them out. */
+  completed: z.enum(["all", "none"]),
+  /** A sub-task's own sub-tasks are listed under it. */
+  nested: z.boolean(),
+  show: z.record(z.enum(SUB_TASK_PROPERTIES), z.boolean()),
+});
+export type SubTaskView = z.infer<typeof subTaskViewSchema>;
+
+export const DEFAULT_SUB_TASK_VIEW: SubTaskView = {
+  sort: { field: "number", direction: "asc" },
+  completed: "all",
+  nested: true,
+  show: {
+    priority: true,
+    id: true,
+    status: true,
+    labels: true,
+    dueDate: true,
+    assignee: true,
+  },
+};
+
 export const devicePreferencesSchema = z.object({
   id: z.literal(DEVICE_PREFERENCES_ID),
   theme: z.enum(["light", "dark", "system"]).default("dark"),
@@ -30,6 +71,8 @@ export const devicePreferencesSchema = z.object({
   showTaskAssignees: z.boolean().default(true),
   showTaskDueDates: z.boolean().default(true),
   showTaskPriority: z.boolean().default(true),
+  /** The sub-task list of the task sheet. */
+  subTaskView: subTaskViewSchema.default(DEFAULT_SUB_TASK_VIEW),
   /** Whether cards and rows show a custom Field's value, by Field id; on unless switched off. */
   showTaskFields: z.record(z.string(), z.boolean()).default({}),
   /** Filters and sort of each Project's board and list, by Project id. */

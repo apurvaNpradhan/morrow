@@ -91,7 +91,6 @@ export function TaskDetails({
           )}
         >
           <div className="order-2 min-w-0 flex-1 space-y-4 @min-[720px]:order-1">
-            <TaskParentLink task={task} />
             <Textarea
               unstyled
               rows={1}
@@ -113,6 +112,7 @@ export function TaskDetails({
                 }
               }}
             />
+            <TaskParentLink task={task} />
             {description === undefined ? (
               <div className="min-h-40" aria-busy="true" />
             ) : (

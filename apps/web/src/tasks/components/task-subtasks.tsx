@@ -1,112 +1,123 @@
-import { TASK_TITLE_MAX, type TaskRow } from "@morrow/sync-schemas";
-import { Plus } from "lucide-react";
-import { useState } from "react";
+import type { TaskRow } from "@morrow/sync-schemas";
+import { ChevronRight, CornerLeftUp, ListPlus, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { errorMessage } from "@/app/lib/error-message";
-import { toast } from "@/design-system/toast";
+import { cn } from "@/design-system/cn";
 import { Button } from "@/design-system/ui/button";
-import { Input } from "@/design-system/ui/input";
-import { createTask } from "../actions/task-actions";
-import { displayTicketId } from "../lib/task-links";
-import { useSubtasks } from "../queries/use-task-queries";
-import { LinkedTaskRow } from "./linked-task-row";
+import { MenuItem } from "@/design-system/ui/menu";
+import { useTaskActions } from "../actions/use-task-actions";
+import { clearSelection } from "../lib/selection-store";
+import { ProgressRing } from "./progress-ring";
+import { SubTaskComposer } from "./sub-task-composer";
+import { SubTaskDisplayMenu } from "./sub-task-display-menu";
+import { SubTaskRows } from "./sub-task-rows";
+import { TaskContextMenu } from "./task-context-menu";
 import { useTaskView } from "./task-view-context";
 
 /**
- * The direct subtasks of a task, by number, with a box that adds one by title.
- * A new subtask starts in the Project's first To Do column. Nothing is shown to
- * a viewer when there are none.
+ * A task's sub-tasks in the sheet, Linear style: a header with the done count
+ * and display options, the rows (nested, selectable, with the task context
+ * menu) and an inline composer. Nothing shows to a viewer when there are none.
+ * The selection belongs to this list: it starts empty and is dropped on close.
  */
 export function TaskSubtasks({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
-  const { project, columns, columnById, meId, can, frozen } = useTaskView();
-  const subtasks = useSubtasks(task.id);
-  const [title, setTitle] = useState("");
-  const [adding, setAdding] = useState(false);
+  const { can, frozen } = useTaskView();
+  const actions = useTaskActions();
+  const [open, setOpen] = useState(true);
+  // The task a new sub-task goes under: this one, or a row's from its menu.
+  const [composeFor, setComposeFor] = useState<TaskRow | null>(null);
   const editable = can.create && !frozen;
 
-  if (subtasks.length === 0 && !editable) return null;
+  useEffect(() => {
+    clearSelection();
+    return clearSelection;
+  }, []);
 
-  async function add() {
-    const next = title.trim();
-    const column =
-      columns.find((candidate) => candidate.category === "unstarted") ??
-      columns[0];
-    if (next === "" || !column) return;
-    setTitle("");
-    try {
-      await createTask({
-        projectId: project.id,
-        column,
-        title: next,
-        parentId: task.id,
-        userId: meId,
-      });
-    } catch (error) {
-      toast.error(errorMessage(t, error, t("subtasks.error")));
-    }
-  }
+  if (task.subtaskTotal === 0 && !editable) return null;
 
   return (
-    <section aria-label={t("subtasks.title")} className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xs font-medium text-muted-foreground">
+    <section aria-label={t("subtasks.title")} className="space-y-1">
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-expanded={open}
+          className="flex cursor-pointer items-center gap-1.5 rounded-md px-1 py-0.5 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={() => setOpen(!open)}
+        >
+          <ChevronRight
+            aria-hidden="true"
+            className={cn("size-3.5 transition-transform", open && "rotate-90")}
+          />
           {t("subtasks.title")}
           {task.subtaskTotal > 0 ? (
-            <span className="ms-2 tabular-nums">
+            <span className="ms-1 inline-flex items-center gap-1 tabular-nums">
+              <ProgressRing done={task.subtaskDone} total={task.subtaskTotal} />
               {task.subtaskDone}/{task.subtaskTotal}
             </span>
           ) : null}
-        </h2>
-        {editable && !adding ? (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={t("subtasks.add")}
-            onClick={() => setAdding(true)}
-          >
-            <Plus aria-hidden="true" />
-          </Button>
-        ) : null}
+        </button>
+        <span className="ms-auto flex items-center gap-0.5">
+          <SubTaskDisplayMenu />
+          {editable ? (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t("subtasks.add")}
+              onClick={() => {
+                setOpen(true);
+                setComposeFor(task);
+              }}
+            >
+              <Plus aria-hidden="true" />
+            </Button>
+          ) : null}
+        </span>
       </div>
-      {subtasks.length > 0 ? (
-        <ul className="space-y-0.5">
-          {subtasks.map((subtask) => (
-            <LinkedTaskRow
-              key={subtask.id}
-              task={subtask}
-              ticketId={displayTicketId(project.key, subtask.number)}
-              column={columnById.get(subtask.columnId)}
-            />
-          ))}
-        </ul>
-      ) : null}
-      {editable && adding ? (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void add();
-          }}
+      {open ? (
+        <TaskContextMenu
+          extraItems={(row) => (
+            <>
+              {editable ? (
+                <MenuItem
+                  onClick={() => {
+                    setOpen(true);
+                    setComposeFor(row);
+                  }}
+                >
+                  <ListPlus aria-hidden="true" />
+                  {t("subtasks.addUnder")}
+                </MenuItem>
+              ) : null}
+              {editable && row.parentId ? (
+                <MenuItem onClick={() => void actions.setParent(row, null)}>
+                  <CornerLeftUp aria-hidden="true" />
+                  {t("subtasks.removeFromParent")}
+                </MenuItem>
+              ) : null}
+            </>
+          )}
         >
-          <Input
-            size="sm"
-            value={title}
-            maxLength={TASK_TITLE_MAX}
-            placeholder={t("subtasks.placeholder")}
-            aria-label={t("subtasks.add")}
-            autoFocus
-            onChange={(event) => setTitle(event.target.value)}
-            onBlur={() => {
-              if (title.trim() === "") setAdding(false);
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== "Escape") return;
-              event.stopPropagation();
-              setTitle("");
-              setAdding(false);
-            }}
-          />
-        </form>
+          <div className="-mx-4" role="list" aria-label={t("subtasks.title")}>
+            <SubTaskRows parentId={task.id} />
+          </div>
+        </TaskContextMenu>
+      ) : null}
+      {editable && composeFor ? (
+        <SubTaskComposer
+          key={composeFor.id}
+          parent={composeFor}
+          onClose={() => setComposeFor(null)}
+        />
+      ) : editable && open ? (
+        <button
+          type="button"
+          className="flex cursor-pointer items-center gap-1.5 rounded-md px-1 py-1 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={() => setComposeFor(task)}
+        >
+          <Plus aria-hidden="true" className="size-3.5" />
+          {t("subtasks.addLink")}
+        </button>
       ) : null}
     </section>
   );

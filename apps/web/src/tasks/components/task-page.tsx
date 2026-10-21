@@ -19,6 +19,7 @@ import { useTicketTask } from "../queries/use-task-queries";
 import { DeleteTaskDialog } from "./delete-task-dialog";
 import { DueDateDialog } from "./due-date-dialog";
 import { ProjectTaskViewProvider } from "./project-task-view-provider";
+import { SelectionBar } from "./selection-bar";
 import { TaskDetails } from "./task-details";
 import { TaskFieldPicker } from "./task-field-picker";
 import { TaskPager } from "./task-pager";
@@ -156,6 +157,7 @@ function LoadedTaskPage({
           </div>
         )}
       </div>
+      <SelectionBar />
       <TaskFieldPicker />
       <DueDateDialog />
       <DeleteTaskDialog onDeleted={leave} />

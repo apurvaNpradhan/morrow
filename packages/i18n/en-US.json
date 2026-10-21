@@ -1536,13 +1536,36 @@
 			"unknownUser": "Former member"
 		},
 		"parent": {
+			"subtaskOf": "Sub-task of",
 			"open": "Open the parent {{id}}"
 		},
 		"subtasks": {
 			"title": "Sub-tasks",
 			"add": "Add a sub-task",
-			"placeholder": "Add a sub-task…",
-			"error": "Couldn't add the sub-task"
+			"addLink": "Add sub-tasks",
+			"addUnder": "Add a sub-task",
+			"removeFromParent": "Remove from parent",
+			"titleLabel": "Sub-task title",
+			"titlePlaceholder": "Sub-task title",
+			"moreFields": "More fields",
+			"create": "Create",
+			"error": "Couldn't add the sub-task",
+			"display": "Sub-task display options",
+			"completed": "Completed tasks",
+			"completedOption": {
+				"all": "All",
+				"none": "None"
+			},
+			"nested": "Nested sub-tasks",
+			"properties": "Display properties",
+			"property": {
+				"priority": "Priority",
+				"id": "ID",
+				"status": "Status",
+				"labels": "Labels",
+				"dueDate": "Due date",
+				"assignee": "Assignee"
+			}
 		},
 		"relations": {
 			"title": "Relations",
