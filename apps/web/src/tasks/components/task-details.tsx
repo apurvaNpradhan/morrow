@@ -15,7 +15,6 @@ import { Textarea } from "@/design-system/ui/textarea";
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TaskLinks } from "./task-links";
 import { TaskParentLink } from "./task-parent-link";
-import { TaskAttachments } from "./task-attachments";
 import { TaskRelations } from "./task-relations";
 import { TaskSubtasks } from "./task-subtasks";
 import { TaskProperties } from "./task-properties";
@@ -133,7 +132,6 @@ export function TaskDetails({
             )}
             <TaskSubtasks task={task} />
             <TaskRelations task={task} />
-            <TaskAttachments task={task} />
             <TaskLinks task={task} />
             <TaskTimeline task={task} />
           </div>

@@ -431,7 +431,7 @@ describe("clicking a file card", () => {
     expect(document.body.querySelectorAll("iframe")).toHaveLength(1);
   });
 
-  it("downloads a file a browser cannot show, without a preview", async () => {
+  it("does nothing when a file a browser cannot show is clicked", async () => {
     const card = await cardFor(
       '[logs.zip](/api/asset/zip789 "application/zip 4096")',
     );
@@ -440,8 +440,40 @@ describe("clicking a file card", () => {
 
     fireEvent.click(card);
 
-    expect(assign).toHaveBeenCalledWith("/api/asset/zip789?download=1");
+    expect(assign).not.toHaveBeenCalled();
     expect(document.body.querySelector("iframe")).toBeNull();
     vi.unstubAllGlobals();
+  });
+
+  it("downloads only from the download button", async () => {
+    const card = await cardFor(
+      '[r.pdf](/api/asset/def456 "application/pdf 10")',
+    );
+    const assign = vi.fn();
+    vi.stubGlobal("location", { ...window.location, assign });
+
+    fireEvent.click(
+      card.parentElement!.querySelector(".morrow-attachment-download")!,
+    );
+
+    expect(assign).toHaveBeenCalledWith("/api/asset/def456?download=1");
+    expect(document.body.querySelector("iframe")).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it("plays a video inline instead of showing a card", async () => {
+    const { editor, surface } = await mountEditor();
+    editor.commands.setContent('[v.mp4](/api/asset/vid123 "video/mp4 2048")', {
+      contentType: "markdown",
+    });
+
+    const video = await waitFor(() => {
+      const found = surface.querySelector("video");
+      if (!found) throw new Error("no video");
+      return found;
+    });
+    expect(video.getAttribute("src")).toBe("/api/asset/vid123");
+    expect(video.getAttribute("preload")).toBe("metadata");
+    expect(surface.querySelector("button.morrow-attachment-card")).toBeNull();
   });
 });
