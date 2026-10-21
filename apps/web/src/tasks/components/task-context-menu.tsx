@@ -46,7 +46,14 @@ import { useTaskView } from "./task-view-context";
  * it stays open when its task scrolls out of view. Items follow what the user
  * may do.
  */
-export function TaskContextMenu({ children }: { children: ReactNode }) {
+export function TaskContextMenu({
+  children,
+  extraItems,
+}: {
+  children: ReactNode;
+  /** More items for a single task, after its field actions: the sheet's sub-task list adds its own. */
+  extraItems?: (task: TaskRow) => ReactNode;
+}) {
   const { project, can, frozen } = useTaskView();
   const [taskId, setTaskId] = useState<string | null>(null);
   const task = taskId ? taskCollection.get(taskId) : undefined;
@@ -81,7 +88,7 @@ export function TaskContextMenu({ children }: { children: ReactNode }) {
               anchor={document.querySelector(`[data-task-id="${task.id}"]`)}
             />
           ) : (
-            <TaskMenuItems task={task} />
+            <TaskMenuItems task={task} extraItems={extraItems} />
           )}
         </ContextMenuPopup>
       ) : null}
@@ -89,7 +96,13 @@ export function TaskContextMenu({ children }: { children: ReactNode }) {
   );
 }
 
-function TaskMenuItems({ task }: { task: TaskRow }) {
+function TaskMenuItems({
+  task,
+  extraItems,
+}: {
+  task: TaskRow;
+  extraItems?: (task: TaskRow) => ReactNode;
+}) {
   const { t } = useTranslation("tasks");
   const { columns, columnById, people, meId, today, can, frozen } =
     useTaskView();
@@ -174,6 +187,7 @@ function TaskMenuItems({ task }: { task: TaskRow }) {
             </MenuSubPopup>
           </MenuSub>
           <MenuSeparator />
+          {extraItems?.(task)}
           {can.create ? (
             <MenuItem onClick={() => void actions.duplicate(task)}>
               <Copy aria-hidden="true" />
