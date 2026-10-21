@@ -26,7 +26,7 @@ async function setStatus(page: Page, column: string) {
   await page.getByRole("menuitemradio", { name: column, exact: true }).click();
 }
 
-test("subtasks: add inline, progress with Done collapsed, set and clear a parent, and the picker leaves out invalid choices", async ({
+test("subtasks: add inline, progress with Done collapsed, and remove from the parent in the row menu", async ({
   browser,
 }) => {
   const { admin, member, slug, close } = await twoPeople(browser, "Subtask");
@@ -39,8 +39,8 @@ test("subtasks: add inline, progress with Done collapsed, set and clear a parent
   await admin.goto(`/${slug}/tasks/PLN-1`);
   const sheet = sheetOf(admin);
   await sheet.getByRole("button", { name: "Add a sub-task" }).click();
-  await sheet.getByLabel("Add a sub-task", { exact: true }).fill("Write tests");
-  await sheet.getByLabel("Add a sub-task", { exact: true }).press("Enter");
+  await sheet.getByLabel("Sub-task title", { exact: true }).fill("Write tests");
+  await sheet.getByLabel("Sub-task title", { exact: true }).press("Enter");
   const subtasks = sheet.getByRole("region", { name: "Sub-tasks" });
   await expect(subtasks.getByText("Write tests")).toBeVisible();
   await expect(subtasks.getByText("PLN-2")).toBeVisible();
@@ -57,32 +57,13 @@ test("subtasks: add inline, progress with Done collapsed, set and clear a parent
     member.getByRole("button", { name: "PLN-2: Write tests", exact: true }),
   ).toHaveCount(0);
 
-  // Clear the parent, then set it again through the picker.
-  await sheet.getByRole("button", { name: "Parent", exact: true }).click();
-  await admin.getByRole("button", { name: "Remove parent" }).click();
+  // Remove the sub-task from its parent in the row's context menu.
+  await subtasks.getByText("Write tests").click({ button: "right" });
+  await admin.getByRole("menuitem", { name: "Remove from parent" }).click();
   await expect(
     sheet.getByRole("button", { name: "Open the parent PLN-1" }),
   ).toHaveCount(0);
   await expect(member.getByTitle("Subtasks done")).toHaveCount(0);
-
-  await sheet.getByRole("button", { name: "Parent", exact: true }).click();
-  const picker = admin.getByRole("combobox", { name: "Parent", exact: true });
-  await picker.fill("PLN-2");
-  await expect(admin.getByRole("option")).toHaveCount(0); // itself
-  await picker.fill("PLN-1");
-  await admin.getByRole("option", { name: /PLN-1 Epic/ }).click();
-  await expect(
-    sheet.getByRole("button", { name: "Open the parent PLN-1" }),
-  ).toBeVisible();
-  await expect(member.getByTitle("Subtasks done")).toHaveText("1/1");
-
-  // The parent cannot be put under its own subtask.
-  await sheet.getByRole("button", { name: "Open the parent PLN-1" }).click();
-  await sheet.getByRole("button", { name: "Parent", exact: true }).click();
-  await admin
-    .getByRole("combobox", { name: "Parent", exact: true })
-    .fill("PLN-2");
-  await expect(admin.getByRole("option")).toHaveCount(0);
   await close();
 });
 
@@ -105,22 +86,22 @@ test("relations: a blocks link across Projects shows the blocked mark on the boa
   await admin.goto(`/${slug}/tasks/OTH-1`);
   const sheet = sheetOf(admin);
   await sheet.getByRole("button", { name: "Add relation" }).click();
-  await admin.getByRole("menuitem", { name: "Blocks", exact: true }).click();
-  const picker = admin.getByRole("combobox", { name: "Blocks", exact: true });
+  await admin.getByRole("menuitem", { name: "Blocking", exact: true }).click();
+  const picker = admin.getByRole("combobox", { name: "Blocking", exact: true });
   await picker.fill("OTH-1");
   await expect(admin.getByRole("option")).toHaveCount(0);
   await picker.fill("PLN-1");
   await admin.getByRole("option", { name: /PLN-1 Waiting/ }).click();
 
-  const group = sheet.getByRole("group", { name: "Blocks", exact: true });
+  const group = sheet.getByRole("group", { name: "Blocking", exact: true });
   await expect(group.getByText("Waiting")).toBeVisible();
   await expect(member.getByTitle("Blocked by 1 open task")).toBeVisible();
 
   // It is not offered again for that type, but is for another.
   await sheet.getByRole("button", { name: "Add relation" }).click();
-  await admin.getByRole("menuitem", { name: "Blocks", exact: true }).click();
+  await admin.getByRole("menuitem", { name: "Blocking", exact: true }).click();
   await admin
-    .getByRole("combobox", { name: "Blocks", exact: true })
+    .getByRole("combobox", { name: "Blocking", exact: true })
     .fill("PLN-1");
   await expect(admin.getByRole("option")).toHaveCount(0);
   await admin.keyboard.press("Escape");

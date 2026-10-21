@@ -18,7 +18,7 @@ async function createTask(page: Page, column: string, title: string) {
   await expect(page.getByText(/created$/).first()).toBeVisible();
 }
 
-test("changes show as history lines in another tab's open sheet, quick title edits leave one, and a run of changes folds", async ({
+test("changes show as history lines in another tab's open sheet, and quick title edits leave one", async ({
   browser,
 }) => {
   const { admin, member, slug, close } = await twoPeople(browser, "History");
@@ -36,7 +36,7 @@ test("changes show as history lines in another tab's open sheet, quick title edi
   const history = memberSheet.getByLabel("Comments");
   await expect(history.getByText("created the task")).toBeVisible();
 
-  // Priority: one more line, so the two entries still show on their own.
+  // Priority: one more line.
   await adminSheet
     .getByRole("button", { name: "Priority", exact: true })
     .click();
@@ -47,15 +47,11 @@ test("changes show as history lines in another tab's open sheet, quick title edi
     history.getByText("changed the priority from No priority to Urgent"),
   ).toBeVisible();
 
-  // A move makes the third entry in a row: they fold behind one line.
+  // Status and priority changes always keep their own line.
   await adminSheet.getByRole("button", { name: "Status", exact: true }).click();
   await admin
     .getByRole("menuitemradio", { name: "In Progress", exact: true })
     .click();
-  const fold = history.getByRole("button", { name: "3 more changes" });
-  await expect(fold).toBeVisible();
-  await expect(history.getByText("created the task")).toHaveCount(0);
-  await fold.click();
   await expect(
     history.getByText("moved this from To Do to In Progress"),
   ).toBeVisible();
