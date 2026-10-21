@@ -6,23 +6,19 @@ Morrow is one image on one Dokploy server. This page is the short list of things
 
 Merging to `main` runs CI, then the **Build and push image** workflow publishes `ghcr.io/apurvanpradhan/morrow:latest` and `:sha-<short sha>`, then its `deploy` job calls Dokploy's deploy webhook.
 
-One-time setup:
+One-time setup: [deployment.md](deployment.md#compose-service-setup) (compose service, environment, domain, and the webhook in the repository secret `DOKPLOY_DEPLOY_WEBHOOK`). Without the secret the deploy job skips.
 
-1. In Dokploy, create the application from the image, attach the domain on container port `1337`, and set the environment (see deployment.md).
-2. In the application's **Deployments** tab copy the deploy webhook URL.
-3. In GitHub, add it as the repository secret `DOKPLOY_DEPLOY_WEBHOOK`. Without it the deploy job skips.
-
-Migrations run when the container starts; the app refuses to start if one fails, so Dokploy keeps the previous container serving.
+Migrations run when the container starts, and the app refuses to start if one fails. A compose deploy has already replaced the old container by then, so the site stays down while the new one restarts in a loop. Roll back (below) and read the `db.startup` log line.
 
 ## Roll back
 
-Set the application's image tag to the previous `sha-…` tag (the Deployments tab lists them) and redeploy. A rollback does not undo migrations, so only roll back across a migration when the older code still works with the newer schema; otherwise restore a backup first.
+Set `MORROW_IMAGE_TAG` in the compose service's environment to the previous `sha-…` tag (GHCR lists them) and redeploy. Set it back to `latest` once the fix ships. A rollback does not undo migrations, so only roll back across a migration when the older code still works with the newer schema; otherwise restore a backup first.
 
 ## Postgres and backups
 
-Postgres is a separate Dokploy database service. Configure in Dokploy:
+Postgres is a separate Dokploy database service (PostgreSQL 17) in the same project as the compose service. Create it with database name `morrow` and user `morrow`, and leave its external port unset so it is reachable only on `dokploy-network`. Configure in Dokploy:
 
-1. **Destinations** → add the Cloudflare R2 bucket (`S3_ENDPOINT` of the form `https://<account>.r2.cloudflarestorage.com`, region `auto`) with a token scoped to that bucket.
+1. **Destinations** → add the private `morrow-backups` R2 bucket, never the public app bucket (`S3_ENDPOINT` of the form `https://<account>.r2.cloudflarestorage.com`, region `auto`) with a token scoped to that bucket.
 2. The database service → **Backups** → schedule `0 3 * * *` (daily) to that destination, retention **14**.
 
 Avatars and attachments live in the R2 bucket, not in Postgres, so these database backups do not cover them. A lost avatar is recoverable by uploading a new one. Attachments are not: a lost file leaves a broken image or card in its task. Enable bucket versioning if that matters. Task exports carry the links to attachments, not the files.
@@ -39,8 +35,7 @@ One-time setup, in this order, before the first deploy of a release that include
    ```
 
    Morrow's migrations grant it `SELECT` on the synced tables, the schema and the publication; nothing else. A migration cannot create it because it would have to contain the password.
-3. **Secret and volume.** Generate `ELECTRIC_SECRET` (`openssl rand -hex 32`) and set it on both the Electric application and Morrow. Give Electric a persistent volume at `/var/lib/electric`.
-4. **Deploy Morrow first** (its startup migrations create the publication Electric reads), then start Electric.
+3. **Secrets.** Generate `ELECTRIC_SECRET` (`openssl rand -hex 32`) and set it, with `ELECTRIC_DATABASE_URL` for the role above, in the compose service's environment. The compose file gives Electric its volume and starts it after Morrow, whose startup migrations create the publication Electric reads.
 
 Check that sync works by opening a workspace's Members page in two browsers and changing a role in one.
 
@@ -52,7 +47,7 @@ SELECT pg_drop_replication_slot('electric_slot_default');
 
 If Postgres already dropped the slot because of the cap, Electric recreates it on start and browsers re-sync; no manual step is needed.
 
-**Rotating `ELECTRIC_SECRET`.** Change it on both applications and redeploy both. Browsers keep working: the secret never reaches them.
+**Rotating `ELECTRIC_SECRET`.** Change it in the compose service's environment and redeploy; both containers pick it up. Browsers keep working: the secret never reaches them.
 
 ## Restore drill
 
@@ -62,7 +57,7 @@ Run this after setting up backups, and again after any change to how backups are
 2. `scripts/ops/restore-drill.sh <file>`: restores it into a throwaway `postgres:17-alpine` container and checks that the core tables are present. It handles gzipped SQL and `pg_dump` custom archives, and removes the container when it finishes.
 3. Record the date and result in `.scratch/personal-instance-orpc-verticals/progress.md`.
 
-To restore for real: stop the Morrow application, restore the backup into the database service from Dokploy's backup screen (or `pg_restore` / `psql` against its connection string), then start the application. Sessions in the backup become valid again, so a restore taken before a secret rotation brings the old sessions back.
+To restore for real: stop the compose service, restore the backup into the database service from Dokploy's backup screen (or `pg_restore` / `psql` against its connection string), then start the compose service. Sessions in the backup become valid again, so a restore taken before a secret rotation brings the old sessions back.
 
 ## Background jobs
 
@@ -83,7 +78,7 @@ Cron monitors in Sentry (`storage-cleanup`, `draft-upload-cleanup`,
 
 ## Rotate secrets
 
-Change values in the application's environment in Dokploy, then redeploy.
+Change values in the compose service's environment in Dokploy, then redeploy.
 
 | Secret | Effect of changing it |
 | --- | --- |
@@ -92,8 +87,8 @@ Change values in the application's environment in Dokploy, then redeploy.
 | `TURNSTILE_SECRET_KEY` / `VITE_TURNSTILE_SITE_KEY` | The site key is baked into the image at build time (GitHub variable `VITE_TURNSTILE_SITE_KEY`); rebuild to change it. |
 | Google / GitHub OAuth secrets | Takes effect on restart. |
 | `DATABASE_URL` | Change in step with the database service's password. |
-| `ELECTRIC_SECRET` | Change on Morrow and on the Electric application together; sync pauses until both run the new value. |
-| `electric` database role password | Change it in Postgres (`ALTER ROLE electric PASSWORD '…'`) and in the Electric application's `DATABASE_URL`, then restart Electric. |
+| `ELECTRIC_SECRET` | One value, shared by both containers; sync pauses until both run it. |
+| `electric` database role password | Change it in Postgres (`ALTER ROLE electric PASSWORD '…'`) and in `ELECTRIC_DATABASE_URL`, then redeploy. |
 
 ## Close sign-ups
 
