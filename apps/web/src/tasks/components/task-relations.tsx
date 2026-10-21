@@ -13,9 +13,10 @@ import { TaskRelationAdder } from "./task-relation-adder";
 import { useTaskView } from "./task-view-context";
 
 /**
- * The relations of a task, grouped as blocked by, blocks, related, duplicate
- * of and duplicated by, each with the other task's ticket id, title and Column.
- * Relations to tasks of other Projects are listed too.
+ * The relations of a task in the properties rail, grouped as blocked by, blocks,
+ * related, duplicate of and duplicated by, each row the other task's Column
+ * marker and title. Relations to tasks of other Projects are listed too. Only
+ * the groups that have a task show; the adder is always last for an editor.
  */
 export function TaskRelations({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
@@ -42,10 +43,10 @@ export function TaskRelations({ task }: { task: TaskRow }) {
   }
 
   return (
-    <section aria-label={t("relations.title")} className="space-y-1.5">
-      <h2 className="text-xs font-medium text-muted-foreground">
-        {t("relations.title")}
-      </h2>
+    <section
+      aria-label={t("relations.title")}
+      className="mt-3 space-y-2 @min-[720px]:w-full"
+    >
       {RELATION_KINDS.map((kind) => {
         const ofKind = relations.filter(
           (relation) =>
@@ -61,7 +62,7 @@ export function TaskRelations({ task }: { task: TaskRow }) {
             role="group"
             aria-label={t(`relations.kinds.${kind}`)}
           >
-            <h3 className="px-1.5 text-xs text-muted-foreground/80">
+            <h3 className="mb-0.5 px-2 text-xs font-medium text-muted-foreground">
               {t(`relations.kinds.${kind}`)}
             </h3>
             <ul className="space-y-0.5">
@@ -79,6 +80,7 @@ export function TaskRelations({ task }: { task: TaskRow }) {
                     task={other.task}
                     ticketId={other.ticketId}
                     column={other.column}
+                    compact
                     trailing={
                       editable ? (
                         <Button

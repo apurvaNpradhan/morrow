@@ -13,7 +13,6 @@ import { PageTitle } from "@/design-system/page-title";
 import { toast } from "@/design-system/toast";
 import { Textarea } from "@/design-system/ui/textarea";
 import { TaskDescriptionEditor } from "./task-description-editor";
-import { TaskLinks } from "./task-links";
 import { TaskParentLink } from "./task-parent-link";
 import { TaskRelations } from "./task-relations";
 import { TaskSubtasks } from "./task-subtasks";
@@ -131,15 +130,14 @@ export function TaskDetails({
               />
             )}
             <TaskSubtasks task={task} />
-            <TaskRelations task={task} />
-            <TaskLinks task={task} />
             <TaskTimeline task={task} />
           </div>
           <aside
             aria-label={t("sheet.properties")}
             className="order-1 shrink-0 @min-[720px]:order-2 @min-[720px]:w-56"
           >
-            <TaskProperties task={task} />
+            <TaskProperties key={task.id} task={task} />
+            <TaskRelations task={task} />
           </aside>
         </div>
       </div>

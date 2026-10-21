@@ -17,6 +17,7 @@ import { toggleSelected } from "../lib/select-gesture";
 import { currentView } from "../lib/view-order-store";
 import { requestDeleteTasks } from "./delete-task-dialog";
 import { useTaskView } from "./task-view-context";
+import { revealSheetField } from "./reveal-sheet-field";
 
 /**
  * The shortcuts that edit the focused task, or the one open in the sheet or on
@@ -70,6 +71,10 @@ export function useTaskFieldHotkeys() {
         sheetChip.click();
         return;
       }
+      if (sheetIsOpen()) {
+        revealSheetField(sheetField);
+        return;
+      }
       const id = focusedTaskId();
       const card = id ? document.querySelector(`[data-task-id="${id}"]`) : null;
       if (id && card) openFieldPicker(id, field, card);
@@ -92,6 +97,7 @@ export function useTaskFieldHotkeys() {
           document.querySelector('[data-sheet-field^="field:"]') ??
           document.querySelector(`[data-task-id="${task.id}"]`);
         if (anchor) openFieldPicker(task.id, "fields", anchor);
+        else if (sheetIsOpen()) revealSheetField("field");
       }),
     },
     {

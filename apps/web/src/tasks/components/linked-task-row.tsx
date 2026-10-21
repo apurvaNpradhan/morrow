@@ -9,18 +9,21 @@ import { useTaskView } from "./task-view-context";
  * A task the open task points at, in a section of the sheet: ticket id, title
  * and Column, and its Assignee when it is one of this Project's. A task of this
  * Project opens in place; one of another Project goes to its own page.
- * `trailing` holds the row's action, outside the link.
+ * `trailing` holds the row's action, outside the link. `compact` leaves out the
+ * ticket id and Assignee, for the properties rail.
  */
 export function LinkedTaskRow({
   task,
   ticketId,
   column,
   trailing,
+  compact = false,
 }: {
   task: TaskRow;
   ticketId: string;
   column: ProjectColumnRow | undefined;
   trailing?: ReactNode;
+  compact?: boolean;
 }) {
   const view = useTaskView();
   const assignee = task.assigneeId
@@ -31,11 +34,13 @@ export function LinkedTaskRow({
   const content = (
     <>
       {column ? <ColumnMarker column={column} /> : <span className="size-4" />}
-      <span className="shrink-0 font-mono text-xs text-muted-foreground">
-        {ticketId}
-      </span>
+      {compact ? null : (
+        <span className="shrink-0 font-mono text-xs text-muted-foreground">
+          {ticketId}
+        </span>
+      )}
       <span className="truncate">{task.title}</span>
-      {assignee ? (
+      {assignee && !compact ? (
         <PersonAvatar person={assignee} className="ms-auto shrink-0" />
       ) : null}
     </>

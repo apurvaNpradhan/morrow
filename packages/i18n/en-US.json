@@ -1519,6 +1519,7 @@
 			"label": "Task",
 			"description": "Task details",
 			"properties": "Properties",
+			"addProperty": "Add property",
 			"details": "Details",
 			"createdBy": "Created by {{name}}",
 			"titleLabel": "Title",
@@ -1535,9 +1536,6 @@
 			"unknownUser": "Former member"
 		},
 		"parent": {
-			"field": "Parent",
-			"set": "Set parent",
-			"remove": "Remove parent",
 			"open": "Open the parent {{id}}"
 		},
 		"subtasks": {
@@ -1553,24 +1551,11 @@
 			"error": "Couldn't change the relation",
 			"kinds": {
 				"blocked_by": "Blocked by",
-				"blocks": "Blocks",
-				"related": "Related to",
+				"blocks": "Blocking",
+				"related": "Related",
 				"duplicate_of": "Duplicate of",
 				"duplicated_by": "Duplicated by"
 			}
-		},
-		"links": {
-			"title": "Links",
-			"add": "Add link",
-			"save": "Save",
-			"edit": "Edit link",
-			"remove": "Remove link",
-			"url": "Link address",
-			"urlPlaceholder": "https://…",
-			"titleLabel": "Link title",
-			"titlePlaceholder": "Title (optional)",
-			"invalid": "Enter an http or https address.",
-			"error": "Couldn't change the link"
 		},
 		"pager": {
 			"next": "Next task",

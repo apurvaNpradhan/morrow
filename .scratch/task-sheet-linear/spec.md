@@ -21,7 +21,7 @@ Rework the sheet and the full task page (they share `TaskDetails`) in four stage
 
 ### Stage 2: properties panel
 
-- The panel shows only properties with a value, plus one **Add property** control listing the unset ones (due date, parent, custom Fields and so on). Setting one shows it. Status is always visible. Priority, assignee and labels look as before.
+- The panel shows only properties with a value, plus one **Add property** control listing the unset ones (due date and custom Fields). Setting one shows it. Status is always visible. Priority, assignee and labels look as before.
 - Remove "Set parent" from the panel.
 - Add **Related**, **Blocked by** and **Blocking** sections: status icon and a truncated title per row, opening the task on click, and a "+" on each header to add a relation.
 - Remove the relations section (`task-relations.tsx`) from the body. Remove the links section (`task-links.tsx`) from the UI; link data, API and MCP stay.

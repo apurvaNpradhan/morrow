@@ -1,4 +1,5 @@
 import { CalendarDays, SlidersHorizontal, Tag, UserRound } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
 import { formatDate } from "@/design-system/format";
@@ -13,6 +14,8 @@ import { optionHeld } from "../lib/field-value";
 import { useTaskActions } from "../actions/use-task-actions";
 import { openDatePicker } from "../lib/date-picker-store";
 import { parseDay } from "../lib/calendar-day";
+import { AddPropertyMenu } from "./add-property-menu";
+import { REVEAL_SHEET_FIELD } from "./reveal-sheet-field";
 import { ColumnMarker } from "./column-marker";
 import { FieldValueItems } from "./field-value-items";
 import { FieldChipMenu } from "./field-chip-menu";
@@ -23,14 +26,15 @@ import {
   DueDateItems,
   PriorityItems,
 } from "./task-field-items";
-import { TaskParentField } from "./task-parent-field";
 import { TaskLabelPicker } from "./task-label-picker";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { useTaskView } from "./task-view-context";
 
 /**
  * A task's fields in the sheet: a rail on wide screens, a wrapping row of
- * chips on narrow ones. Read-only when the user cannot edit.
+ * chips on narrow ones. Read-only when the user cannot edit. Due date and
+ * custom Fields show only once they have a value or are added from the last
+ * row; what was added stays until the task closes.
  */
 export function TaskProperties({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
@@ -53,6 +57,57 @@ export function TaskProperties({ task }: { task: TaskRow }) {
     ? personById.get(task.assigneeId)
     : undefined;
   const labels = labelsOfTask(task.labelIds, labelById);
+  const [added, setAdded] = useState<{ names: string[]; open: string | null }>({
+    names: [],
+    open: null,
+  });
+  const showDueDate = task.dueDate !== null || added.names.includes("dueDate");
+  const unsetFields = fields.filter(
+    (field) => !optionHeld(field, task.fieldValues),
+  );
+  const shownFields = fields.filter(
+    (field) =>
+      optionHeld(field, task.fieldValues) ||
+      added.names.includes(`field:${field.id}`),
+  );
+  const addable = [
+    ...(showDueDate
+      ? []
+      : [{ sheetField: "dueDate", label: t("fields.dueDate") }]),
+    ...unsetFields
+      .filter((field) => !added.names.includes(`field:${field.id}`))
+      .map((field) => ({ sheetField: `field:${field.id}`, label: field.name })),
+  ];
+
+  function add(sheetField: string) {
+    setAdded((current) => ({
+      names: [...current.names, sheetField],
+      open: sheetField,
+    }));
+  }
+
+  // The chip is only there after the render that adds it, so it opens then.
+  useEffect(() => {
+    if (!added.open) return;
+    document
+      .querySelector<HTMLElement>(`[data-sheet-field="${added.open}"]`)
+      ?.click();
+    setAdded((current) => ({ ...current, open: null }));
+  }, [added.open]);
+
+  // A shortcut for a property that is not shown yet adds it.
+  useEffect(() => {
+    if (!editable) return;
+    function onReveal(event: Event) {
+      const name = (event as CustomEvent<string>).detail;
+      const target = name === "field" ? `field:${unsetFields[0]?.id}` : name;
+      if (addable.some((property) => property.sheetField === target)) {
+        add(target);
+      }
+    }
+    window.addEventListener(REVEAL_SHEET_FIELD, onReveal);
+    return () => window.removeEventListener(REVEAL_SHEET_FIELD, onReveal);
+  });
 
   return (
     <dl className="flex flex-wrap items-start gap-2 @min-[720px]:flex-col @min-[720px]:gap-0.5">
@@ -117,38 +172,37 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           />
         </FieldChipMenu>
       </Field>
-      <Field label={t("fields.dueDate")}>
-        <FieldChipMenu
-          label={t("fields.dueDate")}
-          sheetField="dueDate"
-          disabled={!editable}
-          muted={!task.dueDate}
-          icon={<CalendarDays aria-hidden="true" className="size-3.5" />}
-          value={
-            task.dueDate
-              ? formatDate(parseDay(task.dueDate), {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })
-              : t("fields.noDueDate")
-          }
-        >
-          <DueDateItems
-            today={today}
-            hasValue={task.dueDate !== null}
-            onSelect={(dueDate) => void actions.setDueDate(task, dueDate)}
-            onPickDate={() => openDatePicker(task.id)}
-          />
-        </FieldChipMenu>
-      </Field>
-      <Field label={t("parent.field")}>
-        <TaskParentField task={task} />
-      </Field>
-      {fields.length > 0 ? (
+      {showDueDate ? (
+        <Field label={t("fields.dueDate")}>
+          <FieldChipMenu
+            label={t("fields.dueDate")}
+            sheetField="dueDate"
+            disabled={!editable}
+            muted={!task.dueDate}
+            icon={<CalendarDays aria-hidden="true" className="size-3.5" />}
+            value={
+              task.dueDate
+                ? formatDate(parseDay(task.dueDate), {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : t("fields.noDueDate")
+            }
+          >
+            <DueDateItems
+              today={today}
+              hasValue={task.dueDate !== null}
+              onSelect={(dueDate) => void actions.setDueDate(task, dueDate)}
+              onPickDate={() => openDatePicker(task.id)}
+            />
+          </FieldChipMenu>
+        </Field>
+      ) : null}
+      {shownFields.length > 0 ? (
         <RailHeading>{t("fieldValues.heading")}</RailHeading>
       ) : null}
-      {fields.map((field) => {
+      {shownFields.map((field) => {
         const held = optionHeld(field, task.fieldValues);
         return (
           <Field key={field.id} label={field.name}>
@@ -208,6 +262,7 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           </PopoverPopup>
         </Popover>
       </Field>
+      {editable ? <AddPropertyMenu properties={addable} onAdd={add} /> : null}
     </dl>
   );
 }
