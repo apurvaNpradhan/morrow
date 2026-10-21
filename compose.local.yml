@@ -32,6 +32,8 @@ services:
       DATABASE_URL: postgresql://electric:electric_local_dev@postgres:5432/morrow?sslmode=disable
       ELECTRIC_SECRET: morrow_local_electric_secret
       ELECTRIC_MANUAL_TABLE_PUBLISHING: "true"
+      # Defaults to ./persistent, outside the volume.
+      ELECTRIC_STORAGE_DIR: /var/lib/electric
     ports:
       - "127.0.0.1:3010:3000"
     volumes:
