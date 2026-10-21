@@ -53,33 +53,46 @@ describe("buildTimeline", () => {
     ).toEqual(["event:e1", "comment:c1", "event:e2", "comment:c2"]);
   });
 
-  it("folds three or more entries in a row, and leaves two alone", () => {
-    const two = parseEvents([eventRow("e1", 1), eventRow("e2", 2)]);
-    const three = parseEvents([
-      eventRow("e1", 1),
-      eventRow("e2", 2),
-      eventRow("e3", 3),
-    ]);
+  const relation = (id: string, second: number) =>
+    eventRow(id, second, "relation_added", {
+      type: "blocks",
+      direction: "outgoing",
+      ticketId: "MOR-2",
+    });
 
-    expect(kinds(buildTimeline([], two))).toEqual(["event:e1", "event:e2"]);
-    expect(kinds(buildTimeline([], three))).toEqual(["fold:3"]);
+  it("folds two or more bookkeeping entries in a row, and leaves one alone", () => {
+    const one = parseEvents([relation("e1", 1)]);
+    const two = parseEvents([relation("e1", 1), relation("e2", 2)]);
+
+    expect(kinds(buildTimeline([], one))).toEqual(["event:e1"]);
+    expect(kinds(buildTimeline([], two))).toEqual(["fold:2"]);
   });
 
-  it("counts a run on each side of a comment separately", () => {
+  it("never folds status or priority changes, which split a run", () => {
     const events = parseEvents([
-      eventRow("e1", 1),
+      relation("e1", 1),
       eventRow("e2", 2),
-      eventRow("e3", 3),
-      eventRow("e4", 5),
-      eventRow("e5", 6),
+      relation("e3", 3),
+      relation("e4", 4),
     ]);
 
-    expect(kinds(buildTimeline([comment("c", 4)], events))).toEqual([
-      "fold:3",
-      "comment:c",
-      "event:e4",
-      "event:e5",
+    expect(kinds(buildTimeline([], events))).toEqual([
+      "event:e1",
+      "event:e2",
+      "fold:2",
     ]);
+  });
+
+  it("counts a run on each side of a comment separately and names its groups", () => {
+    const events = parseEvents([
+      relation("e1", 1),
+      eventRow("e2", 2, "parent", { from: null, to: "MOR-1" }),
+      relation("e3", 5),
+    ]);
+    const items = buildTimeline([comment("c", 4)], events);
+
+    expect(kinds(items)).toEqual(["fold:2", "comment:c", "event:e3"]);
+    expect(items[0]).toMatchObject({ groups: ["relations", "parent"] });
   });
 
   it("keeps the order of entries that share a moment", () => {

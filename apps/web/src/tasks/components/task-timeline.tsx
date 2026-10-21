@@ -65,7 +65,12 @@ export function TaskTimeline({ task }: { task: TaskRow }) {
                   className="text-xs text-muted-foreground underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={() => setOpened(new Set([...opened, first]))}
                 >
-                  {t("history.more", { count: item.events.length })}
+                  {t("history.show", {
+                    count: item.events.length,
+                    kinds: item.groups
+                      .map((group) => t(`history.groups.${group}`))
+                      .join(", "),
+                  })}
                 </button>
               </li>
             );
