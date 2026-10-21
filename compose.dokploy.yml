@@ -1,0 +1,76 @@
+# Production stack for a Dokploy "Docker Compose" service: Morrow and Electric.
+# Postgres is a separate Dokploy database service and storage is Cloudflare R2,
+# so neither is here. Setup: docs/deployment.md.
+#
+# Both services join `dokploy-network`, where the database service and Traefik
+# live; turn Isolated Deployments off, or neither could reach the database.
+# Nothing is published on the host: Traefik routes the domain to `morrow:1337`
+# and Electric is reachable only on the internal network.
+#
+# Dokploy writes its Environment tab to `.env` beside this file. Morrow reads
+# all of it (varlock validates it at startup against .env.schema); Electric
+# gets only the three values it needs.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "5"
+
+services:
+  morrow:
+    image: ghcr.io/apurvanpradhan/morrow:${MORROW_IMAGE_TAG:-latest}
+    # Dokploy runs `compose up`, which would reuse a cached `latest`.
+    pull_policy: always
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      ELECTRIC_URL: http://morrow-electric:3000
+    expose:
+      - "1337"
+    # The image's check, polled every 2s while starting so Electric need not
+    # wait out a full interval.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -Y off -q --spider http://127.0.0.1:1337/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+      start_interval: 2s
+    # Shutdown stops background jobs (up to 10s) and drains sign-in emails.
+    stop_grace_period: 30s
+    networks:
+      - dokploy-network
+    logging: *logging
+
+  # Starts after Morrow, whose startup migrations create the publication
+  # Electric reads (manual table publishing). The service name is unique on
+  # the shared network; Morrow reaches it as `morrow-electric`.
+  morrow-electric:
+    image: electricsql/electric@sha256:efb6fa43859d67cb8c73439e0c8bc0f7a3daa467500fb06f2a924bcb2070c139
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${ELECTRIC_DATABASE_URL:?set ELECTRIC_DATABASE_URL to the database as the electric role}
+      ELECTRIC_SECRET: ${ELECTRIC_SECRET:?set ELECTRIC_SECRET}
+      ELECTRIC_MANUAL_TABLE_PUBLISHING: "true"
+      ELECTRIC_STORAGE_DIR: /var/lib/electric
+      ELECTRIC_DB_POOL_SIZE: "10"
+      ELECTRIC_LOG_COLORS: "false"
+    expose:
+      - "3000"
+    volumes:
+      - electric_data:/var/lib/electric
+    depends_on:
+      morrow:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+    logging: *logging
+
+volumes:
+  electric_data:
+
+networks:
+  dokploy-network:
+    external: true
