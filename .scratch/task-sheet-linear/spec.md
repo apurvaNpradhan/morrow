@@ -28,9 +28,9 @@ Rework the sheet and the full task page (they share `TaskDetails`) in four stage
 
 ### Stage 3: activity
 
-- Comments always show as cards, with the "Leave a reply" row.
+- Comments always show as cards. There is no "Leave a reply" row: comments have no threads.
 - Created, status and priority events show as one-line rows with the actor, text and age.
-- Runs of low-signal events (relations, parent changes, spec and link events) collapse into one row, "Show N events: <kinds>", which expands in place.
+- Runs of low-signal events (relations, subtask and parent changes) collapse into one row, "Show N events: <kinds>", which expands in place. A single such event keeps its own line.
 
 ### Stage 4: parent line and sub-issues
 

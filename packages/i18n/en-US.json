@@ -1731,8 +1731,13 @@
 				"duplicate_of": "removed the duplicate link to {{ticket}}",
 				"duplicated_by": "removed the duplicate link from {{ticket}}"
 			},
-			"more_one": "{{count}} more change",
-			"more_other": "{{count}} more changes",
+			"show_one": "Show {{count}} event: {{kinds}}",
+			"show_other": "Show {{count}} events: {{kinds}}",
+			"groups": {
+				"relations": "related tasks",
+				"subtasks": "subtasks",
+				"parent": "parent"
+			},
 			"fieldSet": "set {{field}} to {{to}}",
 			"fieldChanged": "changed {{field}} from {{from}} to {{to}}",
 			"fieldCleared": "cleared {{field}} (was {{from}})"
