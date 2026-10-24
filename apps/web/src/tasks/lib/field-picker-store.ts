@@ -4,6 +4,7 @@ export type PickerField =
   | "column"
   | "priority"
   | "assignee"
+  | "startDate"
   | "dueDate"
   | "labels"
   /** The Project's custom Fields: choose one, then its value. */

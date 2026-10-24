@@ -41,7 +41,7 @@ test("a due date with a time reads in the zone chosen in preferences", async ({
   await admin.goto(`/${slug}/projects/ZON/board`);
   await card(admin, "ZON-1", "Call back").click();
   await admin.keyboard.press("Shift+D");
-  await admin.getByRole("textbox", { name: "Type a due date" }).fill("3pm");
+  await admin.getByRole("textbox", { name: "Type a date" }).fill("3pm");
   await admin.keyboard.press("Enter");
   await expect(sheetOf(admin).getByText(/3:00\s?PM/)).toBeVisible();
   await admin.keyboard.press("Escape");
@@ -51,5 +51,34 @@ test("a due date with a time reads in the zone chosen in preferences", async ({
   await admin.goto(`/${slug}/projects/ZON/board`);
   await card(admin, "ZON-1", "Call back").click();
   await expect(sheetOf(admin).getByText(/9:30\s?AM/)).toBeVisible();
+  await close();
+});
+
+test("a start and a due date with times show as one range on the card", async ({
+  browser,
+}) => {
+  const { admin, slug, close } = await twoPeople(browser, "Range");
+  await createProject(admin, slug, "Range project", "RNG");
+  await admin.goto(`/${slug}/projects/RNG/board`);
+  await createTask(admin, "To Do", "Plan the launch");
+
+  await card(admin, "RNG-1", "Plan the launch").click();
+  await admin.keyboard.press("Shift+S");
+  await admin
+    .getByRole("textbox", { name: "Type a date" })
+    .fill("tomorrow 9am");
+  await admin.keyboard.press("Enter");
+  await admin.keyboard.press("Shift+D");
+  await admin
+    .getByRole("textbox", { name: "Type a date" })
+    .fill("in 3 days 5pm");
+  await admin.keyboard.press("Enter");
+  await admin.keyboard.press("Escape");
+
+  await expect(
+    card(admin, "RNG-1", "Plan the launch").getByText(
+      /9:00\s?AM → .*5:00\s?PM/,
+    ),
+  ).toBeVisible();
   await close();
 });

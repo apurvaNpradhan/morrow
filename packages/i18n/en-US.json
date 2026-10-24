@@ -1371,6 +1371,8 @@
 			"column": "Status",
 			"priority": "Priority",
 			"assignee": "Assignee",
+			"startDate": "Start date",
+			"noStartDate": "No start date",
 			"dueDate": "Due date",
 			"noDueDate": "No due date",
 			"createdBy": "Created by",
@@ -1387,9 +1389,13 @@
 			"weekend": "This weekend",
 			"nextWeek": "Next week",
 			"pick": "Pick a date…",
-			"pickTitle": "Due date",
+			"pickTitle": {
+				"startDate": "Start date",
+				"dueDate": "Due date"
+			},
+			"startCleared": "Start date cleared: it came after the new due date",
 			"typeHint": "Try: fri, 7 days, nov 3, fri 3pm",
-			"typeLabel": "Type a due date",
+			"typeLabel": "Type a date",
 			"typeResult": "→ {{date}}",
 			"set": "Set date",
 			"time": "Time",
@@ -1413,6 +1419,7 @@
 		},
 		"card": {
 			"label": "{{id}}: {{title}}",
+			"starts": "Starts {{date}}",
 			"subtasks": "Subtasks done",
 			"parent": "Subtask of {{id}}",
 			"blockedMark": "Blocked",
@@ -1473,6 +1480,7 @@
 			"subject": {
 				"assignee": "Assignee",
 				"priority": "Priority",
+				"startDate": "Start date",
 				"dueDate": "Due date",
 				"column": "Status",
 				"label": "Label",
@@ -1491,6 +1499,14 @@
 				"isNot": "is not",
 				"isAnyOf": "is any of",
 				"isNoneOf": "is none of"
+			},
+			"start": {
+				"past": "Before today",
+				"today": "Today",
+				"thisWeek": "This week",
+				"nextWeek": "Next week",
+				"started": "Started",
+				"none": "No start date"
 			},
 			"due": {
 				"overdue": "Overdue",
@@ -1521,6 +1537,7 @@
 				"manual": "Manual",
 				"created": "Created",
 				"priority": "Priority",
+				"startDate": "Start date",
 				"dueDate": "Due date",
 				"title": "Title",
 				"number": "Task number"
@@ -1532,6 +1549,7 @@
 			"field": {
 				"numbers": "Task numbers",
 				"assignees": "Assignees",
+				"startDates": "Start dates",
 				"dueDates": "Due dates",
 				"priority": "Priority"
 			},
@@ -1768,6 +1786,9 @@
 			"assigned": "assigned this to {{to}}",
 			"unassigned": "unassigned {{from}}",
 			"reassigned": "reassigned this from {{from}} to {{to}}",
+			"startSet": "set the start date to {{to}}",
+			"startCleared": "cleared the start date",
+			"startChanged": "changed the start date from {{from}} to {{to}}",
 			"dueSet": "set the due date to {{to}}",
 			"dueCleared": "cleared the due date",
 			"dueChanged": "changed the due date from {{from}} to {{to}}",

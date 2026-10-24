@@ -5,26 +5,14 @@ import {
 } from "@morrow/sync-schemas";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import {
-  formatDate,
-  formatDateTime,
-  formatRelativeTime,
-} from "@/design-system/format";
-import { parseDay } from "../lib/calendar-day";
+import { formatDateTime, formatRelativeTime } from "@/design-system/format";
 import { formatFieldDate, formatFieldNumber } from "../lib/field-value";
+import { formatTaskDateText } from "../lib/format-task-date";
 import type { TimelineEvent } from "../lib/timeline";
 import { ticketsNamedBy, useLiveTickets } from "../queries/use-live-tickets";
 import { PersonAvatar } from "./person-avatar";
 import { TaskEventIcon } from "./task-event-icon";
 import { useTaskView } from "./task-view-context";
-
-/** A short date for a due-date entry. */
-const day = (value: string) =>
-  formatDate(parseDay(value), {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
 /**
  * One history entry as a line: avatar, "who did what" and when. Names are the
@@ -33,12 +21,15 @@ const day = (value: string) =>
  */
 export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
   const { t } = useTranslation("tasks");
-  const { workspace, columnById, fieldById, labelById, personById } =
+  const { workspace, columnById, fieldById, labelById, personById, timeZone } =
     useTaskView();
   const { row, event } = entry;
   const ticket = useLiveTickets(workspace.id, ticketsNamedBy(event));
   const actor = row.actorId ? personById.get(row.actorId) : undefined;
 
+  /** A start or due date of an entry: the day, with the time for a moment. */
+  const date = (text: string) =>
+    formatTaskDateText(text, timeZone, { year: true });
   const columnName = (ref: { id: string; name: string }) =>
     columnById.get(ref.id)?.name ?? ref.name;
   const personName = (ref: { id: string; name: string } | null) =>
@@ -84,6 +75,7 @@ export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
           fieldName,
           valueText,
           ticket,
+          date,
         })}
       </span>
       <time
@@ -105,6 +97,8 @@ type Names = {
   valueText: (fieldId: string, ref: TaskEventFieldValueRef) => string;
   /** The Ticket id a task has now, for one written into an entry. */
   ticket: (id: string) => string;
+  /** A start or due date in words. */
+  date: (text: string) => string;
 };
 
 /** What the actor did, as the rest of the sentence. */
@@ -146,8 +140,21 @@ function sentence(t: TFunction, event: TaskEvent, names: Names): string {
       const { from, to } = event.data;
       if (to === null) return t("history.dueCleared");
       return from === null
-        ? t("history.dueSet", { to: day(to) })
-        : t("history.dueChanged", { from: day(from), to: day(to) });
+        ? t("history.dueSet", { to: names.date(to) })
+        : t("history.dueChanged", {
+            from: names.date(from),
+            to: names.date(to),
+          });
+    }
+    case "start_date": {
+      const { from, to } = event.data;
+      if (to === null) return t("history.startCleared");
+      return from === null
+        ? t("history.startSet", { to: names.date(to) })
+        : t("history.startChanged", {
+            from: names.date(from),
+            to: names.date(to),
+          });
     }
     case "labels": {
       const { added, removed } = event.data;

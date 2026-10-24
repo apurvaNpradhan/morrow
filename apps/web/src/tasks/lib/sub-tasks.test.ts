@@ -16,6 +16,8 @@ const task = (id: string, number: number, patch: Partial<TaskRow> = {}) =>
     priority: "none",
     position: "a0",
     createdAt: new Date(0),
+    startAt: null,
+    startHasTime: false,
     dueAt: null,
     dueHasTime: false,
     title: id,

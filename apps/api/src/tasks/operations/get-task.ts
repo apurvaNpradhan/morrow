@@ -21,7 +21,7 @@ import {
   taskRelationTable,
   taskTable,
 } from "#api/tasks/tables";
-import { dueText } from "#api/tasks/lib/task-date-columns";
+import { dueText, startText } from "#api/tasks/lib/task-date-columns";
 
 /**
  * One task by ticket id with what the list leaves out: its description, its
@@ -165,6 +165,7 @@ export async function getTask(
       task.assigneeId && found.assigneeName
         ? { id: task.assigneeId, name: found.assigneeName }
         : null,
+    startDate: startText(task),
     dueDate: dueText(task),
     completedAt: task.completedAt,
     archivedAt: task.archivedAt,

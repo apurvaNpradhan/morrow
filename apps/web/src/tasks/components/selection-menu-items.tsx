@@ -1,6 +1,7 @@
 import {
   Archive,
   ArchiveRestore,
+  CalendarArrowDown,
   CalendarDays,
   FolderInput,
   Tag,
@@ -28,7 +29,7 @@ import { requestDeleteTasks } from "./delete-task-dialog";
 import {
   AssigneeItems,
   ColumnItems,
-  DueDateItems,
+  TaskDateItems,
   PriorityItems,
 } from "./task-field-items";
 import { TaskPriorityIcon } from "./task-priority-icon";
@@ -75,17 +76,33 @@ export function SelectionMenuItems({ anchor }: { anchor: Element | null }) {
           </MenuSub>
           <MenuSub>
             <MenuSubTrigger disabled={capped}>
+              <CalendarArrowDown aria-hidden="true" />
+              {t("fields.startDate")}
+              <MenuHint hotkeyId="setTaskStartDate" />
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <TaskDateItems
+                today={today}
+                timeZone={timeZone}
+                hasValue={tasks.some((task) => task.startAt !== null)}
+                onSelect={(startDate) => void bulk.setStartDate(startDate)}
+                onPickDate={() => openDatePicker(SELECTION, "startDate")}
+              />
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger disabled={capped}>
               <CalendarDays aria-hidden="true" />
               {t("fields.dueDate")}
               <MenuHint hotkeyId="setTaskDueDate" />
             </MenuSubTrigger>
             <MenuSubPopup>
-              <DueDateItems
+              <TaskDateItems
                 today={today}
                 timeZone={timeZone}
                 hasValue={tasks.some((task) => task.dueAt !== null)}
                 onSelect={(dueDate) => void bulk.setDueDate(dueDate)}
-                onPickDate={() => openDatePicker(SELECTION)}
+                onPickDate={() => openDatePicker(SELECTION, "dueDate")}
               />
             </MenuSubPopup>
           </MenuSub>

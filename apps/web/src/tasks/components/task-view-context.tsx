@@ -12,6 +12,7 @@ import type { Person } from "../queries/use-workspace-people";
 export type TaskDisplay = {
   numbers: boolean;
   assignees: boolean;
+  startDates: boolean;
   dueDates: boolean;
   priority: boolean;
 };

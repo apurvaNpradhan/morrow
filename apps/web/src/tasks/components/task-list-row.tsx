@@ -1,11 +1,10 @@
 import { isClosedCategory, type TaskRow } from "@morrow/sync-schemas";
-import { CalendarDays, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { LabelChips, labelsOfTask } from "@/labels";
 import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
 import type { SubTaskView } from "@/app/preferences/device-preferences-collection";
 import { cn } from "@/design-system/cn";
-import { isOverdue } from "../lib/due-date";
 import {
   keepTextUnselectedOnShiftClick,
   selectByClick,
@@ -15,7 +14,7 @@ import { TaskSelectBox } from "./task-select-box";
 import { openFieldPicker } from "../lib/field-picker-store";
 import { displayTicketId } from "../lib/task-links";
 import { ColumnMarker } from "./column-marker";
-import { DueDateText } from "./due-date-chip-text";
+import { TaskDatesChip } from "./task-dates-chip";
 import { FieldValueChips } from "./field-value-chips";
 import { PersonAvatar } from "./person-avatar";
 import { TaskChip } from "./task-chip";
@@ -63,6 +62,7 @@ export function TaskListRow({
     ? {
         numbers: subTask.show.id,
         assignees: subTask.show.assignee,
+        startDates: subTask.show.dueDate,
         dueDates: subTask.show.dueDate,
         priority: subTask.show.priority,
       }
@@ -79,8 +79,9 @@ export function TaskListRow({
   const editable = can.edit && !frozen;
   const selectable = editable || (can.delete && !frozen);
   const open = editable
-    ? (field: "priority" | "column" | "dueDate") => (anchor: HTMLElement) =>
-        openFieldPicker(task.id, field, anchor)
+    ? (field: "priority" | "column" | "startDate" | "dueDate") =>
+        (anchor: HTMLElement) =>
+          openFieldPicker(task.id, field, anchor)
     : undefined;
   const ticket = displayTicketId(project.key, task.number);
 
@@ -175,21 +176,14 @@ export function TaskListRow({
           {task.commentCount}
         </TaskChip>
       ) : null}
-      {display.dueDates && task.dueAt && !closed ? (
-        <TaskChip
-          label={t("fields.dueDate")}
-          onOpen={open?.("dueDate")}
-          tone={isOverdue(task, today, timeZone) ? "danger" : "default"}
-        >
-          <CalendarDays aria-hidden="true" className="size-3" />
-          <DueDateText
-            dueAt={task.dueAt}
-            dueHasTime={task.dueHasTime}
-            today={today}
-            timeZone={timeZone}
-          />
-        </TaskChip>
-      ) : null}
+      <TaskDatesChip
+        task={task}
+        showStart={display.startDates && task.startAt !== null && !closed}
+        showDue={display.dueDates && task.dueAt !== null && !closed}
+        today={today}
+        timeZone={timeZone}
+        open={open}
+      />
       {display.assignees ? (
         assignee ? (
           <PersonAvatar person={assignee} />

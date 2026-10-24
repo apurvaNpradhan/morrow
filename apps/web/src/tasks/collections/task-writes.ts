@@ -38,6 +38,18 @@ export async function writeTaskChanges({ original, changes }: TaskMutation) {
       rpc.tasks.updatePriority({ ...target, priority: changes.priority }),
     );
   }
+  // Before the due date: a start the due date takes along is cleared first.
+  if (changes.startAt !== undefined || changes.startHasTime !== undefined) {
+    const startAt =
+      changes.startAt === undefined ? original.startAt : changes.startAt;
+    const startHasTime = changes.startHasTime ?? original.startHasTime;
+    await keep(
+      rpc.tasks.updateStartDate({
+        ...target,
+        startDate: formatTaskDate(startAt, startHasTime),
+      }),
+    );
+  }
   if (changes.dueAt !== undefined || changes.dueHasTime !== undefined) {
     const dueAt = changes.dueAt === undefined ? original.dueAt : changes.dueAt;
     const dueHasTime = changes.dueHasTime ?? original.dueHasTime;

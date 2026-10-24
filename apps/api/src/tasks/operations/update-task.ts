@@ -6,9 +6,13 @@ import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { saveDescription } from "#api/tasks/lib/description";
 import { findTask } from "#api/tasks/lib/find-task";
 import {
+  assertSpan,
   dueColumns,
   dueText,
   normalTaskDate,
+  startColumns,
+  startsAfterDue,
+  startText,
 } from "#api/tasks/lib/task-date-columns";
 import { personRef } from "#api/tasks/history/person-ref";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
@@ -19,6 +23,7 @@ export type TaskPatch = {
   title?: string;
   description?: string;
   priority?: TaskPriority;
+  startDate?: string | null;
   dueDate?: string | null;
   assigneeId?: string | null;
 };
@@ -48,7 +53,16 @@ export async function updateTask(
         task.assigneeId,
       );
     }
-    const { description, dueDate, ...fields } = patch;
+    const { description, dueDate, startDate, ...fields } = patch;
+    // A start date set after the due date is refused; a due date moved before
+    // the start takes the start with it, so the span is never backwards.
+    const startFrom = startText(task);
+    const dueFrom = dueText(task);
+    const dueTo = dueDate === undefined ? dueFrom : normalTaskDate(dueDate);
+    let startTo =
+      startDate === undefined ? startFrom : normalTaskDate(startDate);
+    if (startDate !== undefined) assertSpan(startTo, dueTo);
+    else if (startsAfterDue(startTo, dueTo)) startTo = null;
     const [previous] =
       description === undefined
         ? []
@@ -63,6 +77,7 @@ export async function updateTask(
       .set({
         ...fields,
         ...(dueDate === undefined ? {} : dueColumns(dueDate)),
+        ...(startTo === startFrom ? {} : startColumns(startTo)),
         updatedAt: new Date(),
       })
       .where(eq(taskTable.id, taskId));
@@ -89,8 +104,12 @@ export async function updateTask(
         data: { from: task.priority, to: patch.priority },
       });
     }
-    const dueFrom = dueText(task);
-    const dueTo = dueDate === undefined ? dueFrom : normalTaskDate(dueDate);
+    if (startTo !== startFrom) {
+      await record({
+        type: "start_date",
+        data: { from: startFrom, to: startTo },
+      });
+    }
     if (dueTo !== dueFrom) {
       await record({ type: "due_date", data: { from: dueFrom, to: dueTo } });
     }

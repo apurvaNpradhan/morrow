@@ -23,7 +23,11 @@ import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { recordParentChange } from "#api/tasks/history/record-parent-change";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
-import { dueColumns } from "#api/tasks/lib/task-date-columns";
+import {
+  assertSpan,
+  dueColumns,
+  startColumns,
+} from "#api/tasks/lib/task-date-columns";
 import { taskTable } from "#api/tasks/tables";
 
 export type NewTask = {
@@ -34,6 +38,7 @@ export type NewTask = {
   description?: string;
   priority?: TaskPriority;
   assigneeId?: string | null;
+  startDate?: string | null;
   dueDate?: string | null;
   labelIds?: string[];
   parentId?: string | null;
@@ -57,6 +62,7 @@ export async function createTask(
 ) {
   if (!TASK_ID_PATTERN.test(input.id)) throw taskError("INVALID_ID");
   assertValidPosition(input.position);
+  assertSpan(input.startDate ?? null, input.dueDate ?? null);
   try {
     const { result, txid } = await withTxid(async (tx) => {
       const project = await lockProject(tx, workspaceId, projectId);
@@ -105,6 +111,7 @@ export async function createTask(
           title: input.title,
           priority: input.priority ?? "none",
           assigneeId: input.assigneeId ?? null,
+          ...startColumns(input.startDate ?? null),
           ...dueColumns(input.dueDate ?? null),
           labelIds,
           fieldValues,

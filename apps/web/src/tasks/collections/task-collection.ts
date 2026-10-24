@@ -46,6 +46,10 @@ export const taskCollection = registerSyncedCollection(
               description,
               priority: modified.priority,
               assigneeId: modified.assigneeId,
+              startDate: formatTaskDate(
+                modified.startAt,
+                modified.startHasTime,
+              ),
               dueDate: formatTaskDate(modified.dueAt, modified.dueHasTime),
               labelIds: modified.labelIds,
               parentId: modified.parentId,

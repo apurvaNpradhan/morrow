@@ -69,6 +69,8 @@ export async function duplicateTask(
           title: `${source.title.slice(0, TASK_TITLE_MAX - COPY_SUFFIX.length)}${COPY_SUFFIX}`,
           priority: source.priority,
           assigneeId,
+          startAt: source.startAt,
+          startHasTime: source.startHasTime,
           dueAt: source.dueAt,
           dueHasTime: source.dueHasTime,
           labelIds: source.labelIds,

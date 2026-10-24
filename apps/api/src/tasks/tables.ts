@@ -67,6 +67,8 @@ export const taskTable = pgTable(
     assigneeId: text("assignee_id").references(() => userTable.id, {
       onDelete: "set null",
     }),
+    startAt: timestamp("start_at", { mode: "date" }),
+    startHasTime: boolean("start_has_time").notNull().default(false),
     dueAt: timestamp("due_at", { mode: "date" }),
     dueHasTime: boolean("due_has_time").notNull().default(false),
     // Ids of the Workspace's labels. No foreign key, on purpose: one row per
@@ -113,6 +115,15 @@ export const taskTable = pgTable(
     check(
       "task_due_has_time_check",
       sql`${table.dueAt} IS NOT NULL OR NOT ${table.dueHasTime}`,
+    ),
+    check(
+      "task_start_has_time_check",
+      sql`${table.startAt} IS NOT NULL OR NOT ${table.startHasTime}`,
+    ),
+    // A day is 00:00 UTC, so a day and a moment compare by that.
+    check(
+      "task_start_before_due_check",
+      sql`${table.startAt} IS NULL OR ${table.dueAt} IS NULL OR ${table.startAt} <= ${table.dueAt}`,
     ),
     check(
       "task_priority_check",

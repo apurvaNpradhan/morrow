@@ -348,20 +348,27 @@ describe("MCP endpoint", () => {
     await run("update_tasks", {
       projectId,
       items: [
-        { ticketId: "MOR-1", dueDate: "2026-10-30T15:00:00+05:30" },
+        {
+          ticketId: "MOR-1",
+          startDate: "2026-10-29",
+          dueDate: "2026-10-30T15:00:00+05:30",
+        },
         { ticketId: "MOR-2", dueDate: "2026-10-30" },
       ],
     });
     const dated = await run("list_tasks", { projectId });
     expect(
-      dated.tasks.map((t: { ticketId: string; dueDate: string }) => [
-        t.ticketId,
-        t.dueDate,
-      ]),
+      dated.tasks.map(
+        (t: { ticketId: string; startDate: string; dueDate: string }) => [
+          t.ticketId,
+          t.startDate,
+          t.dueDate,
+        ],
+      ),
     ).toEqual(
       expect.arrayContaining([
-        ["MOR-1", "2026-10-30T09:30:00.000Z"],
-        ["MOR-2", "2026-10-30"],
+        ["MOR-1", "2026-10-29", "2026-10-30T09:30:00.000Z"],
+        ["MOR-2", null, "2026-10-30"],
       ]),
     );
     await run("move_task", {

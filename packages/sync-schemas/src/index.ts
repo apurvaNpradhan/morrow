@@ -162,8 +162,8 @@ export type ProjectFieldRow = z.infer<typeof projectFieldsShape.schema>;
 
 /**
  * Every Task of the Projects of the Workspaces the user belongs to, archived
- * ones included. `dueAt` is a day or a moment, told apart by `dueHasTime`
- * (see `task-dates.ts`).
+ * ones included. `startAt` and `dueAt` are each a day or a moment, told apart by
+ * `startHasTime` and `dueHasTime` (see `task-dates.ts`).
  */
 export const tasksShape = shape(
   "tasks",
@@ -179,6 +179,8 @@ export const tasksShape = shape(
     openBlockerCount: z.number(),
     priority: z.enum(TASK_PRIORITIES),
     assigneeId: z.string().nullable(),
+    startAt: z.date().nullable(),
+    startHasTime: z.boolean(),
     dueAt: z.date().nullable(),
     dueHasTime: z.boolean(),
     labelIds: z.array(z.string()),

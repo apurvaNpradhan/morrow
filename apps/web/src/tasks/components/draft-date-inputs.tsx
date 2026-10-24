@@ -8,11 +8,16 @@ import { splitTaskDateText, taskDateText } from "../lib/format-task-date";
  * the date clears the due date; a date alone is a day.
  */
 export function DraftDateInputs({
+  field,
   value,
+  latest,
   timeZone,
   onChange,
 }: {
+  field: "startDate" | "dueDate";
   value: string | null;
+  /** The last day that may be picked: the due date, for a start. */
+  latest?: string;
   timeZone: string;
   onChange: (value: string | null) => void;
 }) {
@@ -24,7 +29,8 @@ export function DraftDateInputs({
         type="date"
         size="sm"
         className="h-7 w-40"
-        aria-label={t("fields.dueDate")}
+        aria-label={t(`fields.${field}`)}
+        max={latest}
         value={day}
         onChange={(event) =>
           onChange(

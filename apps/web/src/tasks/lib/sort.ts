@@ -22,6 +22,7 @@ type Sortable = Pick<
   | "position"
   | "createdAt"
   | "priority"
+  | "startAt"
   | "dueAt"
   | "title"
   | "number"
@@ -120,6 +121,15 @@ export function sortTasks<T extends Sortable>(
             direction,
           ) || byNumber(a, b)
         );
+      case "startDate": {
+        if (a.startAt === null && b.startAt === null) return byNumber(a, b);
+        if (a.startAt === null) return 1;
+        if (b.startAt === null) return -1;
+        return (
+          direct(a.startAt.getTime() - b.startAt.getTime(), direction) ||
+          byNumber(a, b)
+        );
+      }
       case "dueDate": {
         if (a.dueAt === null && b.dueAt === null) return byNumber(a, b);
         if (a.dueAt === null) return 1;

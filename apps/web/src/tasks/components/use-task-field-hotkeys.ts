@@ -86,6 +86,10 @@ export function useTaskFieldHotkeys() {
     { hotkey: hotkeys.setTaskColumn, callback: pick("column", "column") },
     { hotkey: hotkeys.setTaskPriority, callback: pick("priority", "priority") },
     { hotkey: hotkeys.assignTask, callback: pick("assignee", "assignee") },
+    {
+      hotkey: hotkeys.setTaskStartDate,
+      callback: pick("startDate", "startDate"),
+    },
     { hotkey: hotkeys.setTaskDueDate, callback: pick("dueDate", "dueDate") },
     { hotkey: hotkeys.setTaskLabels, callback: pick("labels", "labels") },
     {

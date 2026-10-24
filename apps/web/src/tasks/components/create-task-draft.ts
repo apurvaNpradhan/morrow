@@ -8,6 +8,8 @@ export type TaskDraft = {
   description: string;
   priority: TaskPriority;
   assigneeId: string | null;
+  /** `YYYY-MM-DD` for a day, ISO 8601 for a moment. */
+  startDate: string | null;
   dueDate: string | null;
   labelIds: string[];
   /** Custom Field values by Field id, for the chosen Project. */
@@ -21,6 +23,7 @@ export const EMPTY_DRAFT: TaskDraft = {
   description: "",
   priority: "none",
   assigneeId: null,
+  startDate: null,
   dueDate: null,
   labelIds: [],
   fieldValues: {},
@@ -33,6 +36,7 @@ export function isDirty(draft: TaskDraft) {
     draft.description.trim() !== "" ||
     draft.priority !== "none" ||
     draft.assigneeId !== null ||
+    draft.startDate !== null ||
     draft.dueDate !== null ||
     draft.labelIds.length > 0 ||
     Object.keys(draft.fieldValues).length > 0

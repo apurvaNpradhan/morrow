@@ -702,6 +702,166 @@ describe("a task of an archived project", () => {
   });
 });
 
+describe("start dates", () => {
+  it("round-trips a day and a moment, and clears them", async () => {
+    const { client, base, addTask } = await setupTasks();
+    const { id } = await addTask("To Do");
+
+    await client.tasks.updateStartDate({
+      ...base,
+      taskId: id,
+      startDate: "2026-11-01",
+    });
+    expect(await taskRow(id)).toMatchObject({
+      startAt: new Date("2026-11-01T00:00:00Z"),
+      startHasTime: false,
+    });
+
+    await client.tasks.updateStartDate({
+      ...base,
+      taskId: id,
+      startDate: "2026-11-01T09:00:00+05:30",
+    });
+    expect(await taskRow(id)).toMatchObject({
+      startAt: new Date("2026-11-01T03:30:00Z"),
+      startHasTime: true,
+    });
+    const [listed] = await client.tasks.list(base);
+    expect(listed?.startDate).toBe("2026-11-01T03:30:00.000Z");
+
+    await client.tasks.updateStartDate({
+      ...base,
+      taskId: id,
+      startDate: null,
+    });
+    expect(await taskRow(id)).toMatchObject({
+      startAt: null,
+      startHasTime: false,
+    });
+  });
+
+  it("refuses a start after the due date, on set, create and bulk update", async () => {
+    const { client, base, addTask, byName, nextPosition } = await setupTasks();
+    const { id } = await addTask("To Do", { dueDate: "2026-11-10" });
+
+    const onSet = await rejection(
+      client.tasks.updateStartDate({
+        ...base,
+        taskId: id,
+        startDate: "2026-11-11",
+      }),
+    );
+    const onCreate = await rejection(
+      client.tasks.create({
+        ...base,
+        id: newTaskId(),
+        columnId: byName("To Do").id,
+        position: nextPosition(byName("To Do").id),
+        title: "Backwards",
+        startDate: "2026-11-12",
+        dueDate: "2026-11-11",
+      }),
+    );
+    const onBulk = await rejection(
+      client.tasks.bulkUpdate({
+        ...base,
+        taskIds: [id],
+        change: { type: "startDate", startDate: "2026-11-30" },
+      }),
+    );
+
+    for (const error of [onSet, onCreate, onBulk]) {
+      expect(error.data?.code).toBe("START_AFTER_DUE");
+    }
+    expect((await taskRow(id))?.startAt).toBeNull();
+  });
+
+  it("allows a start on the due date, a day or a moment on either side", async () => {
+    const { client, base, addTask } = await setupTasks();
+    const { id } = await addTask("To Do", {
+      startDate: "2026-11-10T08:00:00Z",
+      dueDate: "2026-11-10T17:00:00Z",
+    });
+
+    await client.tasks.updateStartDate({
+      ...base,
+      taskId: id,
+      startDate: "2026-11-10",
+    });
+
+    expect(await taskRow(id)).toMatchObject({ startHasTime: false });
+  });
+
+  it("takes the start along when the due date moves before it", async () => {
+    const { client, base, addTask } = await setupTasks();
+    const { id } = await addTask("To Do", {
+      startDate: "2026-11-10",
+      dueDate: "2026-11-20",
+    });
+
+    await client.tasks.updateDueDate({
+      ...base,
+      taskId: id,
+      dueDate: "2026-11-05",
+    });
+
+    expect(await taskRow(id)).toMatchObject({
+      startAt: null,
+      dueAt: new Date("2026-11-05T00:00:00Z"),
+    });
+  });
+
+  it("keeps the start when the due date moves later or is cleared", async () => {
+    const { client, base, addTask } = await setupTasks();
+    const { id } = await addTask("To Do", {
+      startDate: "2026-11-10",
+      dueDate: "2026-11-20",
+    });
+
+    await client.tasks.updateDueDate({ ...base, taskId: id, dueDate: null });
+
+    expect(await taskRow(id)).toMatchObject({
+      startAt: new Date("2026-11-10T00:00:00Z"),
+      dueAt: null,
+    });
+  });
+
+  it("writes only the start date's own fields, with its txid", async () => {
+    const { client, base, addTask } = await setupTasks();
+    const { id } = await addTask("To Do", { title: "Keep" });
+
+    const { txid } = await client.tasks.updateStartDate({
+      ...base,
+      taskId: id,
+      startDate: "2026-11-01",
+    });
+
+    expect(txid).toBe(await xminOfTask(id));
+    expect(await taskRow(id)).toMatchObject({ title: "Keep" });
+  });
+
+  it("is copied by a duplicate", async () => {
+    const { client, base, addTask } = await setupTasks();
+    const { id } = await addTask("To Do", {
+      startDate: "2026-11-01T10:00:00Z",
+      dueDate: "2026-11-02",
+    });
+    const copyId = newTaskId();
+
+    await client.tasks.duplicate({
+      ...base,
+      taskId: id,
+      id: copyId,
+      position: positionAt(5),
+    });
+
+    expect(await taskRow(copyId)).toMatchObject({
+      startAt: new Date("2026-11-01T10:00:00Z"),
+      startHasTime: true,
+    });
+  });
+});
+
 describe("duplicating", () => {
   it("copies the fields into the same column under a new number", async () => {
     const { client, base, workspace, byName, addTask } = await setupTasks();

@@ -40,6 +40,7 @@ type Preferences = ReturnType<typeof useTaskViewPreferences>;
 const DISPLAY_FIELDS = [
   "numbers",
   "assignees",
+  "startDates",
   "dueDates",
   "priority",
 ] as const satisfies readonly (keyof TaskDisplay)[];

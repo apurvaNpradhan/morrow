@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
 import { copyToClipboard } from "@/design-system/copy-to-clipboard";
 import { toast } from "@/design-system/toast";
-import { dueFields } from "../lib/due-date";
+import { dueFields, startFields, startsAfterDue } from "../lib/due-date";
 import { useTaskView } from "../components/task-view-context";
 import { useCreatedToast } from "./use-created-toast";
 import {
@@ -44,8 +44,20 @@ export function useTaskActions() {
     return {
       setPriority: (task: TaskRow, priority: TaskPriority) =>
         attempt(() => updateTask(task.id, { priority })),
-      setDueDate: (task: TaskRow, dueDate: string | null) =>
-        attempt(() => updateTask(task.id, dueFields(dueDate))),
+      setStartDate: (task: TaskRow, startDate: string | null) =>
+        attempt(() => updateTask(task.id, startFields(startDate))),
+      /** A due date before the start takes the start with it, and says so. */
+      setDueDate: (task: TaskRow, dueDate: string | null) => {
+        const due = dueFields(dueDate);
+        const clearsStart = startsAfterDue({ ...task, ...due });
+        return attempt(async () => {
+          await updateTask(task.id, {
+            ...due,
+            ...(clearsStart && startFields(null)),
+          });
+          if (clearsStart) toast.info(t("due.startCleared"));
+        });
+      },
       setAssignee: (task: TaskRow, assigneeId: string | null) =>
         attempt(() => updateTask(task.id, { assigneeId })),
       /** `null` makes the task a top-level one again. */

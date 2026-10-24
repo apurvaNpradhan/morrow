@@ -34,6 +34,7 @@ export const appHotkeys = defineAppHotkeys({
   setTaskPriority: { hotkey: "P", meta: { group: "tasks" } },
   assignTask: { hotkey: "A", meta: { group: "tasks" } },
   assignTaskToMe: { hotkey: "I", meta: { group: "tasks" } },
+  setTaskStartDate: { hotkey: "Shift+S", meta: { group: "tasks" } },
   setTaskDueDate: { hotkey: "Shift+D", meta: { group: "tasks" } },
   setTaskLabels: { hotkey: "L", meta: { group: "tasks" } },
   setTaskField: { hotkey: "Shift+F", meta: { group: "tasks" } },

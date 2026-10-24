@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
 import { toast } from "@/design-system/toast";
 import { useTaskView } from "../components/task-view-context";
+import { dueFields, startsAfterDue } from "../lib/due-date";
 import { selectedTasks } from "../lib/selected-tasks";
 import {
   bulkRemoveTasks,
@@ -60,8 +61,18 @@ export function useBulkActions() {
       setColumn: (columnId: string) => update({ type: "move", columnId }),
       setAssignee: (assigneeId: string | null) =>
         update({ type: "assignee", assigneeId }),
-      setDueDate: (dueDate: string | null) =>
-        update({ type: "dueDate", dueDate }),
+      setStartDate: (startDate: string | null) =>
+        update({ type: "startDate", startDate }),
+      /** A due date before a start takes the start with it, and says so. */
+      setDueDate: async (dueDate: string | null) => {
+        const due = dueFields(dueDate);
+        const clearsStart = batch().tasks.some((task) =>
+          startsAfterDue({ ...task, ...due }),
+        );
+        const done = await update({ type: "dueDate", dueDate });
+        if (done && clearsStart) toast.info(t("due.startCleared"));
+        return done;
+      },
       addLabel: (labelId: string) => update({ type: "addLabel", labelId }),
       removeLabel: (labelId: string) =>
         update({ type: "removeLabel", labelId }),

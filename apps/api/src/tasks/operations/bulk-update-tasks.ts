@@ -20,9 +20,13 @@ import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import {
+  assertSpan,
   dueColumns,
   dueText,
   normalTaskDate,
+  startColumns,
+  startsAfterDue,
+  startText,
 } from "#api/tasks/lib/task-date-columns";
 import { taskTable } from "#api/tasks/tables";
 
@@ -31,6 +35,7 @@ export type BulkChange =
   | { type: "move"; columnId: string }
   | { type: "priority"; priority: TaskPriority }
   | { type: "assignee"; assigneeId: string | null }
+  | { type: "startDate"; startDate: string | null }
   | { type: "dueDate"; dueDate: string | null }
   | { type: "addLabel"; labelId: string }
   | { type: "removeLabel"; labelId: string }
@@ -104,9 +109,33 @@ export async function bulkUpdateTasks(
             });
           }
           break;
+        case "startDate": {
+          const to = normalTaskDate(change.startDate);
+          // One refusal for the batch, before anything is written.
+          for (const task of tasks) assertSpan(to, dueText(task));
+          await update(startColumns(change.startDate), tasks);
+          for (const task of tasks) {
+            const from = startText(task);
+            if (from === to) continue;
+            await record(task, { type: "start_date", data: { from, to } });
+          }
+          break;
+        }
         case "dueDate": {
-          await update(dueColumns(change.dueDate), tasks);
           const to = normalTaskDate(change.dueDate);
+          // A due date moved before a start takes the start with it; the
+          // start goes first, or the table's check refuses the due date.
+          const backwards = tasks.filter((task) =>
+            startsAfterDue(startText(task), to),
+          );
+          await update(startColumns(null), backwards);
+          await update(dueColumns(change.dueDate), tasks);
+          for (const task of backwards) {
+            await record(task, {
+              type: "start_date",
+              data: { from: startText(task), to: null },
+            });
+          }
           for (const task of tasks) {
             const from = dueText(task);
             if (from === to) continue;

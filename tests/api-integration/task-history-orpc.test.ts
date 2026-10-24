@@ -98,6 +98,44 @@ describe("what a task's history records", () => {
     ]);
   });
 
+  it("records a start date change, with the time when there is one", async () => {
+    const { client, target, taskId } = await setup();
+
+    await client.tasks.updateStartDate({
+      ...target,
+      startDate: "2026-12-20T09:00:00+01:00",
+    });
+
+    expect((await storyOf(taskId)).slice(1)).toEqual([
+      {
+        type: "start_date",
+        data: { from: null, to: "2026-12-20T08:00:00.000Z" },
+      },
+    ]);
+  });
+
+  it("records the start a due date took along", async () => {
+    const { client, base, addTask } = await setup();
+    const { id } = await addTask("To Do", {
+      startDate: "2026-12-20",
+      dueDate: "2026-12-31",
+    });
+
+    await client.tasks.updateDueDate({
+      ...base,
+      taskId: id,
+      dueDate: "2026-12-10",
+    });
+
+    expect((await storyOf(id)).slice(1)).toEqual([
+      { type: "start_date", data: { from: "2026-12-20", to: null } },
+      {
+        type: "due_date",
+        data: { from: "2026-12-31", to: "2026-12-10" },
+      },
+    ]);
+  });
+
   it("records a move to another column with both columns, and an archive and unarchive", async () => {
     const { client, target, taskId, byName } = await setup();
 
@@ -259,6 +297,24 @@ describe("folding repeated edits", () => {
 
     expect((await storyOf(taskId)).slice(1)).toEqual([
       { type: "title", data: { from: "Original", to: "Renamed" } },
+    ]);
+  });
+
+  it("folds the same person's start date edits into one", async () => {
+    const { client, target, taskId } = await setup();
+
+    await client.tasks.updateStartDate({ ...target, startDate: "2026-12-01" });
+    await client.tasks.updateStartDate({ ...target, startDate: "2026-12-02" });
+    await client.tasks.updateStartDate({
+      ...target,
+      startDate: "2026-12-03T10:00:00Z",
+    });
+
+    expect((await storyOf(taskId)).slice(1)).toEqual([
+      {
+        type: "start_date",
+        data: { from: null, to: "2026-12-03T10:00:00.000Z" },
+      },
     ]);
   });
 

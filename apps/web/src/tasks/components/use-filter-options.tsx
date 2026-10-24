@@ -11,6 +11,7 @@ import {
   DATE_FIELD_PRESETS,
   dateFieldValue,
   DUE_VALUES,
+  START_VALUES,
   HAS_FIELD_VALUE,
   RELATION_VALUES,
   ME,
@@ -117,6 +118,11 @@ export function useFilterOptions() {
           value: priority,
           label: t(`priority.${priority}`),
           glyph: <TaskPriorityIcon priority={priority} />,
+        }));
+      case "startDate":
+        return START_VALUES.map((value) => ({
+          value,
+          label: t(`filter.start.${value}`),
         }));
       case "dueDate":
         return DUE_VALUES.map((value) => ({

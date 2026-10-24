@@ -2,6 +2,7 @@ import { MAX_BULK_TASKS } from "@morrow/sync-schemas";
 import {
   Archive,
   ArchiveRestore,
+  CalendarArrowDown,
   CalendarDays,
   Circle,
   FolderInput,
@@ -100,6 +101,15 @@ export function SelectionBar() {
             onClick={pick("labels")}
           >
             <Tag aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            disabled={capped}
+            aria-label={t("fields.startDate")}
+            onClick={pick("startDate")}
+          >
+            <CalendarArrowDown aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"

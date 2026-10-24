@@ -1,4 +1,4 @@
-import { CalendarDays, Tag, UserRound } from "lucide-react";
+import { CalendarArrowDown, CalendarDays, Tag, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
@@ -9,6 +9,7 @@ import {
 } from "@/design-system/ui/popover";
 import { cn } from "@/design-system/cn";
 import { LabelChips, labelsOfTask } from "@/labels";
+import { dueDay } from "../lib/due-date";
 import { fieldHeld } from "../lib/field-value";
 import { useTaskActions } from "../actions/use-task-actions";
 import { openDatePicker } from "../lib/date-picker-store";
@@ -22,7 +23,7 @@ import { PersonAvatar } from "./person-avatar";
 import {
   AssigneeItems,
   ColumnItems,
-  DueDateItems,
+  TaskDateItems,
   PriorityItems,
 } from "./task-field-items";
 import { TaskLabelPicker } from "./task-label-picker";
@@ -62,6 +63,8 @@ export function TaskProperties({ task }: { task: TaskRow }) {
     names: [],
     open: null,
   });
+  const showStartDate =
+    task.startAt !== null || added.names.includes("startDate");
   const showDueDate = task.dueAt !== null || added.names.includes("dueDate");
   const unsetFields = fields.filter(
     (field) => fieldHeld(field, task.fieldValues) === undefined,
@@ -72,6 +75,9 @@ export function TaskProperties({ task }: { task: TaskRow }) {
       added.names.includes(`field:${field.id}`),
   );
   const addable = [
+    ...(showStartDate
+      ? []
+      : [{ sheetField: "startDate", label: t("fields.startDate") }]),
     ...(showDueDate
       ? []
       : [{ sheetField: "dueDate", label: t("fields.dueDate") }]),
@@ -173,6 +179,35 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           />
         </FieldChipMenu>
       </Field>
+      {showStartDate ? (
+        <Field label={t("fields.startDate")}>
+          <FieldChipMenu
+            label={t("fields.startDate")}
+            sheetField="startDate"
+            disabled={!editable}
+            muted={!task.startAt}
+            icon={<CalendarArrowDown aria-hidden="true" className="size-3.5" />}
+            value={
+              task.startAt
+                ? formatTaskDate(task.startAt, task.startHasTime, timeZone, {
+                    year: true,
+                  })
+                : t("fields.noStartDate")
+            }
+          >
+            <TaskDateItems
+              today={today}
+              timeZone={timeZone}
+              hasValue={task.startAt !== null}
+              latest={dueDay(task, timeZone) ?? undefined}
+              onSelect={(startDate) =>
+                void actions.setStartDate(task, startDate)
+              }
+              onPickDate={() => openDatePicker(task.id, "startDate")}
+            />
+          </FieldChipMenu>
+        </Field>
+      ) : null}
       {showDueDate ? (
         <Field label={t("fields.dueDate")}>
           <FieldChipMenu
@@ -189,12 +224,12 @@ export function TaskProperties({ task }: { task: TaskRow }) {
                 : t("fields.noDueDate")
             }
           >
-            <DueDateItems
+            <TaskDateItems
               today={today}
               timeZone={timeZone}
               hasValue={task.dueAt !== null}
               onSelect={(dueDate) => void actions.setDueDate(task, dueDate)}
-              onPickDate={() => openDatePicker(task.id)}
+              onPickDate={() => openDatePicker(task.id, "dueDate")}
             />
           </FieldChipMenu>
         </Field>

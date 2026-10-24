@@ -37,7 +37,7 @@ import {
   taskEventTable,
   taskTable,
 } from "#api/tasks/tables";
-import { dueColumns } from "#api/tasks/lib/task-date-columns";
+import { dueColumns, startColumns } from "#api/tasks/lib/task-date-columns";
 
 /** Rows per insert: a task has 17 bound columns and Postgres allows 65,535 parameters. */
 const INSERT_CHUNK = 1000;
@@ -290,6 +290,7 @@ export async function importTasks(
         title: task.title,
         priority: task.priority,
         assigneeId,
+        ...startColumns(task.startDate),
         ...dueColumns(task.dueDate),
         labelIds,
         fieldValues,

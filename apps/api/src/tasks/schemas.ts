@@ -67,6 +67,9 @@ export const dueDate = z
     "Must be a day (YYYY-MM-DD) or a moment with an offset (2026-10-24T15:00+05:30)",
   );
 
+/** A start date: a day or a moment, as a due date. */
+export const startDate = dueDate;
+
 /** A fractional-index key; its format is checked by the operation. */
 export const position = z.string().min(1).max(64);
 
@@ -84,6 +87,7 @@ export const bulkChange = z.discriminatedUnion("type", [
   z.object({ type: z.literal("move"), columnId }),
   z.object({ type: z.literal("priority"), priority }),
   z.object({ type: z.literal("assignee"), assigneeId: assigneeId.nullable() }),
+  z.object({ type: z.literal("startDate"), startDate: startDate.nullable() }),
   z.object({ type: z.literal("dueDate"), dueDate: dueDate.nullable() }),
   z.object({ type: z.literal("addLabel"), labelId }),
   z.object({ type: z.literal("removeLabel"), labelId }),

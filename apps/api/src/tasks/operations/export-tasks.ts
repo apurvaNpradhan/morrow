@@ -14,7 +14,7 @@ import {
   taskDescriptionTable,
   taskTable,
 } from "#api/tasks/tables";
-import { dueText } from "#api/tasks/lib/task-date-columns";
+import { dueText, startText } from "#api/tasks/lib/task-date-columns";
 
 /**
  * A project's tasks as a portable document: columns by name and category,
@@ -117,6 +117,7 @@ export async function exportTasks(workspaceId: string, projectId: string) {
         column: column?.name ?? "",
         category: column?.category ?? "unstarted",
         priority: task.priority,
+        startDate: startText(task),
         dueDate: dueText(task),
         assigneeEmail,
         completedAt: task.completedAt?.toISOString() ?? null,
