@@ -8,6 +8,7 @@ const rpc = vi.hoisted(() => {
       updateTitle: call(1),
       updateDescription: call(2),
       updatePriority: call(3),
+      updateStartDate: call(10),
       updateDueDate: call(4),
       updateAssignee: call(5),
       updateParent: call(9),

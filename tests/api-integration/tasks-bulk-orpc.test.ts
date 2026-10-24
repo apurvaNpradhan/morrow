@@ -35,6 +35,25 @@ async function setup() {
 }
 
 describe("bulk changes", () => {
+  it("sets a start date on every task, and a due date before it clears the start", async () => {
+    const { addTasks, update } = await setup();
+    const ids = await addTasks(2);
+
+    await update(ids, { type: "dueDate", dueDate: "2026-12-31" });
+    await update(ids, { type: "startDate", startDate: "2026-12-10" });
+    for (const id of ids) {
+      expect(await taskRow(id)).toMatchObject({
+        startAt: new Date("2026-12-10T00:00:00Z"),
+        startHasTime: false,
+      });
+    }
+
+    await update(ids, { type: "dueDate", dueDate: "2026-12-01" });
+    for (const id of ids) {
+      expect(await taskRow(id)).toMatchObject({ startAt: null });
+    }
+  });
+
   it("sets a due moment on every task, then a day over it", async () => {
     const { addTasks, update } = await setup();
     const ids = await addTasks(2);

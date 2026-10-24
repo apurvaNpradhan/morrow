@@ -23,6 +23,7 @@ export function fieldIdOf(subject: string): string | null {
 export const FILTER_SUBJECTS = [
   "assignee",
   "priority",
+  "startDate",
   "dueDate",
   "column",
   "label",
@@ -44,6 +45,7 @@ export const SORT_FIELDS = [
   "manual",
   "created",
   "priority",
+  "startDate",
   "dueDate",
   "title",
   "number",

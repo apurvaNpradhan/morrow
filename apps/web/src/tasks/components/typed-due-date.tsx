@@ -22,11 +22,14 @@ export function TypedDueDate({
   today,
   timeZone,
   allowTime = true,
+  latest,
   onSelect,
 }: {
   today: string;
   timeZone: string;
   allowTime?: boolean;
+  /** The last day that may be picked, `YYYY-MM-DD`: the due date, for a start. */
+  latest?: string;
   onSelect: (dueDate: string) => void;
 }) {
   const { t } = useTranslation("tasks");
@@ -49,7 +52,12 @@ export function TypedDueDate({
           className="w-full bg-transparent px-1.5 py-1 text-sm outline-none placeholder:text-muted-foreground"
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && typed) {
+            if (
+              event.key === "Enter" &&
+              typed &&
+              parsed &&
+              (latest === undefined || parsed.day <= latest)
+            ) {
               event.preventDefault();
               event.stopPropagation();
               onSelect(typed);
@@ -60,7 +68,10 @@ export function TypedDueDate({
         />
       </div>
       {typed && parsed ? (
-        <MenuItem onClick={() => onSelect(typed)}>
+        <MenuItem
+          disabled={latest !== undefined && parsed.day > latest}
+          onClick={() => onSelect(typed)}
+        >
           <CalendarDays aria-hidden="true" />
           {formatDate(parseDay(parsed.day), {
             weekday: "short",

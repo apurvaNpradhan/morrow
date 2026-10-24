@@ -15,6 +15,7 @@ const NO_FILTERS: TaskFilter[] = [];
 const DISPLAY_KEYS = {
   numbers: "showTaskNumbers",
   assignees: "showTaskAssignees",
+  startDates: "showTaskStartDate",
   dueDates: "showTaskDueDates",
   priority: "showTaskPriority",
 } as const satisfies Record<keyof TaskDisplay, string>;
@@ -39,6 +40,7 @@ export function useTaskViewPreferences(projectId: string) {
   const display: TaskDisplay = {
     numbers: preferences.showTaskNumbers,
     assignees: preferences.showTaskAssignees,
+    startDates: preferences.showTaskStartDate,
     dueDates: preferences.showTaskDueDates,
     priority: preferences.showTaskPriority,
   };
@@ -85,6 +87,7 @@ export function useTaskViewPreferences(projectId: string) {
       saveDevicePreferences({
         showTaskNumbers: true,
         showTaskAssignees: true,
+        showTaskStartDate: true,
         showTaskDueDates: true,
         showTaskPriority: true,
         showTaskFields: {},

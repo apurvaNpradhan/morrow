@@ -22,16 +22,22 @@ import {
   splitTaskDateText,
   taskDateText,
 } from "../lib/format-task-date";
-import { dueText } from "../lib/due-date";
+import { dueDay, dueText, startText } from "../lib/due-date";
 import { parseDateQuery } from "../lib/parse-date-query";
 import { useToday } from "../queries/use-today";
-import { closeDatePicker, useDatePickerTask } from "../lib/date-picker-store";
+import {
+  closeDatePicker,
+  type DateField,
+  useDatePicker,
+} from "../lib/date-picker-store";
 import { SELECTION } from "../lib/selection-store";
 
-/** A calendar field for "Pick a date", opened from any due-date menu. */
-export function DueDateDialog() {
-  const taskId = useDatePickerTask();
-  const forSelection = taskId === SELECTION;
+/** A calendar field for "Pick a date", opened from any start or due date menu. */
+export function TaskDateDialog() {
+  const picker = useDatePicker();
+  const timeZone = useTimeZone();
+  const taskId = picker?.taskId ?? null;
+  const forSelection = picker !== null && taskId === SELECTION;
   const task = taskId && !forSelection ? taskCollection.get(taskId) : undefined;
   return (
     <Dialog
@@ -41,26 +47,46 @@ export function DueDateDialog() {
       }}
     >
       {forSelection ? (
-        <DueDateForm key={SELECTION} taskId={SELECTION} initial={null} />
-      ) : task ? (
-        <DueDateForm
-          // A new task starts the field afresh.
-          key={task.id}
+        <TaskDateForm
+          key={`${SELECTION}:${picker.field}`}
+          taskId={SELECTION}
+          field={picker.field}
+          initial={null}
+          latest={undefined}
+        />
+      ) : task && picker ? (
+        <TaskDateForm
+          // A new task or date starts the field afresh.
+          key={`${task.id}:${picker.field}`}
           taskId={task.id}
-          initial={dueText(task)}
+          field={picker.field}
+          initial={
+            picker.field === "startDate" ? startText(task) : dueText(task)
+          }
+          // A start date cannot pass the due date.
+          latest={
+            picker.field === "startDate"
+              ? (dueDay(task, timeZone) ?? undefined)
+              : undefined
+          }
         />
       ) : null}
     </Dialog>
   );
 }
 
-function DueDateForm({
+function TaskDateForm({
   taskId,
+  field,
   initial,
+  latest,
 }: {
   taskId: string;
-  /** The task's due date as text (`YYYY-MM-DD` or ISO), if it has one. */
+  field: DateField;
+  /** The task's date as text (`YYYY-MM-DD` or ISO), if it has one. */
   initial: string | null;
+  /** The last day that may be picked: the due date, for a start. */
+  latest: string | undefined;
 }) {
   const { t } = useTranslation("tasks");
   const actions = useTaskActions();
@@ -72,23 +98,34 @@ function DueDateForm({
   const [query, setQuery] = useState("");
   const today = useToday();
   const typed = parseDateQuery(query, today, timeInZone(new Date(), timeZone));
-  const valid = isCalendarDate(value.day);
+  const allowed = (day: string) => latest === undefined || day <= latest;
+  const valid = isCalendarDate(value.day) && allowed(value.day);
+  const typedAllowed = typed !== null && allowed(typed.day);
 
   async function save(text: string) {
     const task = taskCollection.get(taskId);
     closeDatePicker();
-    if (taskId === SELECTION) await bulk.setDueDate(text);
-    else if (task) await actions.setDueDate(task, text);
+    if (taskId === SELECTION) {
+      await (field === "startDate"
+        ? bulk.setStartDate(text)
+        : bulk.setDueDate(text));
+    } else if (task) {
+      await (field === "startDate"
+        ? actions.setStartDate(task, text)
+        : actions.setDueDate(task, text));
+    }
   }
   const saveTyped = () =>
-    typed && save(taskDateText(typed.day, typed.time, timeZone));
+    typedAllowed &&
+    typed &&
+    save(taskDateText(typed.day, typed.time, timeZone));
   const saveFields = () =>
     save(taskDateText(value.day, value.time || undefined, timeZone));
 
   return (
     <DialogPopup className="w-full max-w-xs">
       <DialogHeader>
-        <DialogTitle>{t("due.pickTitle")}</DialogTitle>
+        <DialogTitle>{t(`due.pickTitle.${field}`)}</DialogTitle>
       </DialogHeader>
       <form
         onSubmit={(event) => {
@@ -129,10 +166,11 @@ function DueDateForm({
             <Input
               type="date"
               value={value.day}
+              max={latest}
               onChange={(event) =>
                 setValue({ ...value, day: event.target.value })
               }
-              aria-label={t("fields.dueDate")}
+              aria-label={t(`fields.${field}`)}
             />
             <Input
               type="time"
@@ -158,7 +196,7 @@ function DueDateForm({
           <Button
             type="submit"
             size="sm"
-            disabled={query.trim() ? !typed : !valid}
+            disabled={query.trim() ? !typedAllowed : !valid}
           >
             {t("due.set")}
           </Button>

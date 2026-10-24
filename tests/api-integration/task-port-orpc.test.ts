@@ -5,7 +5,7 @@ import { commentRows, newCommentId } from "./helpers/comments";
 import { resetTestDatabase } from "./helpers/database";
 import { storyOf } from "./helpers/history";
 import { labelFactory, labelRows } from "./helpers/labels";
-import { as, createProject } from "./helpers/projects";
+import { as, createProject, rejection } from "./helpers/projects";
 import { setupTasks, taskRow } from "./helpers/tasks";
 
 beforeEach(async () => {
@@ -129,6 +129,38 @@ describe("importing labels and comments", () => {
         ["Day", "2026-11-03"],
       ]),
     );
+  });
+
+  it("round-trips a start date and refuses a file whose start is after its due date", async () => {
+    const { client, base, addTask, target, into } = await setupSource();
+    await addTask("To Do", {
+      title: "Span",
+      startDate: "2026-11-02T08:00:00Z",
+      dueDate: "2026-11-04",
+    });
+
+    const document = await client.tasks.export(base);
+    expect(
+      document.tasks.find((task) => task.title === "Span")?.startDate,
+    ).toBe("2026-11-02T08:00:00.000Z");
+    await client.tasks.import({ ...into(target.id), document });
+    const copied = (await client.tasks.list(into(target.id))).find(
+      (task) => task.title === "Span",
+    );
+    expect(copied?.startDate).toBe("2026-11-02T08:00:00.000Z");
+
+    const backwards = {
+      ...document,
+      tasks: document.tasks.map((task) => ({
+        ...task,
+        startDate: "2027-01-01",
+        dueDate: "2026-01-01",
+      })),
+    };
+    const error = await rejection(
+      client.tasks.import({ ...into(target.id), document: backwards }),
+    );
+    expect(error.data?.code).toBe("IMPORT_INVALID");
   });
 
   it("still imports an old export file, whose due date is a bare day", async () => {

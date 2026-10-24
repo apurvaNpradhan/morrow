@@ -33,6 +33,7 @@ const CODES = {
   RELATION_CYCLE: "BAD_REQUEST",
   MOVE_TOO_LARGE: "BAD_REQUEST",
   MOVE_SAME_PROJECT: "BAD_REQUEST",
+  START_AFTER_DUE: "BAD_REQUEST",
 } as const;
 
 export type TaskErrorCode = keyof typeof CODES;

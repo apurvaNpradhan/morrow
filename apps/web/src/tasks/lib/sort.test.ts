@@ -8,6 +8,7 @@ function task(id: string, overrides: Record<string, unknown> = {}) {
     title: id,
     position: `a${id.slice(1)}`,
     priority: "none" as const,
+    startAt: null as Date | null,
     dueAt: null as Date | null,
     fieldValues: {} as Record<string, string | number | true | string[]>,
     createdAt: new Date(2026, 0, Number(id.slice(1))),
@@ -51,6 +52,20 @@ describe("sortTasks", () => {
     ).toEqual(["t3", "t2", "t1"]);
     expect(
       ids(sortTasks(tasks, { field: "dueDate", direction: "desc" })),
+    ).toEqual(["t2", "t3", "t1"]);
+  });
+
+  it("sorts by start date, those without one last in both directions", () => {
+    const tasks = [
+      task("t1"),
+      task("t2", { startAt: new Date("2026-12-01T00:00:00Z") }),
+      task("t3", { startAt: new Date("2026-11-01T09:00:00Z") }),
+    ];
+    expect(
+      ids(sortTasks(tasks, { field: "startDate", direction: "asc" })),
+    ).toEqual(["t3", "t2", "t1"]);
+    expect(
+      ids(sortTasks(tasks, { field: "startDate", direction: "desc" })),
     ).toEqual(["t2", "t3", "t1"]);
   });
 

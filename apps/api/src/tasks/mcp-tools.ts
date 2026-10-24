@@ -6,7 +6,7 @@ import { absoluteAssetUrls, parseTicketId } from "@morrow/sync-schemas";
 import { config } from "#api/platform/config";
 import { mcpTool } from "#api/platform/orpc/mcp-tool";
 import { resolveColumn } from "#api/projects/index";
-import { description, dueDate, priority, title } from "./schemas";
+import { description, dueDate, priority, startDate, title } from "./schemas";
 import {
   resolveAssigneeId,
   resolveLabelIds,
@@ -52,6 +52,7 @@ const createItem = z.object({
   column: z.string().optional(),
   priority: priority.optional(),
   assignee: z.string().optional(),
+  startDate: startDate.optional(),
   dueDate: dueDate.optional(),
   labels: z.array(z.string()).optional(),
   fields: fieldsByName.optional(),
@@ -64,6 +65,7 @@ const updateItem = z.object({
   title: title.optional(),
   description: description.optional(),
   priority: priority.optional(),
+  startDate: startDate.nullable().optional(),
   dueDate: dueDate.nullable().optional(),
   assignee: z.string().nullable().optional(),
   addLabels: z.array(z.string()).optional(),
@@ -159,6 +161,7 @@ export const tasksMcpTools = [
           assignee: task.assigneeId
             ? { id: task.assigneeId, name: task.assigneeName }
             : null,
+          startDate: task.startDate,
           dueDate: task.dueDate,
           parent: task.parentTicketId,
           subtasks: { done: task.subtaskDone, total: task.subtaskTotal },
@@ -199,7 +202,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "create_tasks",
     description:
-      "Create 1–50 tasks in one call. Each item has a title and optionally parentId (a ticket id of this project), description, column (named; default the project's first), priority, assignee (a member's email), dueDate (YYYY-MM-DD for a day, or ISO 8601 with an offset like 2026-10-30T15:00+05:30 for a moment), labels (named; missing ones are created), fields (value by Field name) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
+      "Create 1–50 tasks in one call. Each item has a title and optionally parentId (a ticket id of this project), description, column (named; default the project's first), priority, assignee (a member's email), startDate and dueDate (each YYYY-MM-DD for a day, or ISO 8601 with an offset like 2026-10-30T15:00+05:30 for a moment; a start after the due date is refused), labels (named; missing ones are created), fields (value by Field name) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(createItem).min(1).max(MAX_BATCH),
     }),
@@ -236,6 +239,7 @@ export const tasksMcpTools = [
           title: item.title,
           description: item.description,
           priority: item.priority,
+          startDate: item.startDate,
           dueDate: item.dueDate,
           assigneeId: item.assignee
             ? await resolveAssigneeId(client, input.workspaceId, item.assignee)
@@ -255,7 +259,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "update_tasks",
     description:
-      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; dueDate is a day (YYYY-MM-DD) or a moment (ISO 8601 with an offset); null clears dueDate, assignee (an email) and parentId (a ticket id; refused if it would make a loop). addLabels creates missing labels; removeLabels names existing ones. fields sets custom Fields by name (value by Field name; null clears one). column moves the task, at its top or bottom (default bottom). Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
+      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; startDate and dueDate are each a day (YYYY-MM-DD) or a moment (ISO 8601 with an offset); null clears startDate, dueDate, assignee (an email) and parentId (a ticket id; refused if it would make a loop). addLabels creates missing labels; removeLabels names existing ones. fields sets custom Fields by name (value by Field name; null clears one). column moves the task, at its top or bottom (default bottom). Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(updateItem).min(1).max(MAX_BATCH),
     }),
@@ -327,6 +331,15 @@ export const tasksMcpTools = [
         if (item.dueDate !== undefined) {
           await client.tasks.updateDueDate({ ...scope, dueDate: item.dueDate });
           changed.push("dueDate");
+        }
+        // After the due date: a due date moved before the old start clears it,
+        // and the new start is checked against the new due date.
+        if (item.startDate !== undefined) {
+          await client.tasks.updateStartDate({
+            ...scope,
+            startDate: item.startDate,
+          });
+          changed.push("startDate");
         }
         if (assigneeId !== undefined) {
           await client.tasks.updateAssignee({ ...scope, assigneeId });

@@ -69,6 +69,7 @@ export const devicePreferencesSchema = z.object({
   /** What cards and rows show; every field is on until switched off. */
   showTaskNumbers: z.boolean().default(true),
   showTaskAssignees: z.boolean().default(true),
+  showTaskStartDate: z.boolean().default(true),
   showTaskDueDates: z.boolean().default(true),
   showTaskPriority: z.boolean().default(true),
   /** The sub-task list of the task sheet. */

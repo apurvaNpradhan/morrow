@@ -62,6 +62,7 @@ const accountExportSchema = z.object({
       category: z.string(),
       priority: z.string(),
       assignedToYou: z.boolean(),
+      startDate: z.string().nullable(),
       dueDate: z.string().nullable(),
       completedAt: z.date().nullable(),
       archivedAt: z.date().nullable(),

@@ -76,6 +76,7 @@ export async function exportAccountData(user: { id: string; email: string }) {
           category: task.category,
           priority: task.priority,
           assignedToYou: task.assigneeId === user.id,
+          startDate: task.startDate,
           dueDate: task.dueDate,
           completedAt: task.completedAt,
           archivedAt: task.archivedAt,

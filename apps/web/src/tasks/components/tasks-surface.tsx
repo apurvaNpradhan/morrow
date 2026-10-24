@@ -11,7 +11,7 @@ import { BoardView } from "./board-view";
 import { BoardSkeleton } from "./board-skeleton";
 import { DeleteTaskDialog } from "./delete-task-dialog";
 import { MoveTasksDialog } from "./move-tasks-dialog";
-import { DueDateDialog } from "./due-date-dialog";
+import { TaskDateDialog } from "./task-date-dialog";
 import { ListSkeleton } from "./list-skeleton";
 import { ListView } from "./list-view";
 import { TaskFieldPicker } from "./task-field-picker";
@@ -109,7 +109,7 @@ export function TasksSurface({
         onMoved={followMoved}
       />
       <TaskFieldPicker />
-      <DueDateDialog />
+      <TaskDateDialog />
       <MoveTasksDialog />
       <DeleteTaskDialog
         onDeleted={(tasks) => {

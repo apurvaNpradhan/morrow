@@ -18,7 +18,7 @@ import { displayTicketId } from "../lib/task-links";
 import { useFollowMovedTask } from "../queries/use-follow-moved-task";
 import { useTicketTask } from "../queries/use-task-queries";
 import { DeleteTaskDialog } from "./delete-task-dialog";
-import { DueDateDialog } from "./due-date-dialog";
+import { TaskDateDialog } from "./task-date-dialog";
 import { MoveTasksDialog } from "./move-tasks-dialog";
 import { ProjectTaskViewProvider } from "./project-task-view-provider";
 import { SelectionBar } from "./selection-bar";
@@ -175,7 +175,7 @@ function LoadedTaskPage({
       </div>
       <SelectionBar />
       <TaskFieldPicker />
-      <DueDateDialog />
+      <TaskDateDialog />
       <MoveTasksDialog />
       <DeleteTaskDialog onDeleted={leave} />
     </WorkspaceLayout>

@@ -20,6 +20,7 @@ import { Switch } from "@/design-system/ui/switch";
 const FIELDS = [
   ["showTaskNumbers", "numbers"],
   ["showTaskAssignees", "assignees"],
+  ["showTaskStartDate", "startDates"],
   ["showTaskDueDates", "dueDates"],
   ["showTaskPriority", "priority"],
 ] as const;
@@ -90,6 +91,7 @@ export function TaskDetailsSection() {
               saveDevicePreferences({
                 showTaskNumbers: true,
                 showTaskAssignees: true,
+                showTaskStartDate: true,
                 showTaskDueDates: true,
                 showTaskPriority: true,
               })

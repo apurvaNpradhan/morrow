@@ -6,6 +6,7 @@ import {
 import { daysBetween } from "./calendar-day";
 
 type Due = { dueAt: Date | null; dueHasTime: boolean };
+type Start = { startAt: Date | null; startHasTime: boolean };
 
 export type DueLabel =
   | { kind: "overdueDays"; count: number }
@@ -33,9 +34,36 @@ export function dueLabel(dueDate: string, today: string): DueLabel {
   return { kind: "date", day: dueDate };
 }
 
+/** The day a task starts on in `timeZone` (`YYYY-MM-DD`), or null. */
+export function startDay(task: Start, timeZone: string) {
+  return task.startAt
+    ? taskDateDay(task.startAt, task.startHasTime, timeZone)
+    : null;
+}
+
 /** The day a task is due on in `timeZone` (`YYYY-MM-DD`), or null. */
 export function dueDay(task: Due, timeZone: string) {
   return task.dueAt ? taskDateDay(task.dueAt, task.dueHasTime, timeZone) : null;
+}
+
+/** The task columns for a start date's text form (`YYYY-MM-DD` or ISO); null clears it. */
+export function startFields(text: string | null): Start {
+  const date = text === null ? null : parseTaskDate(text);
+  return { startAt: date?.at ?? null, startHasTime: date?.hasTime ?? false };
+}
+
+/** A task's start date as text (`YYYY-MM-DD` or ISO), as the API takes it. */
+export function startText(task: Start) {
+  return formatTaskDate(task.startAt, task.startHasTime);
+}
+
+/** Whether the start date falls after the due date (a day counts as 00:00 UTC). */
+export function startsAfterDue(task: Start & Due) {
+  return (
+    task.startAt !== null &&
+    task.dueAt !== null &&
+    task.startAt.getTime() > task.dueAt.getTime()
+  );
 }
 
 /** The task columns for a due date's text form (`YYYY-MM-DD` or ISO); null clears it. */

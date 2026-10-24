@@ -33,6 +33,8 @@ function task(overrides: Partial<Parameters<typeof matchesFilters>[0]> = {}) {
     openBlockerCount: 0,
     assigneeId: null,
     priority: "none" as const,
+    startAt: null as Date | null,
+    startHasTime: false,
     dueAt: null as Date | null,
     dueHasTime: false,
     columnId: "todo",
@@ -165,6 +167,51 @@ describe("matchesFilters", () => {
     const none = [filter("dueDate", "is", "none")];
     expect(matchesFilters(task(), none, context)).toBe(true);
     expect(matchesFilters(due("2026-10-15"), none, context)).toBe(false);
+  });
+
+  it("filters by start date: before today, today, the weeks, started, none", () => {
+    const start = (text: string) =>
+      task({ startAt: new Date(`${text}T00:00:00Z`), startHasTime: false });
+    const only = (value: string) => [filter("startDate", "is", value)];
+
+    expect(matchesFilters(start("2026-10-14"), only("past"), context)).toBe(
+      true,
+    );
+    expect(matchesFilters(start("2026-10-15"), only("past"), context)).toBe(
+      false,
+    );
+    expect(matchesFilters(start("2026-10-15"), only("today"), context)).toBe(
+      true,
+    );
+    expect(matchesFilters(start("2026-10-13"), only("thisWeek"), context)).toBe(
+      true,
+    );
+    expect(matchesFilters(start("2026-10-20"), only("nextWeek"), context)).toBe(
+      true,
+    );
+    expect(matchesFilters(start("2026-10-15"), only("started"), context)).toBe(
+      true,
+    );
+    expect(matchesFilters(start("2026-10-16"), only("started"), context)).toBe(
+      false,
+    );
+    expect(matchesFilters(task(), only("none"), context)).toBe(true);
+    expect(matchesFilters(start("2026-10-15"), only("none"), context)).toBe(
+      false,
+    );
+    expect(matchesFilters(task(), only("started"), context)).toBe(false);
+  });
+
+  it("starts a start-date moment when it has passed", () => {
+    const moment = (iso: string) =>
+      task({ startAt: new Date(iso), startHasTime: true });
+    const started = [filter("startDate", "is", "started")];
+    expect(
+      matchesFilters(moment("2020-01-01T00:00:00Z"), started, context),
+    ).toBe(true);
+    expect(
+      matchesFilters(moment("2999-01-01T00:00:00Z"), started, context),
+    ).toBe(false);
   });
 
   it("reads a moment's day in the user's time zone", () => {

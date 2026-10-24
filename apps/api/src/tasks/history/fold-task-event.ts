@@ -18,7 +18,15 @@ export type FoldDecision =
 
 type Moved = Extract<
   TaskEvent,
-  { type: "title" | "priority" | "due_date" | "column" | "assignee" }
+  {
+    type:
+      | "title"
+      | "priority"
+      | "due_date"
+      | "start_date"
+      | "column"
+      | "assignee";
+  }
 >;
 
 /** What a field changed from and to, by identity: a Column or person by id, the rest by value. */
@@ -54,6 +62,7 @@ const isMoved = (event: TaskEvent): event is Moved =>
   event.type === "title" ||
   event.type === "priority" ||
   event.type === "due_date" ||
+  event.type === "start_date" ||
   event.type === "column" ||
   event.type === "assignee";
 

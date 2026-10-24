@@ -1,6 +1,6 @@
 import type { TaskRow } from "@morrow/sync-schemas";
 import { weekOf } from "./calendar-day";
-import { dueDay, isOverdue } from "./due-date";
+import { dueDay, isOverdue, startDay } from "./due-date";
 import { isNegated, operatorFor } from "./filter-edit";
 
 import {
@@ -85,6 +85,15 @@ export const DUE_VALUES = [
   "nextWeek",
   "none",
 ] as const;
+/** The start date's choices: before today, today, the weeks, already begun, none. */
+export const START_VALUES = [
+  "past",
+  "today",
+  "thisWeek",
+  "nextWeek",
+  "started",
+  "none",
+] as const;
 
 /** One condition on a subject. Several values are alternatives. */
 export type TaskFilter = {
@@ -110,6 +119,8 @@ function matchesValue(
     | "id"
     | "assigneeId"
     | "priority"
+    | "startAt"
+    | "startHasTime"
     | "dueAt"
     | "dueHasTime"
     | "columnId"
@@ -146,11 +157,27 @@ function matchesValue(
       if (value === "hasRelations")
         return context.relations.related.has(task.id);
       return value === "duplicate" && context.relations.duplicate.has(task.id);
+    case "startDate":
+      return matchesStart(task, value, context);
     case "dueDate":
       return matchesDue(task, value, context);
     default:
       return false;
   }
+}
+
+/** Whether `day` is today or in this or next week, by the preset's name. */
+function matchesDayPreset(day: string, preset: string, context: FilterContext) {
+  if (preset === "today") return day === context.today;
+  const thisWeek = weekOf(context.today, context.weekStartsOn);
+  if (preset === "thisWeek")
+    return day >= thisWeek.start && day <= thisWeek.end;
+  if (preset === "nextWeek") {
+    // The day after this week ends is in next week.
+    const next = weekOf(nextDay(thisWeek.end), context.weekStartsOn);
+    return day >= next.start && day <= next.end;
+  }
+  return false;
 }
 
 function matchesDue(
@@ -164,15 +191,25 @@ function matchesDue(
   if (value === "overdue") {
     return isOverdue(task, context.today, context.timeZone);
   }
-  if (value === "today") return day === context.today;
-  const thisWeek = weekOf(context.today, context.weekStartsOn);
-  if (value === "thisWeek") return day >= thisWeek.start && day <= thisWeek.end;
-  if (value === "nextWeek") {
-    // The day after this week ends is in next week.
-    const next = weekOf(nextDay(thisWeek.end), context.weekStartsOn);
-    return day >= next.start && day <= next.end;
+  return matchesDayPreset(day, value, context);
+}
+
+function matchesStart(
+  task: Pick<TaskRow, "startAt" | "startHasTime">,
+  value: string,
+  context: FilterContext,
+) {
+  if (value === "none") return task.startAt === null;
+  const day = startDay(task, context.timeZone);
+  if (day === null) return false;
+  if (value === "past") return day < context.today;
+  // A day has begun when it is today or earlier; a moment, once it has passed.
+  if (value === "started") {
+    return task.startHasTime
+      ? task.startAt!.getTime() <= Date.now()
+      : day <= context.today;
   }
-  return false;
+  return matchesDayPreset(day, value, context);
 }
 
 function matchesFieldValue(

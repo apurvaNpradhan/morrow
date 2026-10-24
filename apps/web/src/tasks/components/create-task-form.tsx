@@ -1,5 +1,10 @@
 import { TASK_DESCRIPTION_MAX } from "@morrow/sync-schemas";
-import { CalendarDays, Layers, UserRound } from "lucide-react";
+import {
+  CalendarArrowDown,
+  CalendarDays,
+  Layers,
+  UserRound,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
@@ -28,7 +33,7 @@ import {
 } from "../lib/create-task-store";
 import { useCurrentProjectKey } from "../lib/use-current-project-key";
 import { useTimeZone } from "@/app/hooks/use-time-zone";
-import { formatTaskDateText } from "../lib/format-task-date";
+import { formatTaskDateText, splitTaskDateText } from "../lib/format-task-date";
 import { DraftDateInputs } from "./draft-date-inputs";
 import { useToday } from "../queries/use-today";
 import { useWorkspacePeople } from "../queries/use-workspace-people";
@@ -41,7 +46,7 @@ import { PersonAvatar } from "./person-avatar";
 import {
   AssigneeItems,
   ColumnItems,
-  DueDateItems,
+  TaskDateItems,
   PriorityItems,
 } from "./task-field-items";
 import { TaskDescriptionEditor } from "./task-description-editor";
@@ -77,7 +82,9 @@ export function CreateTaskForm({
   );
   const [createMore, setCreateMore] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [pickingDate, setPickingDate] = useState(false);
+  const [pickingDate, setPickingDate] = useState<
+    "startDate" | "dueDate" | null
+  >(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
 
   const insideProject =
@@ -96,6 +103,19 @@ export function CreateTaskForm({
 
   const update = (patch: Partial<TaskDraft>) =>
     onDraftChange({ ...draft, ...patch });
+  const dueDayOfDraft =
+    splitTaskDateText(draft.dueDate, timeZone).day || undefined;
+  /** A due date before the start takes the start with it, and says so. */
+  function setDueDate(dueDate: string | null) {
+    const startDay = splitTaskDateText(draft.startDate, timeZone).day;
+    const dueDay = splitTaskDateText(dueDate, timeZone).day;
+    if (draft.startDate && dueDay && startDay > dueDay) {
+      update({ dueDate, startDate: null });
+      toast.info(t("due.startCleared"));
+      return;
+    }
+    update({ dueDate });
+  }
   const canSubmit =
     project !== undefined &&
     column !== undefined &&
@@ -117,6 +137,7 @@ export function CreateTaskForm({
         description: draft.description,
         priority: draft.priority,
         assigneeId: draft.assigneeId,
+        startDate: draft.startDate,
         dueDate: draft.dueDate,
         labelIds: draft.labelIds,
         // Values chosen for another Project's Fields (the Project was changed after) are left out.
@@ -139,11 +160,12 @@ export function CreateTaskForm({
           description: "",
           priority: "none",
           assigneeId: null,
+          startDate: null,
           dueDate: null,
           labelIds: [],
           fieldValues: {},
         });
-        setPickingDate(false);
+        setPickingDate(null);
         titleRef.current?.focus();
       } else {
         closeCreateTask();
@@ -277,6 +299,27 @@ export function CreateTaskForm({
             />
           </FieldChipMenu>
           <FieldChipMenu
+            label={t("fields.startDate")}
+            icon={<CalendarArrowDown aria-hidden="true" className="size-3.5" />}
+            value={
+              draft.startDate
+                ? formatTaskDateText(draft.startDate, timeZone)
+                : t("fields.noStartDate")
+            }
+          >
+            <TaskDateItems
+              today={today}
+              timeZone={timeZone}
+              hasValue={draft.startDate !== null}
+              latest={dueDayOfDraft}
+              onSelect={(startDate) => {
+                setPickingDate(null);
+                update({ startDate });
+              }}
+              onPickDate={() => setPickingDate("startDate")}
+            />
+          </FieldChipMenu>
+          <FieldChipMenu
             label={t("fields.dueDate")}
             icon={<CalendarDays aria-hidden="true" className="size-3.5" />}
             value={
@@ -285,15 +328,15 @@ export function CreateTaskForm({
                 : t("fields.noDueDate")
             }
           >
-            <DueDateItems
+            <TaskDateItems
               today={today}
               timeZone={timeZone}
               hasValue={draft.dueDate !== null}
               onSelect={(dueDate) => {
-                setPickingDate(false);
-                update({ dueDate });
+                setPickingDate(null);
+                setDueDate(dueDate);
               }}
-              onPickDate={() => setPickingDate(true)}
+              onPickDate={() => setPickingDate("dueDate")}
             />
           </FieldChipMenu>
           <DraftLabelField
@@ -308,9 +351,17 @@ export function CreateTaskForm({
           />
           {pickingDate ? (
             <DraftDateInputs
-              value={draft.dueDate}
+              field={pickingDate}
+              value={
+                pickingDate === "startDate" ? draft.startDate : draft.dueDate
+              }
+              latest={pickingDate === "startDate" ? dueDayOfDraft : undefined}
               timeZone={timeZone}
-              onChange={(dueDate) => update({ dueDate })}
+              onChange={(date) =>
+                pickingDate === "startDate"
+                  ? update({ startDate: date })
+                  : setDueDate(date)
+              }
             />
           ) : null}
         </div>

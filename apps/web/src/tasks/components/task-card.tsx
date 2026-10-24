@@ -1,10 +1,9 @@
 import { isClosedCategory, type TaskRow } from "@morrow/sync-schemas";
-import { CalendarDays, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { LabelChips, labelsOfTask } from "@/labels";
 import { type Ref, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/design-system/cn";
-import { isOverdue } from "../lib/due-date";
 import {
   keepTextUnselectedOnShiftClick,
   selectByClick,
@@ -13,7 +12,7 @@ import { useIsSelected } from "../lib/selection-store";
 import { TaskSelectBox } from "./task-select-box";
 import { openFieldPicker } from "../lib/field-picker-store";
 import { displayTicketId } from "../lib/task-links";
-import { DueDateText } from "./due-date-chip-text";
+import { TaskDatesChip } from "./task-dates-chip";
 import { FieldValueChips } from "./field-value-chips";
 import { PersonAvatar } from "./person-avatar";
 import { TaskChip } from "./task-chip";
@@ -69,18 +68,20 @@ export function TaskCard({
   const editable = can.edit && !frozen;
   const selectable = editable || (can.delete && !frozen);
   const open = editable
-    ? (field: "priority" | "dueDate") => (anchor: HTMLElement) =>
+    ? (field: "priority" | "startDate" | "dueDate") => (anchor: HTMLElement) =>
         openFieldPicker(task.id, field, anchor)
     : undefined;
 
   const showPriority = display.priority;
+  const showStart = display.startDates && task.startAt !== null && !closed;
   const showDue = display.dueDates && task.dueAt !== null && !closed;
   const showComments = task.commentCount > 0;
   const showStructure =
     task.parentId !== null ||
     task.subtaskTotal > 0 ||
     (task.openBlockerCount > 0 && !closed);
-  const showChips = showPriority || showDue || showComments || showStructure;
+  const showChips =
+    showPriority || showStart || showDue || showComments || showStructure;
   const ticket = displayTicketId(project.key, task.number);
 
   return (
@@ -150,21 +151,14 @@ export function TaskCard({
               <TaskPriorityIcon priority={task.priority} />
             </TaskChip>
           ) : null}
-          {showDue && task.dueAt ? (
-            <TaskChip
-              label={t("fields.dueDate")}
-              onOpen={open?.("dueDate")}
-              tone={isOverdue(task, today, timeZone) ? "danger" : "default"}
-            >
-              <CalendarDays aria-hidden="true" className="size-3" />
-              <DueDateText
-                dueAt={task.dueAt}
-                dueHasTime={task.dueHasTime}
-                today={today}
-                timeZone={timeZone}
-              />
-            </TaskChip>
-          ) : null}
+          <TaskDatesChip
+            task={task}
+            showStart={showStart}
+            showDue={showDue}
+            today={today}
+            timeZone={timeZone}
+            open={open}
+          />
           <TaskStructureChips task={task} closed={closed} />
           {showComments ? (
             <TaskChip label={t("card.comments", { count: task.commentCount })}>

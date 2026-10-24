@@ -4,6 +4,7 @@ import { Popover, PopoverPopup } from "@/design-system/ui/popover";
 import { useBulkActions } from "../actions/use-bulk-actions";
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
+import { dueDay } from "../lib/due-date";
 import { openDatePicker } from "../lib/date-picker-store";
 import { fieldHeld } from "../lib/field-value";
 import {
@@ -18,7 +19,7 @@ import { FieldValueItems } from "./field-value-items";
 import {
   AssigneeItems,
   ColumnItems,
-  DueDateItems,
+  TaskDateItems,
   PriorityItems,
 } from "./task-field-items";
 import { TaskLabelPicker } from "./task-label-picker";
@@ -174,8 +175,39 @@ export function TaskFieldPicker() {
                 }}
               />
             ) : null}
+            {picker.field === "startDate" ? (
+              <TaskDateItems
+                today={today}
+                timeZone={timeZone}
+                hasValue={
+                  forSelection
+                    ? selected.some((t) => t.startAt !== null)
+                    : task.startAt !== null
+                }
+                latest={
+                  forSelection
+                    ? undefined
+                    : (dueDay(task, timeZone) ?? undefined)
+                }
+                onSelect={(startDate) =>
+                  choose(() =>
+                    forSelection
+                      ? bulk.setStartDate(startDate)
+                      : actions.setStartDate(task, startDate),
+                  )
+                }
+                onPickDate={() =>
+                  choose(() =>
+                    openDatePicker(
+                      forSelection ? SELECTION : task.id,
+                      "startDate",
+                    ),
+                  )
+                }
+              />
+            ) : null}
             {picker.field === "dueDate" ? (
-              <DueDateItems
+              <TaskDateItems
                 today={today}
                 timeZone={timeZone}
                 hasValue={
@@ -192,7 +224,10 @@ export function TaskFieldPicker() {
                 }
                 onPickDate={() =>
                   choose(() =>
-                    openDatePicker(forSelection ? SELECTION : task.id),
+                    openDatePicker(
+                      forSelection ? SELECTION : task.id,
+                      "dueDate",
+                    ),
                   )
                 }
               />

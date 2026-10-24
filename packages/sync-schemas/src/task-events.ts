@@ -79,6 +79,10 @@ export const taskEventSchema = z.discriminatedUnion("type", [
     z.object({ from: z.string().nullable(), to: z.string().nullable() }),
   ),
   event(
+    "start_date",
+    z.object({ from: z.string().nullable(), to: z.string().nullable() }),
+  ),
+  event(
     "labels",
     z.object({ added: z.array(labelRef), removed: z.array(labelRef) }),
   ),

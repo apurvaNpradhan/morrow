@@ -2,6 +2,7 @@ import type { TaskRow } from "@morrow/sync-schemas";
 import {
   Archive,
   ArchiveRestore,
+  CalendarArrowDown,
   CalendarDays,
   Copy,
   FolderInput,
@@ -28,13 +29,14 @@ import { taskCollection } from "../collections/task-collection";
 import { useSelectedIds } from "../lib/selection-store";
 import { SelectionMenuItems } from "./selection-menu-items";
 import { openDatePicker } from "../lib/date-picker-store";
+import { dueDay } from "../lib/due-date";
 import { requestMoveTasks } from "../lib/move-store";
 import { requestDeleteTasks } from "./delete-task-dialog";
 import { ColumnMarker } from "./column-marker";
 import {
   AssigneeItems,
   ColumnItems,
-  DueDateItems,
+  TaskDateItems,
   PriorityItems,
 } from "./task-field-items";
 import { TaskCopyItems } from "./task-copy-items";
@@ -157,17 +159,36 @@ function TaskMenuItems({
           </MenuSub>
           <MenuSub>
             <MenuSubTrigger>
+              <CalendarArrowDown aria-hidden="true" />
+              {t("fields.startDate")}
+              <MenuHint hotkeyId="setTaskStartDate" />
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <TaskDateItems
+                today={today}
+                timeZone={timeZone}
+                hasValue={task.startAt !== null}
+                latest={dueDay(task, timeZone) ?? undefined}
+                onSelect={(startDate) =>
+                  void actions.setStartDate(task, startDate)
+                }
+                onPickDate={() => openDatePicker(task.id, "startDate")}
+              />
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger>
               <CalendarDays aria-hidden="true" />
               {t("fields.dueDate")}
               <MenuHint hotkeyId="setTaskDueDate" />
             </MenuSubTrigger>
             <MenuSubPopup>
-              <DueDateItems
+              <TaskDateItems
                 today={today}
                 timeZone={timeZone}
                 hasValue={task.dueAt !== null}
                 onSelect={(dueDate) => void actions.setDueDate(task, dueDate)}
-                onPickDate={() => openDatePicker(task.id)}
+                onPickDate={() => openDatePicker(task.id, "dueDate")}
               />
             </MenuSubPopup>
           </MenuSub>

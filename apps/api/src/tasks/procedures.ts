@@ -46,6 +46,7 @@ import {
   columnId,
   description,
   dueDate,
+  startDate,
   fieldId,
   fieldValue,
   fieldValues,
@@ -167,6 +168,7 @@ const create = authed
       description: description.optional(),
       priority: priority.optional(),
       assigneeId: assigneeId.nullable().optional(),
+      startDate: startDate.nullable().optional(),
       dueDate: dueDate.nullable().optional(),
       labelIds: z.array(labelId).max(MAX_TASK_LABELS).optional(),
       parentId: taskId.nullable().optional(),
@@ -238,6 +240,20 @@ const updateDueDate = authed
       input.taskId,
       await actorOf(context, input.workspaceId),
       { dueDate: input.dueDate },
+    ),
+  );
+
+const updateStartDate = authed
+  .input(forTask.extend({ startDate: startDate.nullable() }))
+  .use(canUpdate)
+  .output(txidResult)
+  .handler(async ({ input, context }) =>
+    updateTask(
+      input.workspaceId,
+      input.projectId,
+      input.taskId,
+      await actorOf(context, input.workspaceId),
+      { startDate: input.startDate },
     ),
   );
 
@@ -463,6 +479,7 @@ export const tasksRouter = {
   updateTitle,
   updateDescription,
   updatePriority,
+  updateStartDate,
   updateDueDate,
   updateAssignee,
   updateParent,

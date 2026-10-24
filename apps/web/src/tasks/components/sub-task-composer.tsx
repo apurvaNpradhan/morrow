@@ -24,7 +24,11 @@ import { FieldChipMenu } from "./field-chip-menu";
 import { PersonAvatar } from "./person-avatar";
 import { formatTaskDateText } from "../lib/format-task-date";
 import { DraftDateInputs } from "./draft-date-inputs";
-import { AssigneeItems, DueDateItems, PriorityItems } from "./task-field-items";
+import {
+  AssigneeItems,
+  TaskDateItems,
+  PriorityItems,
+} from "./task-field-items";
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { ColumnMarker } from "./column-marker";
@@ -207,7 +211,7 @@ export function SubTaskComposer({
             <Ellipsis aria-hidden="true" className="size-3.5" />
           </MenuTrigger>
           <MenuPopup align="start" className="min-w-48">
-            <DueDateItems
+            <TaskDateItems
               today={today}
               timeZone={timeZone}
               hasValue={draft.dueDate !== null}
@@ -221,6 +225,7 @@ export function SubTaskComposer({
         </Menu>
         {pickingDate ? (
           <DraftDateInputs
+            field="dueDate"
             value={draft.dueDate}
             timeZone={timeZone}
             onChange={(dueDate) => update({ dueDate })}
