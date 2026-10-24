@@ -1,5 +1,6 @@
 import type { TaskRow } from "@morrow/sync-schemas";
 import { weekOf } from "./calendar-day";
+import { dueDay, isOverdue } from "./due-date";
 import { isNegated, operatorFor } from "./filter-edit";
 
 import {
@@ -77,7 +78,13 @@ export const NO_RELATIONS: RelationSets = {
   related: new Set(),
   duplicate: new Set(),
 };
-export const DUE_VALUES = ["overdue", "thisWeek", "nextWeek", "none"] as const;
+export const DUE_VALUES = [
+  "overdue",
+  "today",
+  "thisWeek",
+  "nextWeek",
+  "none",
+] as const;
 
 /** One condition on a subject. Several values are alternatives. */
 export type TaskFilter = {
@@ -89,8 +96,10 @@ export type TaskFilter = {
 type FilterContext = {
   /** The signed-in user, for the "me" shortcut. */
   meId: string;
-  /** Local calendar day, `YYYY-MM-DD`. */
+  /** Today in `timeZone`, `YYYY-MM-DD`. */
   today: string;
+  /** The user's time zone: where a moment's day and "overdue" are read. */
+  timeZone: string;
   weekStartsOn: number;
   relations: RelationSets;
 };
@@ -101,7 +110,8 @@ function matchesValue(
     | "id"
     | "assigneeId"
     | "priority"
-    | "dueDate"
+    | "dueAt"
+    | "dueHasTime"
     | "columnId"
     | "completedAt"
     | "labelIds"
@@ -136,29 +146,33 @@ function matchesValue(
       if (value === "hasRelations")
         return context.relations.related.has(task.id);
       return value === "duplicate" && context.relations.duplicate.has(task.id);
-    case "dueDate": {
-      if (value === "none") return task.dueDate === null;
-      if (task.dueDate === null) return false;
-      if (value === "overdue") {
-        return task.completedAt === null && task.dueDate < context.today;
-      }
-      const thisWeek = weekOf(context.today, context.weekStartsOn);
-      if (value === "thisWeek") {
-        return task.dueDate >= thisWeek.start && task.dueDate <= thisWeek.end;
-      }
-      if (value === "nextWeek") {
-        const next = weekOf(
-          // The day after this week ends is in next week.
-          nextDay(thisWeek.end),
-          context.weekStartsOn,
-        );
-        return task.dueDate >= next.start && task.dueDate <= next.end;
-      }
-      return false;
-    }
+    case "dueDate":
+      return matchesDue(task, value, context);
     default:
       return false;
   }
+}
+
+function matchesDue(
+  task: Pick<TaskRow, "dueAt" | "dueHasTime" | "completedAt">,
+  value: string,
+  context: FilterContext,
+) {
+  if (value === "none") return task.dueAt === null;
+  const day = dueDay(task, context.timeZone);
+  if (day === null) return false;
+  if (value === "overdue") {
+    return isOverdue(task, context.today, context.timeZone);
+  }
+  if (value === "today") return day === context.today;
+  const thisWeek = weekOf(context.today, context.weekStartsOn);
+  if (value === "thisWeek") return day >= thisWeek.start && day <= thisWeek.end;
+  if (value === "nextWeek") {
+    // The day after this week ends is in next week.
+    const next = weekOf(nextDay(thisWeek.end), context.weekStartsOn);
+    return day >= next.start && day <= next.end;
+  }
+  return false;
 }
 
 function matchesFieldValue(

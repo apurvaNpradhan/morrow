@@ -1,7 +1,7 @@
 import {
   COLUMN_CATEGORIES,
   COMMENT_BODY_MAX,
-  isCalendarDate,
+  isTaskDateText,
   namedFieldValueSchema,
   TASK_DESCRIPTION_MAX,
   TASK_PRIORITIES,
@@ -44,7 +44,7 @@ export const importDocument = z.object({
       column: z.string().default(""),
       category: z.enum(COLUMN_CATEGORIES).optional(),
       priority: z.enum(TASK_PRIORITIES).default("none"),
-      dueDate: z.string().refine(isCalendarDate).nullable().default(null),
+      dueDate: z.string().refine(isTaskDateText).nullable().default(null),
       assigneeEmail: z.string().nullable().default(null),
       completedAt: isoDate.nullable().default(null),
       archivedAt: isoDate.nullable().default(null),

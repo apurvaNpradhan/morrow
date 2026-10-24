@@ -5,6 +5,11 @@ import { lockProject } from "#api/projects/index";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { saveDescription } from "#api/tasks/lib/description";
 import { findTask } from "#api/tasks/lib/find-task";
+import {
+  dueColumns,
+  dueText,
+  normalTaskDate,
+} from "#api/tasks/lib/task-date-columns";
 import { personRef } from "#api/tasks/history/person-ref";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
@@ -43,7 +48,7 @@ export async function updateTask(
         task.assigneeId,
       );
     }
-    const { description, ...fields } = patch;
+    const { description, dueDate, ...fields } = patch;
     const [previous] =
       description === undefined
         ? []
@@ -55,7 +60,11 @@ export async function updateTask(
     // value did not.
     await tx
       .update(taskTable)
-      .set({ ...fields, updatedAt: new Date() })
+      .set({
+        ...fields,
+        ...(dueDate === undefined ? {} : dueColumns(dueDate)),
+        updatedAt: new Date(),
+      })
       .where(eq(taskTable.id, taskId));
     const storedDescription =
       description === undefined
@@ -80,11 +89,10 @@ export async function updateTask(
         data: { from: task.priority, to: patch.priority },
       });
     }
-    if (patch.dueDate !== undefined && patch.dueDate !== task.dueDate) {
-      await record({
-        type: "due_date",
-        data: { from: task.dueDate, to: patch.dueDate },
-      });
+    const dueFrom = dueText(task);
+    const dueTo = dueDate === undefined ? dueFrom : normalTaskDate(dueDate);
+    if (dueTo !== dueFrom) {
+      await record({ type: "due_date", data: { from: dueFrom, to: dueTo } });
     }
     if (
       patch.assigneeId !== undefined &&

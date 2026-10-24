@@ -1,4 +1,4 @@
-import { tasksShape } from "@morrow/sync-schemas";
+import { formatTaskDate, tasksShape } from "@morrow/sync-schemas";
 import { electricCollectionOptions } from "@tanstack/electric-db-collection";
 import { BTreeIndex, createCollection } from "@tanstack/react-db";
 import { rpc } from "@/app/lib/orpc";
@@ -46,7 +46,7 @@ export const taskCollection = registerSyncedCollection(
               description,
               priority: modified.priority,
               assigneeId: modified.assigneeId,
-              dueDate: modified.dueDate,
+              dueDate: formatTaskDate(modified.dueAt, modified.dueHasTime),
               labelIds: modified.labelIds,
               parentId: modified.parentId,
               fieldValues: modified.fieldValues,

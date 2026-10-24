@@ -51,7 +51,7 @@ export function FilterAddPopover({
 }) {
   const { t } = useTranslation("tasks");
   const { optionsFor, subjectLabel, typedCreate } = useFilterOptions();
-  const { fields, meId, today } = useTaskView();
+  const { fields, meId, today, timeZone } = useTaskView();
   const subjects: FilterSubject[] = [
     ...FILTER_SUBJECTS.filter(
       (candidate) => includeColumn || candidate !== "column",
@@ -94,6 +94,7 @@ export function FilterAddPopover({
                 context={{
                   meId,
                   today,
+                  timeZone,
                   weekStartsOn: localeWeekStart(),
                   relations: NO_RELATIONS,
                 }}

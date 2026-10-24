@@ -3,6 +3,7 @@ import { newCommentId } from "./helpers/comments";
 import { as } from "./helpers/projects";
 import { newTaskId, positionAt } from "./helpers/tasks";
 import type { ORPCError } from "@orpc/client";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { db, schema } from "../../apps/api/src/platform/database";
 import { createApp } from "../../apps/api/src/index";
@@ -16,6 +17,19 @@ const { app } = createApp();
 beforeEach(resetTestDatabase);
 
 describe("account.export", () => {
+  it("includes the chosen time zone", async () => {
+    const { user } = await createWorkspaceMember();
+    await db
+      .update(schema.userTable)
+      .set({ timeZone: "Asia/Kolkata" })
+      .where(eq(schema.userTable.id, user.id));
+    mockAuthenticatedSession(user);
+
+    const data = await createTestClient(app).account.export();
+
+    expect(data.profile).toMatchObject({ timeZone: "Asia/Kolkata" });
+  });
+
   it("rejects an unauthenticated call", async () => {
     mockAnonymousSession();
     const error = await createTestClient(app)

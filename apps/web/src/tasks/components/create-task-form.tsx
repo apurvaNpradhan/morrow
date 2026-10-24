@@ -1,9 +1,8 @@
-import { isCalendarDate, TASK_DESCRIPTION_MAX } from "@morrow/sync-schemas";
+import { TASK_DESCRIPTION_MAX } from "@morrow/sync-schemas";
 import { CalendarDays, Layers, UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
-import { formatDate } from "@/design-system/format";
 import { toast } from "@/design-system/toast";
 import { Button } from "@/design-system/ui/button";
 import {
@@ -12,7 +11,6 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@/design-system/ui/dialog";
-import { Input } from "@/design-system/ui/input";
 import { MenuRadioGroup, MenuRadioItem } from "@/design-system/ui/menu";
 import { Textarea } from "@/design-system/ui/textarea";
 import {
@@ -23,13 +21,15 @@ import {
 import { useWorkspacePermission } from "@/workspace";
 import { createTask } from "../actions/task-actions";
 import { useCreatedToast } from "../actions/use-created-toast";
-import { parseDay } from "../lib/calendar-day";
 import { fieldHeld } from "../lib/field-value";
 import {
   closeCreateTask,
   type CreateTaskPreset,
 } from "../lib/create-task-store";
 import { useCurrentProjectKey } from "../lib/use-current-project-key";
+import { useTimeZone } from "@/app/hooks/use-time-zone";
+import { formatTaskDateText } from "../lib/format-task-date";
+import { DraftDateInputs } from "./draft-date-inputs";
 import { useToday } from "../queries/use-today";
 import { useWorkspacePeople } from "../queries/use-workspace-people";
 import { ColumnMarker } from "./column-marker";
@@ -69,6 +69,7 @@ export function CreateTaskForm({
   const permission = useWorkspacePermission();
   const { people, meId } = useWorkspacePeople(workspace.id);
   const today = useToday();
+  const timeZone = useTimeZone();
   const showCreated = useCreatedToast();
   const currentKey = useCurrentProjectKey();
   const projects = useProjectsWithoutSuspense(workspace.id).filter(
@@ -280,15 +281,13 @@ export function CreateTaskForm({
             icon={<CalendarDays aria-hidden="true" className="size-3.5" />}
             value={
               draft.dueDate
-                ? formatDate(parseDay(draft.dueDate), {
-                    month: "short",
-                    day: "numeric",
-                  })
+                ? formatTaskDateText(draft.dueDate, timeZone)
                 : t("fields.noDueDate")
             }
           >
             <DueDateItems
               today={today}
+              timeZone={timeZone}
               hasValue={draft.dueDate !== null}
               onSelect={(dueDate) => {
                 setPickingDate(false);
@@ -308,19 +307,10 @@ export function CreateTaskForm({
             onChange={(fieldValues) => update({ fieldValues })}
           />
           {pickingDate ? (
-            <Input
-              type="date"
-              size="sm"
-              className="h-7 w-40"
-              aria-label={t("fields.dueDate")}
-              value={draft.dueDate ?? ""}
-              onChange={(event) =>
-                update({
-                  dueDate: isCalendarDate(event.target.value)
-                    ? event.target.value
-                    : null,
-                })
-              }
+            <DraftDateInputs
+              value={draft.dueDate}
+              timeZone={timeZone}
+              onChange={(dueDate) => update({ dueDate })}
             />
           ) : null}
         </div>

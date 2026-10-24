@@ -22,7 +22,7 @@ export function BoardView({
   toolbar: ToolbarState;
   preferences: ReturnType<typeof useTaskViewPreferences>;
 }) {
-  const { project, columns, meId, today } = useTaskView();
+  const { project, columns, meId, today, timeZone } = useTaskView();
   const { expandedIds, openIds, expandedClosedIds, toggle } =
     useColumnExpansion(project.id, columns);
   const openTasks = useOpenColumnsTasks(project.id, openIds);
@@ -37,6 +37,7 @@ export function BoardView({
     sort: preferences.sort,
     meId,
     today,
+    timeZone,
   });
 
   return (

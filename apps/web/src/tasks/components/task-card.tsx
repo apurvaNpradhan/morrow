@@ -52,6 +52,7 @@ export function TaskCard({
     can,
     frozen,
     today,
+    timeZone,
     fields,
     showsField,
   } = view;
@@ -73,7 +74,7 @@ export function TaskCard({
     : undefined;
 
   const showPriority = display.priority;
-  const showDue = display.dueDates && task.dueDate !== null && !closed;
+  const showDue = display.dueDates && task.dueAt !== null && !closed;
   const showComments = task.commentCount > 0;
   const showStructure =
     task.parentId !== null ||
@@ -149,14 +150,19 @@ export function TaskCard({
               <TaskPriorityIcon priority={task.priority} />
             </TaskChip>
           ) : null}
-          {showDue && task.dueDate ? (
+          {showDue && task.dueAt ? (
             <TaskChip
               label={t("fields.dueDate")}
               onOpen={open?.("dueDate")}
-              tone={isOverdue(task, today) ? "danger" : "default"}
+              tone={isOverdue(task, today, timeZone) ? "danger" : "default"}
             >
               <CalendarDays aria-hidden="true" className="size-3" />
-              <DueDateText dueDate={task.dueDate} today={today} />
+              <DueDateText
+                dueAt={task.dueAt}
+                dueHasTime={task.dueHasTime}
+                today={today}
+                timeZone={timeZone}
+              />
             </TaskChip>
           ) : null}
           <TaskStructureChips task={task} closed={closed} />

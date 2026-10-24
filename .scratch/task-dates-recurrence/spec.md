@@ -68,11 +68,11 @@ A Task has only a due date, and it is a calendar day with no time. You cannot sa
 - Columns: `due_at timestamp` + `due_has_time boolean not null default false`, and `start_at timestamp` + `start_has_time boolean not null default false`. `timestamp` without time zone, UTC, like every Morrow table.
 - **A day** (`has_time` false) is stored as 00:00 UTC of that day and read as a floating calendar day, never converted to a zone. **A moment** (`has_time` true) is a UTC instant shown in the reader's zone.
 - `CHECK (has_time = false OR at IS NOT NULL)` for both, and `CHECK (start_at IS NULL OR due_at IS NULL OR start_at <= due_at)`. Comparing a day with a moment uses the day's 00:00 UTC. That is good enough for "start not after due" and keeps the check in SQL. The Procedure refuses first with a typed error, `START_AFTER_DUE`.
-- One shared type in `@morrow/sync-schemas`, `TaskDate = { at: string; hasTime: boolean }` (`at` ISO UTC), with helpers `taskDateFromDay(day)`, `taskDateDay(date)` for days, and `taskDateInZone(date, zone)` for display. `DUE_DATE_PATTERN` and `isCalendarDate` stay for day input. Custom date Fields stay `YYYY-MM-DD` strings and are unchanged.
-- The migration (against the existing database, nothing dropped by hand): add the new columns, `due_at = due_date::timestamp` with `due_has_time = false`, drop `due_date`, and add the new columns to the `tasks` shape's column schema (bump the shape schema version so persisted browser databases rebuild). Rewrite `task_event` rows of type `due_date` from `{ from: "YYYY-MM-DD" }` to `{ from: { at, hasTime: false } }` in the same migration, so there is one reader.
-- Writes are field-group Procedures as in ADR 0004: `tasks.setDueDate({ taskId, date: TaskDate | null })` replaces the current due-date Procedure, plus `tasks.setStartDate`. Both run in `withTxid` under `lockProject`. Create, duplicate and bulk update accept both dates.
-- Inputs accept `YYYY-MM-DD` (a day) or ISO 8601 with an offset (a moment) and normalise to `TaskDate`, so API, MCP and import share one parser, `parseTaskDateInput`.
-- History: `due_date` and new `start_date` events are `{ from: TaskDate | null, to: TaskDate | null }`, folded within 10 minutes like other fields.
+- One shared module in `@morrow/sync-schemas` (`task-dates.ts`): `TaskDate = { at: Date; hasTime: boolean }`, `parseTaskDate(text)`, `formatTaskDate(at, hasTime)` (the text form), `taskDateDay(at, hasTime, zone)`, `momentInZone(day, time, zone)` and `timeInZone(at, zone)`. `DUE_DATE_PATTERN` and `isCalendarDate` stay for day input. Custom date Fields stay `YYYY-MM-DD` strings and are unchanged.
+- The migration (against the existing database, nothing dropped by hand): add the new columns, `due_at = due_date::timestamp` with `due_has_time = false`, drop `due_date`, and add the new columns to the `tasks` shape's column schema (bump the shape schema version so persisted browser databases rebuild). `task_event` payloads of type `due_date` already hold `YYYY-MM-DD`, which is how a day is written now, so they stay as they are.
+- Writes are field-group Procedures as in ADR 0004: `tasks.updateDueDate({ taskId, dueDate: string | null })` keeps its name and takes the text form; `tasks.updateStartDate` is its twin. Both run in `withTxid` under `lockProject`. Create, duplicate and bulk update accept both dates.
+- Inputs accept `YYYY-MM-DD` (a day) or ISO 8601 with an offset (a moment) and normalise to `TaskDate`, so API, MCP and import share one parser, `parseTaskDate`.
+- History: `due_date` and new `start_date` events are `{ from: string | null, to: string | null }` in the text form (`YYYY-MM-DD` or ISO UTC), folded within 10 minutes like other fields.
 - Import and export: dates are written as `YYYY-MM-DD` for a day and ISO with `Z` for a moment. Import also accepts the old export files, whose `dueDate` is a bare day.
 - MCP: `create_tasks`, `update_tasks` and `list_tasks` take and return `dueDate` and `startDate` in the input format; `null` clears.
 
@@ -120,7 +120,7 @@ A good test checks what a caller can see: what a Procedure returns or refuses, t
 ### API integration
 
 - Time zone: a valid zone is saved and returned on the session; an invalid one is refused; `null` clears it; another Member never sees it in the `users` shape.
-- Dates: a day and a moment round-trip through `setDueDate` and `setStartDate`; start after due is refused with `START_AFTER_DUE`, also on create, duplicate and bulk update; the migration turns existing due dates into days and rewrites old `due_date` history payloads (a migration test seeded with the old shape).
+- Dates: a day and a moment round-trip through `updateDueDate` and `updateStartDate`; start after due is refused with `START_AFTER_DUE`, also on create, duplicate and bulk update; the migration turns existing due dates into days and old `due_date` history payloads still read (a migration test seeded with the old shape).
 - Recurrence validation: every allowed part is accepted; `BYHOUR`, `BYSETPOS`, `UNTIL` with `COUNT`, a `DTSTART` that is not the due date, a rule without a due date and a rule on a subtask are refused with typed errors.
 - Spawning, for each `nextCompletedAt` path (move, bulk update, Column delete, Column category change, move to another Project): exactly one next Task, in the first `unstarted` Column at the top, with the copied fields, recreated open subtasks, the rule only on the new Task, the start gap kept, and `recurred` on both.
 - Next date: weekly, monthly on day 31 (short months), "2nd Tuesday", yearly on Feb 29, a late completion that skips past occurrences, `COUNT` exhausted and `UNTIL` passed (no new Task), and a `TZID` rule across a DST change keeping its wall-clock time.
@@ -131,7 +131,7 @@ A good test checks what a caller can see: what a Procedure returns or refuses, t
 ### Unit tests
 
 - `parseRecurrence`, `nextOccurrence`, `rebaseRecurrence` in sync-schemas, table-driven.
-- `parseTaskDateInput` and the `TaskDate` helpers, including a day read in zones on both sides of UTC.
+- `parseTaskDate` and the `TaskDate` helpers, including a day read in zones on both sides of UTC.
 - `parseDateQuery` with times.
 - Filters and sort on start dates and day/moment due dates in a fixed zone.
 

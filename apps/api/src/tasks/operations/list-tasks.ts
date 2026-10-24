@@ -6,6 +6,7 @@ import {
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "#api/platform/database/index";
 import { projectColumnTable, projectTable } from "#api/projects/index";
+import { dueText } from "#api/tasks/lib/task-date-columns";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
 
 /**
@@ -50,6 +51,7 @@ export async function listTasks(workspaceId: string, projectId?: string) {
     .map(({ task, projectKey, column, assigneeName, description }) => ({
       ...task,
       description,
+      dueDate: dueText(task),
       ticketId: ticketId(projectKey, task.number),
       columnName: column.name,
       category: column.category,

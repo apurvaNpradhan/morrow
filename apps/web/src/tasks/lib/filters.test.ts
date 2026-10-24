@@ -16,6 +16,7 @@ import {
 const context = {
   meId: "me-id",
   today: "2026-10-15",
+  timeZone: "UTC",
   weekStartsOn: 1,
   relations: {
     blocking: new Set(["t-blocking"]),
@@ -32,7 +33,8 @@ function task(overrides: Partial<Parameters<typeof matchesFilters>[0]> = {}) {
     openBlockerCount: 0,
     assigneeId: null,
     priority: "none" as const,
-    dueDate: null,
+    dueAt: null as Date | null,
+    dueHasTime: false,
     columnId: "todo",
     completedAt: null,
     labelIds: [] as string[],
@@ -131,15 +133,24 @@ describe("matchesFilters", () => {
     ).toBe(false);
   });
 
-  it("filters by due date: overdue, this week, next week, none", () => {
-    const due = (dueDate: string, completedAt: Date | null = null) =>
-      task({ dueDate, completedAt });
+  const day = (text: string) => ({
+    dueAt: new Date(`${text}T00:00:00Z`),
+    dueHasTime: false,
+  });
+
+  it("filters by due date: overdue, today, this week, next week, none", () => {
+    const due = (text: string, completedAt: Date | null = null) =>
+      task({ ...day(text), completedAt });
     const overdue = [filter("dueDate", "is", "overdue")];
     expect(matchesFilters(due("2026-10-14"), overdue, context)).toBe(true);
     expect(matchesFilters(due("2026-10-15"), overdue, context)).toBe(false);
     expect(
       matchesFilters(due("2026-10-01", new Date()), overdue, context),
     ).toBe(false);
+
+    const today = [filter("dueDate", "is", "today")];
+    expect(matchesFilters(due("2026-10-15"), today, context)).toBe(true);
+    expect(matchesFilters(due("2026-10-16"), today, context)).toBe(false);
 
     const thisWeek = [filter("dueDate", "is", "thisWeek")];
     expect(matchesFilters(due("2026-10-12"), thisWeek, context)).toBe(true);
@@ -156,15 +167,28 @@ describe("matchesFilters", () => {
     expect(matchesFilters(due("2026-10-15"), none, context)).toBe(false);
   });
 
+  it("reads a moment's day in the user's time zone", () => {
+    // 22:00 UTC on the 14th is already the 15th in Kolkata.
+    const late = task({
+      dueAt: new Date("2026-10-14T22:00:00Z"),
+      dueHasTime: true,
+    });
+    const today = [filter("dueDate", "is", "today")];
+    expect(matchesFilters(late, today, context)).toBe(false);
+    expect(
+      matchesFilters(late, today, { ...context, timeZone: "Asia/Kolkata" }),
+    ).toBe(true);
+  });
+
   it("starts the week on the locale's first day", () => {
     const sunday = { ...context, weekStartsOn: 0 };
     const thisWeek = [filter("dueDate", "is", "thisWeek")];
-    expect(
-      matchesFilters(task({ dueDate: "2026-10-11" }), thisWeek, sunday),
-    ).toBe(true);
-    expect(
-      matchesFilters(task({ dueDate: "2026-10-11" }), thisWeek, context),
-    ).toBe(false);
+    expect(matchesFilters(task(day("2026-10-11")), thisWeek, sunday)).toBe(
+      true,
+    );
+    expect(matchesFilters(task(day("2026-10-11")), thisWeek, context)).toBe(
+      false,
+    );
   });
 
   it("filters by column", () => {

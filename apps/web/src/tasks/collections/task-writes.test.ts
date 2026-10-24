@@ -99,7 +99,12 @@ describe("writeTaskChanges", () => {
   it("clears a due date and an assignee with null, and keeps completion out of it", async () => {
     await writeTaskChanges({
       original,
-      changes: { dueDate: null, assigneeId: null, completedAt: new Date() },
+      changes: {
+        dueAt: null,
+        dueHasTime: false,
+        assigneeId: null,
+        completedAt: new Date(),
+      },
     });
 
     expect(rpc.tasks.updateDueDate).toHaveBeenCalledWith(
@@ -109,6 +114,26 @@ describe("writeTaskChanges", () => {
       expect.objectContaining({ assigneeId: null }),
     );
     expect(rpc.tasks.move).not.toHaveBeenCalled();
+  });
+
+  it("sends a day as YYYY-MM-DD and a moment as ISO UTC", async () => {
+    await writeTaskChanges({
+      original,
+      changes: { dueAt: new Date("2026-10-30T00:00:00Z"), dueHasTime: false },
+    });
+    await writeTaskChanges({
+      original,
+      changes: { dueAt: new Date("2026-10-30T09:30:00Z"), dueHasTime: true },
+    });
+
+    expect(rpc.tasks.updateDueDate).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ dueDate: "2026-10-30" }),
+    );
+    expect(rpc.tasks.updateDueDate).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ dueDate: "2026-10-30T09:30:00.000Z" }),
+    );
   });
 
   it("archives or unarchives by the new value", async () => {

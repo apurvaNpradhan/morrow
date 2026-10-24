@@ -1,4 +1,4 @@
-import { colorHex } from "@morrow/sync-schemas";
+import { colorHex, isTimeZone } from "@morrow/sync-schemas";
 import { type } from "@orpc/server";
 import { z } from "zod";
 import { authApi } from "#api/platform/orpc/auth-api";
@@ -21,6 +21,7 @@ const accountExportSchema = z.object({
       name: z.string(),
       email: z.string(),
       image: z.string().nullable(),
+      timeZone: z.string().nullable(),
       createdAt: z.date(),
     })
     .nullable(),
@@ -114,6 +115,12 @@ export const updateProfile = authed
     z.object({
       name: z.string().trim().min(1).max(200).optional(),
       locale: z.string().max(35).optional(),
+      timeZone: z
+        .string()
+        .max(64)
+        .refine(isTimeZone, "Must be an IANA time zone")
+        .nullable()
+        .optional(),
     }),
   )
   .output(z.object({ status: z.boolean() }))

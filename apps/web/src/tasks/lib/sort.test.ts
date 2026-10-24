@@ -8,7 +8,7 @@ function task(id: string, overrides: Record<string, unknown> = {}) {
     title: id,
     position: `a${id.slice(1)}`,
     priority: "none" as const,
-    dueDate: null as string | null,
+    dueAt: null as Date | null,
     fieldValues: {} as Record<string, string | number | true | string[]>,
     createdAt: new Date(2026, 0, Number(id.slice(1))),
     ...overrides,
@@ -43,8 +43,8 @@ describe("sortTasks", () => {
   it("puts tasks without a due date last in both directions", () => {
     const tasks = [
       task("t1"),
-      task("t2", { dueDate: "2026-12-01" }),
-      task("t3", { dueDate: "2026-11-01" }),
+      task("t2", { dueAt: new Date("2026-12-01T00:00:00Z") }),
+      task("t3", { dueAt: new Date("2026-11-01T00:00:00Z") }),
     ];
     expect(
       ids(sortTasks(tasks, { field: "dueDate", direction: "asc" })),

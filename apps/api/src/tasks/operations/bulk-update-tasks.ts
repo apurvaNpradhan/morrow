@@ -19,6 +19,11 @@ import { personRef } from "#api/tasks/history/person-ref";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { assertAssignable, type TaskActor } from "#api/tasks/lib/assignee";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
+import {
+  dueColumns,
+  dueText,
+  normalTaskDate,
+} from "#api/tasks/lib/task-date-columns";
 import { taskTable } from "#api/tasks/tables";
 
 /** What one bulk action does to every Task it names. */
@@ -99,16 +104,16 @@ export async function bulkUpdateTasks(
             });
           }
           break;
-        case "dueDate":
-          await update({ dueDate: change.dueDate }, tasks);
+        case "dueDate": {
+          await update(dueColumns(change.dueDate), tasks);
+          const to = normalTaskDate(change.dueDate);
           for (const task of tasks) {
-            if (task.dueDate === change.dueDate) continue;
-            await record(task, {
-              type: "due_date",
-              data: { from: task.dueDate, to: change.dueDate },
-            });
+            const from = dueText(task);
+            if (from === to) continue;
+            await record(task, { type: "due_date", data: { from, to } });
           }
           break;
+        }
         case "assignee": {
           for (const current of new Set(tasks.map((task) => task.assigneeId))) {
             await assertAssignable(

@@ -1,4 +1,11 @@
+import {
+  formatTaskDate,
+  parseTaskDate,
+  taskDateDay,
+} from "@morrow/sync-schemas";
 import { daysBetween } from "./calendar-day";
+
+type Due = { dueAt: Date | null; dueHasTime: boolean };
 
 export type DueLabel =
   | { kind: "overdueDays"; count: number }
@@ -26,12 +33,33 @@ export function dueLabel(dueDate: string, today: string): DueLabel {
   return { kind: "date", day: dueDate };
 }
 
-/** Overdue by the local calendar, and not finished. */
+/** The day a task is due on in `timeZone` (`YYYY-MM-DD`), or null. */
+export function dueDay(task: Due, timeZone: string) {
+  return task.dueAt ? taskDateDay(task.dueAt, task.dueHasTime, timeZone) : null;
+}
+
+/** The task columns for a due date's text form (`YYYY-MM-DD` or ISO); null clears it. */
+export function dueFields(text: string | null): Due {
+  const date = text === null ? null : parseTaskDate(text);
+  return { dueAt: date?.at ?? null, dueHasTime: date?.hasTime ?? false };
+}
+
+/** A task's due date as text (`YYYY-MM-DD` or ISO), as the API takes it. */
+export function dueText(task: Due) {
+  return formatTaskDate(task.dueAt, task.dueHasTime);
+}
+
+/**
+ * Not finished and past due: a day once it has ended in `timeZone`, a moment
+ * once it has passed.
+ */
 export function isOverdue(
-  task: { dueDate: string | null; completedAt: Date | null },
+  task: Due & { completedAt: Date | null },
   today: string,
+  timeZone: string,
+  now = new Date(),
 ) {
-  return (
-    task.dueDate !== null && task.completedAt === null && task.dueDate < today
-  );
+  if (task.dueAt === null || task.completedAt !== null) return false;
+  if (task.dueHasTime) return task.dueAt.getTime() < now.getTime();
+  return dueDay(task, timeZone)! < today;
 }

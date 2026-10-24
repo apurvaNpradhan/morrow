@@ -1,4 +1,4 @@
-import type { TaskRow } from "@morrow/sync-schemas";
+import { formatTaskDate, type TaskRow } from "@morrow/sync-schemas";
 import { rpc } from "@/app/lib/orpc";
 import { projectCollection } from "@/projects";
 import { sameFieldValue } from "../lib/field-value";
@@ -38,9 +38,14 @@ export async function writeTaskChanges({ original, changes }: TaskMutation) {
       rpc.tasks.updatePriority({ ...target, priority: changes.priority }),
     );
   }
-  if (changes.dueDate !== undefined) {
+  if (changes.dueAt !== undefined || changes.dueHasTime !== undefined) {
+    const dueAt = changes.dueAt === undefined ? original.dueAt : changes.dueAt;
+    const dueHasTime = changes.dueHasTime ?? original.dueHasTime;
     await keep(
-      rpc.tasks.updateDueDate({ ...target, dueDate: changes.dueDate }),
+      rpc.tasks.updateDueDate({
+        ...target,
+        dueDate: formatTaskDate(dueAt, dueHasTime),
+      }),
     );
   }
   if (changes.assigneeId !== undefined) {

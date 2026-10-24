@@ -23,6 +23,7 @@ import {
   namedFieldValues,
 } from "#api/tasks/lib/named-field-values";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
+import { dueText } from "#api/tasks/lib/task-date-columns";
 
 export const SEARCH_TASKS_MAX = 200;
 
@@ -167,7 +168,7 @@ export async function searchTasks(workspaceId: string, search: TaskSearch) {
           priority: task.priority,
           assigneeId: task.assigneeId,
           assigneeName,
-          dueDate: task.dueDate,
+          dueDate: dueText(task),
           labels: task.labelIds.flatMap((id) => labelName.get(id) ?? []),
           fields: namedFieldValues(task.fieldValues, fieldById),
           completedAt: task.completedAt,

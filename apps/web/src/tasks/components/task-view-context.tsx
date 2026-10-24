@@ -53,6 +53,8 @@ export type TaskViewValue = {
   personById: Map<string, Person>;
   meId: string;
   today: string;
+  /** The user's time zone: where moments read and "today" is. */
+  timeZone: string;
   display: TaskDisplay;
   can: TaskPermissions;
   /** The Project is archived: nothing can be edited. */

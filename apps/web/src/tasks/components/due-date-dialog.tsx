@@ -1,4 +1,4 @@
-import { isCalendarDate } from "@morrow/sync-schemas";
+import { isCalendarDate, timeInZone } from "@morrow/sync-schemas";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/design-system/ui/button";
@@ -11,11 +11,18 @@ import {
   DialogTitle,
 } from "@/design-system/ui/dialog";
 import { Input } from "@/design-system/ui/input";
+import { useTimeZone } from "@/app/hooks/use-time-zone";
 import { useBulkActions } from "../actions/use-bulk-actions";
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
 import { formatDate } from "@/design-system/format";
 import { parseDay } from "../lib/calendar-day";
+import {
+  formatTaskTime,
+  splitTaskDateText,
+  taskDateText,
+} from "../lib/format-task-date";
+import { dueText } from "../lib/due-date";
 import { parseDateQuery } from "../lib/parse-date-query";
 import { useToday } from "../queries/use-today";
 import { closeDatePicker, useDatePickerTask } from "../lib/date-picker-store";
@@ -34,35 +41,49 @@ export function DueDateDialog() {
       }}
     >
       {forSelection ? (
-        <DueDateForm key={SELECTION} taskId={SELECTION} initial="" />
+        <DueDateForm key={SELECTION} taskId={SELECTION} initial={null} />
       ) : task ? (
         <DueDateForm
           // A new task starts the field afresh.
           key={task.id}
           taskId={task.id}
-          initial={task.dueDate ?? ""}
+          initial={dueText(task)}
         />
       ) : null}
     </Dialog>
   );
 }
 
-function DueDateForm({ taskId, initial }: { taskId: string; initial: string }) {
+function DueDateForm({
+  taskId,
+  initial,
+}: {
+  taskId: string;
+  /** The task's due date as text (`YYYY-MM-DD` or ISO), if it has one. */
+  initial: string | null;
+}) {
   const { t } = useTranslation("tasks");
   const actions = useTaskActions();
   const bulk = useBulkActions();
-  const [value, setValue] = useState(initial);
+  const timeZone = useTimeZone();
+  const [value, setValue] = useState(() =>
+    splitTaskDateText(initial, timeZone),
+  );
   const [query, setQuery] = useState("");
   const today = useToday();
-  const typed = parseDateQuery(query, today);
-  const valid = isCalendarDate(value);
+  const typed = parseDateQuery(query, today, timeInZone(new Date(), timeZone));
+  const valid = isCalendarDate(value.day);
 
-  async function save(day: string) {
+  async function save(text: string) {
     const task = taskCollection.get(taskId);
     closeDatePicker();
-    if (taskId === SELECTION) await bulk.setDueDate(day);
-    else if (task) await actions.setDueDate(task, day);
+    if (taskId === SELECTION) await bulk.setDueDate(text);
+    else if (task) await actions.setDueDate(task, text);
   }
+  const saveTyped = () =>
+    typed && save(taskDateText(typed.day, typed.time, timeZone));
+  const saveFields = () =>
+    save(taskDateText(value.day, value.time || undefined, timeZone));
 
   return (
     <DialogPopup className="w-full max-w-xs">
@@ -72,8 +93,8 @@ function DueDateForm({ taskId, initial }: { taskId: string; initial: string }) {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (typed) void save(typed);
-          else if (valid && !query.trim()) void save(value);
+          if (typed) void saveTyped();
+          else if (valid && !query.trim()) void saveFields();
         }}
         className="contents"
       >
@@ -88,22 +109,42 @@ function DueDateForm({ taskId, initial }: { taskId: string; initial: string }) {
           {typed ? (
             <p className="mt-1.5 text-muted-foreground text-xs">
               {t("due.typeResult", {
-                date: formatDate(parseDay(typed), {
+                date: `${formatDate(parseDay(typed.day), {
                   weekday: "short",
                   month: "short",
                   day: "numeric",
                   year: "numeric",
-                }),
+                })}${
+                  typed.time
+                    ? `, ${formatTaskTime(
+                        new Date(taskDateText(typed.day, typed.time, timeZone)),
+                        timeZone,
+                      )}`
+                    : ""
+                }`,
               })}
             </p>
           ) : null}
-          <Input
-            className="mt-3"
-            type="date"
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            aria-label={t("fields.dueDate")}
-          />
+          <div className="mt-3 flex gap-2">
+            <Input
+              type="date"
+              value={value.day}
+              onChange={(event) =>
+                setValue({ ...value, day: event.target.value })
+              }
+              aria-label={t("fields.dueDate")}
+            />
+            <Input
+              type="time"
+              className="w-32"
+              value={value.time}
+              disabled={!valid}
+              onChange={(event) =>
+                setValue({ ...value, time: event.target.value })
+              }
+              aria-label={t("due.time")}
+            />
+          </div>
         </DialogPanel>
         <DialogFooter>
           <Button

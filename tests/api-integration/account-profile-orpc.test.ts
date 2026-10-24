@@ -35,6 +35,24 @@ describe("account.updateProfile", () => {
     });
   });
 
+  it("saves and clears a time zone", async () => {
+    const { userId, client } = await signedIn();
+
+    await client.account.updateProfile({ timeZone: "Asia/Kolkata" });
+    expect(await userRow(userId)).toMatchObject({ timeZone: "Asia/Kolkata" });
+
+    await client.account.updateProfile({ timeZone: null });
+    expect(await userRow(userId)).toMatchObject({ timeZone: null });
+  });
+
+  it("refuses a time zone that is not an IANA name", async () => {
+    const { client } = await signedIn();
+    const error = await client.account
+      .updateProfile({ timeZone: "Mars/Olympus" })
+      .catch((e: unknown) => e);
+    expect((error as ORPCError<string, unknown>).code).toBe("BAD_REQUEST");
+  });
+
   it("refuses an empty name", async () => {
     const { client } = await signedIn();
     const error = await client.account
