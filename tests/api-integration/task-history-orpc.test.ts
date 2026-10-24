@@ -78,6 +78,26 @@ describe("what a task's history records", () => {
     ]);
   });
 
+  it("records a due moment in UTC and nothing when the same moment comes in another offset", async () => {
+    const { client, target, taskId } = await setup();
+
+    await client.tasks.updateDueDate({
+      ...target,
+      dueDate: "2026-12-31T15:00:00+05:30",
+    });
+    await client.tasks.updateDueDate({
+      ...target,
+      dueDate: "2026-12-31T09:30:00Z",
+    });
+
+    expect((await storyOf(taskId)).slice(1)).toEqual([
+      {
+        type: "due_date",
+        data: { from: null, to: "2026-12-31T09:30:00.000Z" },
+      },
+    ]);
+  });
+
   it("records a move to another column with both columns, and an archive and unarchive", async () => {
     const { client, target, taskId, byName } = await setup();
 

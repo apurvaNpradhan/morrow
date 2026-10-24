@@ -37,7 +37,8 @@ import { useTaskView } from "./task-view-context";
 /** The right-click menu of a selected task: every item acts on the whole selection. */
 export function SelectionMenuItems({ anchor }: { anchor: Element | null }) {
   const { t } = useTranslation("tasks");
-  const { project, columns, people, meId, today, can, frozen } = useTaskView();
+  const { project, columns, people, meId, today, timeZone, can, frozen } =
+    useTaskView();
   const bulk = useBulkActions();
   const tasks = useSelectedTasks(project.id);
   const editable = can.edit && !frozen;
@@ -81,7 +82,8 @@ export function SelectionMenuItems({ anchor }: { anchor: Element | null }) {
             <MenuSubPopup>
               <DueDateItems
                 today={today}
-                hasValue={tasks.some((task) => task.dueDate !== null)}
+                timeZone={timeZone}
+                hasValue={tasks.some((task) => task.dueAt !== null)}
                 onSelect={(dueDate) => void bulk.setDueDate(dueDate)}
                 onPickDate={() => openDatePicker(SELECTION)}
               />

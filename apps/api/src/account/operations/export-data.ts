@@ -18,6 +18,7 @@ export async function exportAccountData(user: { id: string; email: string }) {
       name: schema.userTable.name,
       email: schema.userTable.email,
       image: schema.userTable.image,
+      timeZone: schema.userTable.timeZone,
       createdAt: schema.userTable.createdAt,
     })
     .from(schema.userTable)

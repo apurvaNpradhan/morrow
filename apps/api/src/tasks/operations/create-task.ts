@@ -23,6 +23,7 @@ import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { recordParentChange } from "#api/tasks/history/record-parent-change";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
+import { dueColumns } from "#api/tasks/lib/task-date-columns";
 import { taskTable } from "#api/tasks/tables";
 
 export type NewTask = {
@@ -104,7 +105,7 @@ export async function createTask(
           title: input.title,
           priority: input.priority ?? "none",
           assigneeId: input.assigneeId ?? null,
-          dueDate: input.dueDate ?? null,
+          ...dueColumns(input.dueDate ?? null),
           labelIds,
           fieldValues,
           position: await freePosition(tx, input.columnId, input.position),

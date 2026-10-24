@@ -22,7 +22,7 @@ The alternatives were one Task that rolls its dates forward (one ticket id, but 
 
 ## Consequences
 
-- Every due-date reader changes from a `YYYY-MM-DD` string to a `{ at, hasTime }` value; custom date Fields keep their strings.
-- The migration rewrites `due_date` history payloads, so history has one reader.
+- Every due-date reader changes from a `YYYY-MM-DD` string to `dueAt` + `dueHasTime`; outside the database a date is text (`YYYY-MM-DD` for a day, ISO 8601 UTC for a moment). Custom date Fields keep their strings.
+- History stores that same text, so the old `due_date` payloads already are days and the migration leaves them alone.
 - Completing a repeating Task writes two Tasks and their subtasks in one transaction, under the Project lock that every task write already holds.
 - The rule summary is English (`rrule`'s `toText()`) until a second locale exists.

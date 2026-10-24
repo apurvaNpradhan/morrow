@@ -3,7 +3,7 @@ import {
   fieldValuesSchema,
   MAX_BULK_TASKS,
   MAX_MOVE_TASKS,
-  isCalendarDate,
+  isTaskDateText,
   isHttpUrl,
   LINK_TITLE_MAX,
   LINK_URL_MAX,
@@ -59,10 +59,13 @@ export const linkTitle = z
   .max(LINK_TITLE_MAX)
   .transform((value) => (value === "" ? null : value));
 
-/** A calendar day, `YYYY-MM-DD`. */
+/** A day, `YYYY-MM-DD`, or a moment, ISO 8601 with an offset. */
 export const dueDate = z
   .string()
-  .refine(isCalendarDate, "Must be a calendar date (YYYY-MM-DD)");
+  .refine(
+    isTaskDateText,
+    "Must be a day (YYYY-MM-DD) or a moment with an offset (2026-10-24T15:00+05:30)",
+  );
 
 /** A fractional-index key; its format is checked by the operation. */
 export const position = z.string().min(1).max(64);

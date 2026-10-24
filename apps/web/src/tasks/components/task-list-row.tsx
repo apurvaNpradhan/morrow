@@ -57,6 +57,7 @@ export function TaskListRow({
     can,
     frozen,
     today,
+    timeZone,
   } = view;
   const display = subTask
     ? {
@@ -174,14 +175,19 @@ export function TaskListRow({
           {task.commentCount}
         </TaskChip>
       ) : null}
-      {display.dueDates && task.dueDate && !closed ? (
+      {display.dueDates && task.dueAt && !closed ? (
         <TaskChip
           label={t("fields.dueDate")}
           onOpen={open?.("dueDate")}
-          tone={isOverdue(task, today) ? "danger" : "default"}
+          tone={isOverdue(task, today, timeZone) ? "danger" : "default"}
         >
           <CalendarDays aria-hidden="true" className="size-3" />
-          <DueDateText dueDate={task.dueDate} today={today} />
+          <DueDateText
+            dueAt={task.dueAt}
+            dueHasTime={task.dueHasTime}
+            today={today}
+            timeZone={timeZone}
+          />
         </TaskChip>
       ) : null}
       {display.assignees ? (

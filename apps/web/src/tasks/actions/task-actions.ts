@@ -9,6 +9,7 @@ import {
 } from "@morrow/sync-schemas";
 import { generateKeyBetween } from "fractional-indexing";
 import { rpc } from "@/app/lib/orpc";
+import { dueFields } from "../lib/due-date";
 import { taskCollection } from "../collections/task-collection";
 import { workspaceOf } from "../collections/task-writes";
 import { columnTasks } from "../queries/task-queries";
@@ -42,6 +43,7 @@ export type NewTask = {
   description?: string;
   priority?: TaskPriority;
   assigneeId?: string | null;
+  /** `YYYY-MM-DD` for a day, ISO 8601 for a moment. */
   dueDate?: string | null;
   labelIds?: string[];
   /** Makes the new task a subtask of this one. */
@@ -69,7 +71,7 @@ export async function createTask(input: NewTask): Promise<TaskRow> {
       openBlockerCount: 0,
       priority: input.priority ?? "none",
       assigneeId: input.assigneeId ?? null,
-      dueDate: input.dueDate ?? null,
+      ...dueFields(input.dueDate ?? null),
       labelIds: input.labelIds ?? [],
       fieldValues: input.fieldValues ?? {},
       commentCount: 0,
@@ -94,7 +96,8 @@ type TaskPatch = Partial<
     | "title"
     | "priority"
     | "assigneeId"
-    | "dueDate"
+    | "dueAt"
+    | "dueHasTime"
     | "labelIds"
     | "parentId"
     | "fieldValues"

@@ -30,6 +30,7 @@ export function useTaskViewModel({
   sort,
   meId,
   today,
+  timeZone,
 }: {
   projectKey: string;
   columns: ProjectColumnRow[];
@@ -41,6 +42,7 @@ export function useTaskViewModel({
   sort: TaskSort;
   meId: string;
   today: string;
+  timeZone: string;
 }) {
   const sorted = useMemo(() => {
     const byColumn = new Map<string, TaskRow[]>(
@@ -67,7 +69,13 @@ export function useTaskViewModel({
         narrowed: false,
       };
     }
-    const context = { meId, today, weekStartsOn: localeWeekStart(), relations };
+    const context = {
+      meId,
+      today,
+      timeZone,
+      weekStartsOn: localeWeekStart(),
+      relations,
+    };
     const byColumn = new Map<string, TaskRow[]>();
     let shown = 0;
     for (const [columnId, inColumn] of sorted) {
@@ -93,6 +101,7 @@ export function useTaskViewModel({
     relations,
     sorted,
     tasks,
+    timeZone,
     today,
   ]);
 }

@@ -13,6 +13,8 @@ export const userTable = pgTable("user", {
     .notNull(),
   image: text("image"),
   locale: text("locale"),
+  // An IANA name; null follows the browser.
+  timeZone: text("time_zone"),
   onboardingCompletedAt: timestamp("onboarding_completed_at", {
     mode: "date",
   }),

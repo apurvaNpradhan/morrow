@@ -106,7 +106,7 @@ function TaskMenuItems({
   extraItems?: (task: TaskRow) => ReactNode;
 }) {
   const { t } = useTranslation("tasks");
-  const { columns, columnById, people, meId, today, can, frozen } =
+  const { columns, columnById, people, meId, today, timeZone, can, frozen } =
     useTaskView();
   const actions = useTaskActions();
   const column = columnById.get(task.columnId);
@@ -164,7 +164,8 @@ function TaskMenuItems({
             <MenuSubPopup>
               <DueDateItems
                 today={today}
-                hasValue={task.dueDate !== null}
+                timeZone={timeZone}
+                hasValue={task.dueAt !== null}
                 onSelect={(dueDate) => void actions.setDueDate(task, dueDate)}
                 onPickDate={() => openDatePicker(task.id)}
               />

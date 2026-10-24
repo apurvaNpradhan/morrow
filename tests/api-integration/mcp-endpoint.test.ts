@@ -345,6 +345,25 @@ describe("MCP endpoint", () => {
         changed: ["title", "priority", "removeLabels"],
       },
     ]);
+    await run("update_tasks", {
+      projectId,
+      items: [
+        { ticketId: "MOR-1", dueDate: "2026-10-30T15:00:00+05:30" },
+        { ticketId: "MOR-2", dueDate: "2026-10-30" },
+      ],
+    });
+    const dated = await run("list_tasks", { projectId });
+    expect(
+      dated.tasks.map((t: { ticketId: string; dueDate: string }) => [
+        t.ticketId,
+        t.dueDate,
+      ]),
+    ).toEqual(
+      expect.arrayContaining([
+        ["MOR-1", "2026-10-30T09:30:00.000Z"],
+        ["MOR-2", "2026-10-30"],
+      ]),
+    );
     await run("move_task", {
       projectId,
       ticketId: "MOR-1",
@@ -877,7 +896,7 @@ describe("MCP endpoint", () => {
         title: "Plan",
         priority: "high",
         assigneeId: owner.user.id,
-        dueDate: "2026-12-31",
+        dueAt: new Date("2026-12-31T00:00:00Z"),
         position: "a0",
       },
     ]);

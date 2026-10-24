@@ -1,5 +1,5 @@
 import { addDays, addMonths } from "date-fns";
-import { dayString, parseDay } from "./calendar-day";
+import { addDaysTo, dayString, parseDay } from "./calendar-day";
 
 const WEEKDAYS = [
   "sunday",
@@ -49,13 +49,7 @@ function monthDay(month: number, day: number, today: string) {
   return validDay(year + 1, month, day);
 }
 
-/**
- * An English date query ("fri", "in 3 days", "nov 3", "2026-11-03") as a
- * `YYYY-MM-DD` day relative to `today`, or null when it is not understood.
- * A bare weekday is its next occurrence and never today.
- */
-export function parseDateQuery(query: string, today: string): string | null {
-  const text = query.trim().toLowerCase().replace(/\s+/g, " ");
+function parseDayQuery(text: string, today: string): string | null {
   if (!text) return null;
   const base = parseDay(today);
 
@@ -102,4 +96,57 @@ export function parseDateQuery(query: string, today: string): string | null {
   }
 
   return null;
+}
+
+/** A day, and a wall-clock time (`HH:MM`) when the query named one. */
+export type DateQuery = { day: string; time?: string };
+
+const TIME = "noon|\\d{1,2}(?::\\d{2})? ?(?:am|pm)|\\d{1,2}:\\d{2}";
+const TRAILING_TIME = new RegExp(`^(.*?\\S)(?: at)? (${TIME})$`);
+const WHOLE_TIME = new RegExp(`^(?:at )?(${TIME})$`);
+
+/** `3pm`, `3:30 pm`, `15:30` or `noon` as `HH:MM`, or null. */
+function parseTime(text: string) {
+  if (text === "noon") return "12:00";
+  const meridiem = /^(\d{1,2})(?::(\d{2}))? ?(am|pm)$/.exec(text);
+  if (meridiem) {
+    const hour = Number(meridiem[1]);
+    const minute = Number(meridiem[2] ?? 0);
+    if (hour < 1 || hour > 12 || minute > 59) return null;
+    const hour24 = (hour % 12) + (meridiem[3] === "pm" ? 12 : 0);
+    return `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  }
+  const clock = /^(\d{1,2}):(\d{2})$/.exec(text);
+  if (!clock || Number(clock[1]) > 23 || Number(clock[2]) > 59) return null;
+  return `${clock[1]!.padStart(2, "0")}:${clock[2]}`;
+}
+
+/**
+ * An English date query ("fri", "in 3 days", "nov 3", "2026-11-03", "fri 3pm",
+ * "tomorrow 09:00", "15:30") as a day relative to `today`, with a time when
+ * the query has one. A bare weekday is its next occurrence and never today. A
+ * time alone means today, or tomorrow once `now` (`HH:MM` in the user's zone)
+ * has passed it. Null when the query is not understood.
+ */
+export function parseDateQuery(
+  query: string,
+  today: string,
+  now?: string,
+): DateQuery | null {
+  const text = query.trim().toLowerCase().replace(/\s+/g, " ");
+  const alone = WHOLE_TIME.exec(text);
+  if (alone) {
+    const time = parseTime(alone[1]!);
+    if (time === null) return null;
+    const passed = now !== undefined && time <= now;
+    return { day: passed ? addDaysTo(today, 1) : today, time };
+  }
+  const trailing = TRAILING_TIME.exec(text);
+  if (trailing) {
+    const time = parseTime(trailing[2]!);
+    const day = parseDayQuery(trailing[1]!, today);
+    return time !== null && day !== null ? { day, time } : null;
+  }
+  const day = parseDayQuery(text, today);
+  return day === null ? null : { day };
 }

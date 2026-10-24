@@ -2,7 +2,6 @@ import { CalendarDays, Tag, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
-import { formatDate } from "@/design-system/format";
 import {
   Popover,
   PopoverPopup,
@@ -13,7 +12,7 @@ import { LabelChips, labelsOfTask } from "@/labels";
 import { fieldHeld } from "../lib/field-value";
 import { useTaskActions } from "../actions/use-task-actions";
 import { openDatePicker } from "../lib/date-picker-store";
-import { parseDay } from "../lib/calendar-day";
+import { formatTaskDate } from "../lib/format-task-date";
 import { REVEAL_SHEET_FIELD } from "./reveal-sheet-field";
 import { ColumnMarker } from "./column-marker";
 import { FieldValueItems } from "./field-value-items";
@@ -47,6 +46,7 @@ export function TaskProperties({ task }: { task: TaskRow }) {
     personById,
     meId,
     today,
+    timeZone,
     can,
     frozen,
   } = useTaskView();
@@ -62,7 +62,7 @@ export function TaskProperties({ task }: { task: TaskRow }) {
     names: [],
     open: null,
   });
-  const showDueDate = task.dueDate !== null || added.names.includes("dueDate");
+  const showDueDate = task.dueAt !== null || added.names.includes("dueDate");
   const unsetFields = fields.filter(
     (field) => fieldHeld(field, task.fieldValues) === undefined,
   );
@@ -179,21 +179,20 @@ export function TaskProperties({ task }: { task: TaskRow }) {
             label={t("fields.dueDate")}
             sheetField="dueDate"
             disabled={!editable}
-            muted={!task.dueDate}
+            muted={!task.dueAt}
             icon={<CalendarDays aria-hidden="true" className="size-3.5" />}
             value={
-              task.dueDate
-                ? formatDate(parseDay(task.dueDate), {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
+              task.dueAt
+                ? formatTaskDate(task.dueAt, task.dueHasTime, timeZone, {
+                    year: true,
                   })
                 : t("fields.noDueDate")
             }
           >
             <DueDateItems
               today={today}
-              hasValue={task.dueDate !== null}
+              timeZone={timeZone}
+              hasValue={task.dueAt !== null}
               onSelect={(dueDate) => void actions.setDueDate(task, dueDate)}
               onPickDate={() => openDatePicker(task.id)}
             />

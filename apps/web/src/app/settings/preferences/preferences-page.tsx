@@ -9,6 +9,7 @@ import { useDevicePreferences } from "@/app/preferences/use-device-preferences";
 import { LanguageRow } from "./language-row";
 import { ProjectBackgroundsRow } from "./project-backgrounds-row";
 import { SidebarDefaultRow } from "./sidebar-default-row";
+import { TimeZoneRow } from "./time-zone-row";
 import { TaskDetailsSection } from "./task-details-section";
 
 export function PreferencesPage() {
@@ -35,6 +36,7 @@ export function PreferencesPage() {
         >
           <SettingsCard>
             <LanguageRow />
+            <TimeZoneRow />
             <SidebarDefaultRow />
             <ProjectBackgroundsRow />
           </SettingsCard>

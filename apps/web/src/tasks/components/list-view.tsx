@@ -24,7 +24,7 @@ export function ListView({
   toolbar: ToolbarState;
   preferences: ReturnType<typeof useTaskViewPreferences>;
 }) {
-  const { project, columns, meId, today } = useTaskView();
+  const { project, columns, meId, today, timeZone } = useTaskView();
   const [archivedExpanded, setArchivedExpanded] = useState(false);
   const { expandedIds, openIds, expandedClosedIds, toggle } =
     useColumnExpansion(project.id, columns);
@@ -43,6 +43,7 @@ export function ListView({
     sort: preferences.sort,
     meId,
     today,
+    timeZone,
   });
   const archivedModel = useTaskViewModel({
     projectKey: project.key,
@@ -54,6 +55,7 @@ export function ListView({
     sort: preferences.sort,
     meId,
     today,
+    timeZone,
   });
   const archivedTasks = columns.flatMap(
     (column) => archivedModel.byColumn.get(column.id) ?? [],

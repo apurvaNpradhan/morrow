@@ -29,6 +29,11 @@ export const authClient = createAuthClient({
           required: false,
           input: true,
         },
+        timeZone: {
+          type: "string",
+          required: false,
+          input: true,
+        },
         onboardingCompletedAt: {
           type: "date",
           required: false,

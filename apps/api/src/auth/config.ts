@@ -129,6 +129,11 @@ export const auth = betterAuth({
         input: true,
         required: false,
       },
+      timeZone: {
+        type: "string",
+        input: true,
+        required: false,
+      },
       // Set only by POST /api/onboarding/complete, never by update-user.
       onboardingCompletedAt: {
         type: "date",

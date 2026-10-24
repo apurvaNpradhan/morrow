@@ -1,5 +1,4 @@
 import {
-  isCalendarDate,
   TASK_DESCRIPTION_MAX,
   TASK_TITLE_MAX,
   type TaskPriority,
@@ -15,16 +14,16 @@ import {
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
-import { formatDate } from "@/design-system/format";
 import { toast } from "@/design-system/toast";
 import { Button } from "@/design-system/ui/button";
 import { Input } from "@/design-system/ui/input";
 import { Menu, MenuPopup, MenuTrigger } from "@/design-system/ui/menu";
 import { createTask } from "../actions/task-actions";
-import { parseDay } from "../lib/calendar-day";
 import { DraftLabelField } from "./draft-label-field";
 import { FieldChipMenu } from "./field-chip-menu";
 import { PersonAvatar } from "./person-avatar";
+import { formatTaskDateText } from "../lib/format-task-date";
+import { DraftDateInputs } from "./draft-date-inputs";
 import { AssigneeItems, DueDateItems, PriorityItems } from "./task-field-items";
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TaskPriorityIcon } from "./task-priority-icon";
@@ -64,7 +63,7 @@ export function SubTaskComposer({
   onClose: () => void;
 }) {
   const { t } = useTranslation("tasks");
-  const { project, columns, people, meId, today, can, workspace } =
+  const { project, columns, people, meId, today, timeZone, can, workspace } =
     useTaskView();
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [submitting, setSubmitting] = useState(false);
@@ -197,10 +196,7 @@ export function SubTaskComposer({
         {draft.dueDate ? (
           <span className="inline-flex h-7 items-center gap-1.5 rounded-md border bg-control px-2 text-xs">
             <CalendarDays aria-hidden="true" className="size-3.5" />
-            {formatDate(parseDay(draft.dueDate), {
-              month: "short",
-              day: "numeric",
-            })}
+            {formatTaskDateText(draft.dueDate, timeZone)}
           </span>
         ) : null}
         <Menu>
@@ -213,6 +209,7 @@ export function SubTaskComposer({
           <MenuPopup align="start" className="min-w-48">
             <DueDateItems
               today={today}
+              timeZone={timeZone}
               hasValue={draft.dueDate !== null}
               onSelect={(dueDate) => {
                 setPickingDate(false);
@@ -223,19 +220,10 @@ export function SubTaskComposer({
           </MenuPopup>
         </Menu>
         {pickingDate ? (
-          <Input
-            type="date"
-            size="sm"
-            className="h-7 w-40"
-            aria-label={t("fields.dueDate")}
-            value={draft.dueDate ?? ""}
-            onChange={(event) =>
-              update({
-                dueDate: isCalendarDate(event.target.value)
-                  ? event.target.value
-                  : null,
-              })
-            }
+          <DraftDateInputs
+            value={draft.dueDate}
+            timeZone={timeZone}
+            onChange={(dueDate) => update({ dueDate })}
           />
         ) : null}
         <div className="ms-auto flex items-center gap-1.5">

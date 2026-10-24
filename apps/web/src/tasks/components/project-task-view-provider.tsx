@@ -1,5 +1,6 @@
 import type { ProjectRow } from "@morrow/sync-schemas";
 import type { ReactNode } from "react";
+import { useTimeZone } from "@/app/hooks/use-time-zone";
 import { useProjectColumns, useProjectFields } from "@/projects";
 import { useLabels } from "@/labels";
 import { useWorkspacePermission } from "@/workspace";
@@ -33,6 +34,7 @@ export function ProjectTaskViewProvider({
   const { people, byId, meId } = useWorkspacePeople(workspace.id);
   const { labels, labelById } = useLabels(workspace.id);
   const today = useToday();
+  const timeZone = useTimeZone();
   const preferences = useTaskViewPreferences(project.id);
 
   return (
@@ -52,6 +54,7 @@ export function ProjectTaskViewProvider({
         personById: byId,
         meId,
         today,
+        timeZone,
         display: preferences.display,
         can: {
           create: permission.canCreateTasks(),

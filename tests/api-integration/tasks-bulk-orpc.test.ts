@@ -35,6 +35,30 @@ async function setup() {
 }
 
 describe("bulk changes", () => {
+  it("sets a due moment on every task, then a day over it", async () => {
+    const { addTasks, update } = await setup();
+    const ids = await addTasks(2);
+
+    await update(ids, {
+      type: "dueDate",
+      dueDate: "2026-12-31T23:30:00-08:00",
+    });
+    for (const id of ids) {
+      expect(await taskRow(id)).toMatchObject({
+        dueAt: new Date("2027-01-01T07:30:00Z"),
+        dueHasTime: true,
+      });
+    }
+
+    await update(ids, { type: "dueDate", dueDate: "2026-12-31" });
+    for (const id of ids) {
+      expect(await taskRow(id)).toMatchObject({
+        dueAt: new Date("2026-12-31T00:00:00Z"),
+        dueHasTime: false,
+      });
+    }
+  });
+
   it("returns one txid for the whole batch, for every kind of change", async () => {
     const { byName, addLabel, addTasks, update, owner } = await setup();
     const ids = await addTasks(3);
@@ -61,7 +85,7 @@ describe("bulk changes", () => {
         columnId: byName("In Progress").id,
         priority: "high",
         assigneeId: owner.id,
-        dueDate: "2026-12-31",
+        dueAt: new Date("2026-12-31T00:00:00Z"),
         labelIds: [],
       });
       expect(row?.archivedAt).not.toBeNull();

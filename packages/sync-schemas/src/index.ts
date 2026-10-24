@@ -21,6 +21,7 @@ export * from "./projects.js";
 export * from "./relations.js";
 export * from "./search.js";
 export * from "./shape-schema-version.js";
+export * from "./task-dates.js";
 export * from "./tasks.js";
 
 /**
@@ -161,7 +162,8 @@ export type ProjectFieldRow = z.infer<typeof projectFieldsShape.schema>;
 
 /**
  * Every Task of the Projects of the Workspaces the user belongs to, archived
- * ones included. `dueDate` is a `YYYY-MM-DD` string, never a Date.
+ * ones included. `dueAt` is a day or a moment, told apart by `dueHasTime`
+ * (see `task-dates.ts`).
  */
 export const tasksShape = shape(
   "tasks",
@@ -177,7 +179,8 @@ export const tasksShape = shape(
     openBlockerCount: z.number(),
     priority: z.enum(TASK_PRIORITIES),
     assigneeId: z.string().nullable(),
-    dueDate: z.string().nullable(),
+    dueAt: z.date().nullable(),
+    dueHasTime: z.boolean(),
     labelIds: z.array(z.string()),
     fieldValues: fieldValuesSchema,
     commentCount: z.number(),

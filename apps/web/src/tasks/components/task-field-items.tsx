@@ -140,13 +140,16 @@ export function AssigneeItems({
 /** A date of your own, today, tomorrow, this weekend, next week, or none. */
 export function DueDateItems({
   today,
+  timeZone,
   hasValue,
   onSelect,
   onPickDate,
 }: {
-  /** Local calendar day, `YYYY-MM-DD`. */
+  /** Today in `timeZone`, `YYYY-MM-DD`. */
   today: string;
+  timeZone: string;
   hasValue: boolean;
+  /** `YYYY-MM-DD` for a day, ISO 8601 for a moment, null to clear. */
   onSelect: (dueDate: string | null) => void;
   /** Opens the date field for "Pick a date". */
   onPickDate: () => void;
@@ -154,7 +157,7 @@ export function DueDateItems({
   const { t } = useTranslation("tasks");
   return (
     <>
-      <TypedDueDate today={today} onSelect={onSelect} />
+      <TypedDueDate today={today} timeZone={timeZone} onSelect={onSelect} />
       <MenuItem onClick={onPickDate}>{t("due.pick")}</MenuItem>
       {quickDueDates(today, localeWeekStart()).map(({ key, day }) => (
         <MenuItem key={key} onClick={() => onSelect(day)}>

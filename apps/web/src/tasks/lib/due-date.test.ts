@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import { dueLabel, isOverdue } from "./due-date";
 
+const UTC = "UTC";
+
 describe("dueLabel", () => {
   const today = "2026-10-15";
 
@@ -46,20 +48,58 @@ describe("dueLabel", () => {
 });
 
 describe("isOverdue", () => {
-  it("is true only for an unfinished task due before today", () => {
-    const open = { completedAt: null };
-    expect(isOverdue({ ...open, dueDate: "2026-10-14" }, "2026-10-15")).toBe(
-      true,
-    );
-    expect(isOverdue({ ...open, dueDate: "2026-10-15" }, "2026-10-15")).toBe(
-      false,
-    );
-    expect(isOverdue({ ...open, dueDate: null }, "2026-10-15")).toBe(false);
+  const open = { completedAt: null };
+  const day = (text: string) => ({
+    dueAt: new Date(`${text}T00:00:00Z`),
+    dueHasTime: false,
+  });
+  const none = { dueAt: null, dueHasTime: false };
+
+  it("is true only for an unfinished day due before today", () => {
+    expect(
+      isOverdue({ ...open, ...day("2026-10-14") }, "2026-10-15", UTC),
+    ).toBe(true);
+    expect(
+      isOverdue({ ...open, ...day("2026-10-15") }, "2026-10-15", UTC),
+    ).toBe(false);
+    expect(isOverdue({ ...open, ...none }, "2026-10-15", UTC)).toBe(false);
     expect(
       isOverdue(
-        { completedAt: new Date(), dueDate: "2026-10-01" },
+        { completedAt: new Date(), ...day("2026-10-01") },
         "2026-10-15",
+        UTC,
       ),
     ).toBe(false);
+  });
+
+  it("reads a day the same in every zone", () => {
+    expect(
+      isOverdue(
+        { ...open, ...day("2026-10-15") },
+        "2026-10-15",
+        "Pacific/Kiritimati",
+      ),
+    ).toBe(false);
+    expect(
+      isOverdue(
+        { ...open, ...day("2026-10-14") },
+        "2026-10-15",
+        "Pacific/Pago_Pago",
+      ),
+    ).toBe(true);
+  });
+
+  it("is overdue once a moment has passed, not at the end of its day", () => {
+    const moment = {
+      dueAt: new Date("2026-10-15T09:00:00Z"),
+      dueHasTime: true,
+    };
+    const task = { ...open, ...moment };
+    expect(
+      isOverdue(task, "2026-10-15", UTC, new Date("2026-10-15T08:59:00Z")),
+    ).toBe(false);
+    expect(
+      isOverdue(task, "2026-10-15", UTC, new Date("2026-10-15T09:01:00Z")),
+    ).toBe(true);
   });
 });

@@ -3,6 +3,7 @@
 Decisions and reasons: `docs/adr/0001-electric-tanstack-db-sync.md` and `docs/adr/0002-sync-invitations-and-workspaces.md`.
 
 - A table is either a synced **Shape** or an oRPC query, never both. Auth, admin and one-off reads stay on oRPC Query. Members, users, workspaces and invitations are shapes; roles, capabilities and activity stay on oRPC.
+- Document edits are the one exception to Shapes: `document_commits` and `document_body` are not synced. An open Document streams its commits and presence over oRPC SSE from its in-process authority; only the `documents` tree is a Shape. Decision: `docs/adr/0013-collaborative-documents.md`.
 - Membership implies read: every role carries `workspace: read`, so a shape scoped by membership needs no permission logic. Instance admins reach foreign Workspaces through the administration pages only, never `/$slug`.
 - Declare a shape once in its Vertical's `shapes.ts` (`defineShape`) and export it from the Vertical's `index.ts`; add it to the registry in `platform/sync/shapes.ts`. The shape's name and column schema are one object in `@morrow/sync-schemas`, imported by both the API and the collection. The browser never chooses table, columns or filter, and a shape has no "all columns".
 - Shapes are scoped to the user through membership subqueries. Use a per-Workspace collection only for a table where some roles cannot read.

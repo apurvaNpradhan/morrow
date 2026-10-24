@@ -73,7 +73,8 @@ describe("creating a task", () => {
       columnId: byName("In Progress").id,
       title: "Ship it",
       priority: "high",
-      dueDate: "2026-12-31",
+      dueAt: new Date("2026-12-31T00:00:00Z"),
+      dueHasTime: false,
       assigneeId: null,
       completedAt: null,
       archivedAt: null,
@@ -191,14 +192,15 @@ describe("field rules", () => {
       { description: "x".repeat(100_001) },
       { priority: "critical" },
       { dueDate: "2026-02-30" },
-      { dueDate: "2026-12-31T00:00:00Z" },
+      { dueDate: "2026-12-31T00:00:00" },
+      { dueDate: "2026-12-31 10:00+01:00" },
     ]) {
       expect((await rejection(create(input))).code).toBe("BAD_REQUEST");
     }
     await create({ title: "x".repeat(500), description: "x".repeat(100_000) });
   });
 
-  it("keeps a due date as a calendar day whatever the server's zone", async () => {
+  it("keeps a day due date at 00:00 UTC whatever the server's zone", async () => {
     const { client, base, addTask } = await setupTasks();
     const { id } = await addTask("To Do", { dueDate: "2026-03-08" });
 
@@ -207,13 +209,34 @@ describe("field rules", () => {
       taskId: id,
       dueDate: "2026-11-01",
     });
-    const rows = await db.execute<{ due: string }>(
-      sql`SELECT due_date::text AS due FROM task WHERE id = ${id}`,
+    const rows = await db.execute<{ due: string; timed: boolean }>(
+      sql`SELECT due_at::text AS due, due_has_time AS timed FROM task WHERE id = ${id}`,
     );
 
-    expect(rows.rows[0]?.due).toBe("2026-11-01");
+    expect(rows.rows[0]).toEqual({ due: "2026-11-01 00:00:00", timed: false });
     await client.tasks.updateDueDate({ ...base, taskId: id, dueDate: null });
-    expect((await taskRow(id))?.dueDate).toBeNull();
+    expect(await taskRow(id)).toMatchObject({
+      dueAt: null,
+      dueHasTime: false,
+    });
+  });
+
+  it("stores a due moment as its UTC instant and reads it back as ISO", async () => {
+    const { client, base, addTask } = await setupTasks();
+    const { id } = await addTask("To Do");
+
+    await client.tasks.updateDueDate({
+      ...base,
+      taskId: id,
+      dueDate: "2026-11-01T15:00:00+05:30",
+    });
+
+    expect(await taskRow(id)).toMatchObject({
+      dueAt: new Date("2026-11-01T09:30:00Z"),
+      dueHasTime: true,
+    });
+    const [listed] = await client.tasks.list(base);
+    expect(listed?.dueDate).toBe("2026-11-01T09:30:00.000Z");
   });
 
   it("writes only the field group it was asked to", async () => {
@@ -703,12 +726,33 @@ describe("duplicating", () => {
     expect(await taskRow(copyId)).toMatchObject({
       title: "Original (copy)",
       priority: "high",
-      dueDate: "2026-05-05",
+      dueAt: new Date("2026-05-05T00:00:00Z"),
+      dueHasTime: false,
       assigneeId: colleague.id,
       columnId: byName("In Progress").id,
       archivedAt: null,
     });
     expect(await taskDescription(copyId)).toBe("Body");
+  });
+
+  it("keeps a due moment as a moment", async () => {
+    const { client, base, addTask } = await setupTasks();
+    const { id } = await addTask("To Do", {
+      dueDate: "2026-05-05T10:30:00+02:00",
+    });
+    const copyId = newTaskId();
+
+    await client.tasks.duplicate({
+      ...base,
+      taskId: id,
+      id: copyId,
+      position: positionAt(5),
+    });
+
+    expect(await taskRow(copyId)).toMatchObject({
+      dueAt: new Date("2026-05-05T08:30:00Z"),
+      dueHasTime: true,
+    });
   });
 
   it("drops an assignee the member could not assign", async () => {

@@ -32,7 +32,8 @@ export function TaskFieldPicker() {
   const picker = useOpenFieldPicker();
   const actions = useTaskActions();
   const bulk = useBulkActions();
-  const { project, columns, fields, people, meId, today, can } = useTaskView();
+  const { project, columns, fields, people, meId, today, timeZone, can } =
+    useTaskView();
   // The selection picks for several tasks, so no value is shown as current.
   const forSelection = picker?.taskId === SELECTION;
   const selected = useSelectedTasks(project.id);
@@ -176,10 +177,11 @@ export function TaskFieldPicker() {
             {picker.field === "dueDate" ? (
               <DueDateItems
                 today={today}
+                timeZone={timeZone}
                 hasValue={
                   forSelection
-                    ? selected.some((t) => t.dueDate !== null)
-                    : task.dueDate !== null
+                    ? selected.some((t) => t.dueAt !== null)
+                    : task.dueAt !== null
                 }
                 onSelect={(dueDate) =>
                   choose(() =>

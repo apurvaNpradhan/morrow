@@ -6,8 +6,8 @@ import {
 } from "@morrow/sync-schemas";
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
-  date,
   type AnyPgColumn,
   index,
   integer,
@@ -25,7 +25,8 @@ import { workspaceTable } from "#api/workspace/tables";
 
 /*
  * `position` is a fractional-index key and is `COLLATE "C"` (set in the
- * migration), as in the projects tables. `due_date` is a calendar day.
+ * migration), as in the projects tables. `due_at` is a day (00:00 UTC, with
+ * `due_has_time` false) or a moment; see `task-dates.ts` in sync-schemas.
  */
 
 export const taskTable = pgTable(
@@ -66,7 +67,8 @@ export const taskTable = pgTable(
     assigneeId: text("assignee_id").references(() => userTable.id, {
       onDelete: "set null",
     }),
-    dueDate: date("due_date", { mode: "string" }),
+    dueAt: timestamp("due_at", { mode: "date" }),
+    dueHasTime: boolean("due_has_time").notNull().default(false),
     // Ids of the Workspace's labels. No foreign key, on purpose: one row per
     // task, read straight off the card. Label delete keeps it consistent.
     labelIds: text("label_ids")
@@ -108,6 +110,10 @@ export const taskTable = pgTable(
     index("task_parentId_idx").on(table.parentId),
     uniqueIndex("task_project_number_uidx").on(table.projectId, table.number),
     uniqueIndex("task_column_position_uidx").on(table.columnId, table.position),
+    check(
+      "task_due_has_time_check",
+      sql`${table.dueAt} IS NOT NULL OR NOT ${table.dueHasTime}`,
+    ),
     check(
       "task_priority_check",
       sql`${table.priority} IN ('none', 'low', 'medium', 'high', 'urgent')`,

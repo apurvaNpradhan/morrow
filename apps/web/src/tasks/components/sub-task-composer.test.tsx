@@ -29,6 +29,7 @@ beforeEach(() => {
     people: [],
     meId: "me",
     today: "2026-10-15",
+    timeZone: "UTC",
     can: { assign: true },
     workspace: { id: "w1", slug: "atlas" },
   } as unknown as TaskViewValue);

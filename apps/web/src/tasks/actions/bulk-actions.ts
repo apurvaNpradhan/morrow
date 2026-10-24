@@ -8,6 +8,7 @@ import { generateNKeysBetween } from "fractional-indexing";
 import { rpc } from "@/app/lib/orpc";
 import { taskCollection } from "../collections/task-collection";
 import { workspaceOf } from "../collections/task-writes";
+import { dueFields } from "../lib/due-date";
 import { columnTasks } from "../queries/task-queries";
 
 export type BulkChange = Parameters<typeof rpc.tasks.bulkUpdate>[0]["change"];
@@ -54,7 +55,8 @@ function applyChange(batch: Batch, change: BulkChange, drafts: TaskRow[]) {
   for (const draft of drafts) {
     if (change.type === "priority") draft.priority = change.priority;
     else if (change.type === "assignee") draft.assigneeId = change.assigneeId;
-    else if (change.type === "dueDate") draft.dueDate = change.dueDate;
+    else if (change.type === "dueDate")
+      Object.assign(draft, dueFields(change.dueDate));
     else if (change.type === "addLabel") {
       if (!draft.labelIds.includes(change.labelId)) {
         draft.labelIds = [...draft.labelIds, change.labelId];

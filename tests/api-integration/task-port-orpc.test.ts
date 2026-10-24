@@ -104,6 +104,50 @@ describe("importing labels and comments", () => {
     );
   });
 
+  it("writes a day as YYYY-MM-DD and a moment as ISO UTC, and reads both back", async () => {
+    const { client, base, addTask, target, into } = await setupSource();
+    await addTask("To Do", {
+      title: "Moment",
+      dueDate: "2026-11-02T15:00+05:30",
+    });
+    await addTask("To Do", { title: "Day", dueDate: "2026-11-03" });
+
+    const document = await client.tasks.export(base);
+    const dates = Object.fromEntries(
+      document.tasks.map((task) => [task.title, task.dueDate]),
+    );
+    expect(dates).toMatchObject({
+      Moment: "2026-11-02T09:30:00.000Z",
+      Day: "2026-11-03",
+    });
+
+    await client.tasks.import({ ...into(target.id), document });
+    const copies = await client.tasks.list(into(target.id));
+    expect(copies.map((task) => [task.title, task.dueDate]).sort()).toEqual(
+      expect.arrayContaining([
+        ["Moment", "2026-11-02T09:30:00.000Z"],
+        ["Day", "2026-11-03"],
+      ]),
+    );
+  });
+
+  it("still imports an old export file, whose due date is a bare day", async () => {
+    const { client, base, into, target } = await setupSource();
+    const document = await client.tasks.export(base);
+    const old = {
+      ...document,
+      tasks: document.tasks.map((task) => ({ ...task, dueDate: "2025-01-31" })),
+    };
+
+    await client.tasks.import({ ...into(target.id), document: old });
+
+    const [copied] = await client.tasks.list(into(target.id));
+    expect(await taskRow(copied!.id)).toMatchObject({
+      dueAt: new Date("2025-01-31T00:00:00Z"),
+      dueHasTime: false,
+    });
+  });
+
   it("matches labels ignoring case and creates missing ones for a member who may create labels", async () => {
     const { workspace, target, into, client } = await setupSource();
     const member = as(await addWorkspaceMember(workspace.id, "member"));
