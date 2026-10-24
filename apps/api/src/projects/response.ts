@@ -1,4 +1,9 @@
-import { colorHex, COLUMN_CATEGORIES } from "@morrow/sync-schemas";
+import {
+  colorHex,
+  COLUMN_CATEGORIES,
+  FIELD_TYPES,
+  fieldConfigSchema,
+} from "@morrow/sync-schemas";
 import { z } from "zod";
 
 export const txid = z
@@ -66,7 +71,8 @@ export const fieldListResult = z.array(
   z.object({
     id: z.string(),
     name: z.string(),
-    type: z.string(),
+    type: z.enum(FIELD_TYPES),
+    config: fieldConfigSchema,
     options: z.array(
       z.object({ id: z.string(), name: z.string(), color: colorHex }),
     ),
@@ -76,7 +82,14 @@ export const fieldListResult = z.array(
 export const fieldUsageResult = z.array(
   z.object({
     fieldId: z.string(),
-    optionId: z.string(),
-    count: z.number().describe("Tasks holding this option of this Field."),
+    optionId: z
+      .string()
+      .nullable()
+      .describe("Null counts the Tasks holding any value of the Field."),
+    count: z
+      .number()
+      .describe(
+        "Tasks holding this option, or any value when optionId is null.",
+      ),
   }),
 );

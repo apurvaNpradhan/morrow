@@ -24,16 +24,26 @@ export function FilterValuePopover({
   onToggle: (value: string) => void;
   trigger: ReactElement;
 }) {
-  const { optionsFor, subjectLabel } = useFilterOptions();
+  const { optionsFor, labelFor, subjectLabel, typedCreate } =
+    useFilterOptions();
+  // Values typed earlier are not in the list; keep them there to uncheck.
+  const listed = optionsFor(subject);
+  const options = [
+    ...listed,
+    ...values
+      .filter((value) => !listed.some((option) => option.value === value))
+      .map((value) => ({ value, label: labelFor(subject, value) })),
+  ];
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger render={trigger} />
       <PopoverPopup>
         <FilterOptionList
-          options={optionsFor(subject)}
+          options={options}
           selected={new Set(values)}
           label={subjectLabel(subject)}
           onPick={onToggle}
+          create={typedCreate(subject, onToggle)}
         />
       </PopoverPopup>
     </Popover>

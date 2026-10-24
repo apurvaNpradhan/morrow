@@ -2,6 +2,7 @@ import {
   Archive,
   ArchiveRestore,
   CalendarDays,
+  FolderInput,
   Tag,
   Trash2,
   UserRound,
@@ -22,6 +23,7 @@ import { selectedTasks } from "../lib/selected-tasks";
 import { archiveAction, overCap } from "../lib/selection";
 import { SELECTION } from "../lib/selection-store";
 import { useSelectedTasks } from "../queries/use-task-queries";
+import { requestMoveTasks } from "../lib/move-store";
 import { requestDeleteTasks } from "./delete-task-dialog";
 import {
   AssigneeItems,
@@ -111,6 +113,15 @@ export function SelectionMenuItems({ anchor }: { anchor: Element | null }) {
             <MenuHint hotkeyId="setTaskLabels" />
           </MenuItem>
           <MenuSeparator />
+          {can.create ? (
+            <MenuItem
+              onClick={() => requestMoveTasks(selectedTasks(project.id))}
+            >
+              <FolderInput aria-hidden="true" />
+              {t("selection.move")}
+              <MenuHint hotkeyId="moveTask" />
+            </MenuItem>
+          ) : null}
           <MenuItem
             disabled={capped}
             onClick={() => void bulk.archive(!unarchive)}

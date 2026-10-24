@@ -2,7 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { generateKeyBetween } from "fractional-indexing";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
-import { absoluteAssetUrls } from "@morrow/sync-schemas";
+import { absoluteAssetUrls, parseTicketId } from "@morrow/sync-schemas";
 import { config } from "#api/platform/config";
 import { mcpTool } from "#api/platform/orpc/mcp-tool";
 import { resolveColumn } from "#api/projects/index";
@@ -33,9 +33,18 @@ const parentTicket = z
   .min(1)
   .describe("The parent's ticket id, for example MOR-12; same project.");
 
+const fieldValueByName = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.string()),
+]);
+
 const fieldsByName = z
-  .record(z.string(), z.string())
-  .describe('Option name by Field name, for example { "Size": "Large" }.');
+  .record(z.string(), fieldValueByName)
+  .describe(
+    'Value by Field name, for example { "Size": "Large", "Points": 5, "Target": "2026-11-01", "Reviewed": true, "Areas": ["API", "Web"] }. Choice Fields take option names (a list for multi choice), number Fields a number, date Fields YYYY-MM-DD, checkbox Fields true or false.',
+  );
 
 const createItem = z.object({
   title,
@@ -60,10 +69,10 @@ const updateItem = z.object({
   addLabels: z.array(z.string()).optional(),
   removeLabels: z.array(z.string()).optional(),
   fields: z
-    .record(z.string(), z.string().nullable())
+    .record(z.string(), fieldValueByName.nullable())
     .optional()
     .describe(
-      'Option name by Field name, for example { "Size": "Large" }; null clears that Field.',
+      'Value by Field name, for example { "Size": "Large", "Points": 5 }; null clears that Field. Same value shapes as create_tasks fields.',
     ),
   column: z
     .string()
@@ -169,7 +178,7 @@ export const tasksMcpTools = [
     name: "get_task",
     readOnly: true,
     description:
-      "Get one task by ticket id (for example MOR-12): its parent (ticket id and title), subtask counts (done of total, archived left out, canceled counted as done), description, labels (names and colours), custom Field values (option name by Field name), external links (id, url, title), relations (id, type, direction, kind: blocks, blocked_by, related, duplicate_of or duplicated_by, and the other task's ticket id and title) and comments, oldest first, with the fields list_tasks gives.",
+      "Get one task by ticket id (for example MOR-12): its parent (ticket id and title), subtask counts (done of total, archived left out, canceled counted as done), description, labels (names and colours), custom Field values (by Field name: option names, text, numbers, YYYY-MM-DD dates, true for a checked checkbox), external links (id, url, title), relations (id, type, direction, kind: blocks, blocked_by, related, duplicate_of or duplicated_by, and the other task's ticket id and title) and comments, oldest first, with the fields list_tasks gives.",
     inputSchema: z.object({
       workspaceId: z.string().trim().min(1),
       projectId: z.string().trim().min(1),
@@ -190,7 +199,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "create_tasks",
     description:
-      "Create 1–50 tasks in one call. Each item has a title and optionally parentId (a ticket id of this project), description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created), fields (option name by Field name) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
+      "Create 1–50 tasks in one call. Each item has a title and optionally parentId (a ticket id of this project), description, column (named; default the project's first), priority, assignee (a member's email), dueDate, labels (named; missing ones are created), fields (value by Field name) and at (top or bottom). Items run in order; an item that fails to resolve (unknown column, assignee) does not stop the rest, but a malformed item (bad date, empty title) rejects the whole call before anything is created. Returns a small result per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(createItem).min(1).max(MAX_BATCH),
     }),
@@ -211,8 +220,9 @@ export const tasksMcpTools = [
           : undefined;
         const fieldValues = item.fields
           ? Object.fromEntries(
-              (await resolveFieldValues(client, input, item.fields)).map(
-                ({ fieldId, value }) => [fieldId, value as string],
+              (await resolveFieldValues(client, input, item.fields)).flatMap(
+                ({ fieldId, value }) =>
+                  value === null ? [] : [[fieldId, value]],
               ),
             )
           : undefined;
@@ -245,7 +255,7 @@ export const tasksMcpTools = [
   mcpTool({
     name: "update_tasks",
     description:
-      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate, assignee (an email) and parentId (a ticket id; refused if it would make a loop). addLabels creates missing labels; removeLabels names existing ones. fields sets custom Fields by name (option name by Field name; null clears one). column moves the task, at its top or bottom (default bottom). Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
+      "Change 1–50 tasks in one call, each named by ticketId. Only the fields an item passes change; null clears dueDate, assignee (an email) and parentId (a ticket id; refused if it would make a loop). addLabels creates missing labels; removeLabels names existing ones. fields sets custom Fields by name (value by Field name; null clears one). column moves the task, at its top or bottom (default bottom). Items run in order; an item that fails to resolve (unknown task, label, assignee) changes nothing and does not stop the rest, but a malformed item (bad date) rejects the whole call before anything changes. An item with no field besides ticketId is an error. Returns the changed field names per item, each with its index.",
     inputSchema: project.extend({
       items: z.array(updateItem).min(1).max(MAX_BATCH),
     }),
@@ -378,6 +388,116 @@ export const tasksMcpTools = [
         )(column.id, input.at),
       });
       return { ticketId: input.ticketId, column: column.name };
+    },
+  }),
+  mcpTool({
+    name: "move_tasks",
+    description:
+      "Move tasks to another project of the workspace, keeping their description, comments, links, attachments, labels, relations, assignee and history. Tasks may come from several projects. Each task gets a ticket id in the new project; the old one keeps resolving (get_task with it returns the moved task). The destination column is the one named by column when given, else for each task the column with its own column's name, else one of the same category, else the first unstarted one. Custom field values carry over where the new project has a field with the same name and type (and option names); the rest are dropped and listed per task. Subtasks move with their parent unless withSubtasks is false (then they stay behind as top-level tasks); a subtask moved without its parent leaves it. At most 500 tasks, subtasks counted. An item that does not resolve (unknown ticket, already in the destination, archived project) is refused on its own and the rest still move; the result lists every moved task (subtasks included) with its old and new ticket id, and refused items with their index.",
+    inputSchema: z.object({
+      workspaceId: z.string().trim().min(1),
+      ticketIds: z
+        .array(z.string().trim().min(1))
+        .min(1)
+        .max(MAX_BATCH)
+        .describe(
+          "For example MOR-12, WEB-3; they may be of different projects.",
+        ),
+      project: z
+        .string()
+        .trim()
+        .min(1)
+        .describe("The destination project's key, for example WEB."),
+      column: z
+        .string()
+        .trim()
+        .min(1)
+        .optional()
+        .describe(
+          "A column of the destination for the named tasks; omit to keep each task's state.",
+        ),
+      withSubtasks: z.boolean().default(true),
+    }),
+    run: async (input, client) => {
+      const projects = await client.projects.list({
+        workspaceId: input.workspaceId,
+      });
+      const byKey = (key: string) =>
+        projects.find(
+          (candidate) => candidate.key === key.trim().toUpperCase(),
+        );
+      const destination = byKey(input.project);
+      if (!destination) {
+        throw new ORPCError("NOT_FOUND", {
+          message: `No project with key "${input.project}". Projects: ${projects.map((p) => p.key).join(", ")}`,
+        });
+      }
+      const column = input.column
+        ? (
+            await resolveColumn(
+              client,
+              { workspaceId: input.workspaceId, projectId: destination.id },
+              input.column,
+            )
+          ).column
+        : undefined;
+
+      // Resolve every ticket first; a bad one is refused and the rest move.
+      const refused: Array<{ index: number; ticketId: string; error: string }> =
+        [];
+      const taskIds: string[] = [];
+      for (const [index, ticketId] of input.ticketIds.entries()) {
+        try {
+          const source = byKey(parseTicketId(ticketId)?.key ?? "");
+          if (!source) throw new Error(`No project for ticket ${ticketId}`);
+          if (source.archivedAt) {
+            throw new Error(`Project ${source.key} is archived`);
+          }
+          const task = await client.tasks.resolveTicket({
+            workspaceId: input.workspaceId,
+            projectId: source.id,
+            ticketId,
+          });
+          if (task.projectId === destination.id) {
+            throw new Error(
+              `${task.ticketId} is already in ${destination.key}`,
+            );
+          }
+          if (!taskIds.includes(task.id)) taskIds.push(task.id);
+        } catch (error) {
+          refused.push({
+            index,
+            ticketId,
+            error:
+              error instanceof ORPCError && error.code === "NOT_FOUND"
+                ? `No task ${ticketId}`
+                : error instanceof Error
+                  ? error.message
+                  : "Failed",
+          });
+        }
+      }
+      if (taskIds.length === 0) return { moved: [], refused };
+
+      const { moved } = await client.tasks.moveToProject({
+        workspaceId: input.workspaceId,
+        taskIds,
+        toProjectId: destination.id,
+        columnId: column?.id,
+        withSubtasks: input.withSubtasks,
+      });
+      return {
+        moved: moved.map((task) => ({
+          from: task.fromTicketId,
+          to: task.toTicketId,
+          column: task.column,
+          ...(task.droppedValues.length > 0 && {
+            droppedFields: task.droppedValues,
+          }),
+          ...(task.detachedFrom && { leftParent: task.detachedFrom }),
+        })),
+        refused,
+      };
     },
   }),
   mcpTool({

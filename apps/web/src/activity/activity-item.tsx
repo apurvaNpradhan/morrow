@@ -28,6 +28,7 @@ const ACTIVITY_KEYS = new Map(
     "task.completed": "taskCompleted",
     "task.canceled": "taskCanceled",
     "task.deleted": "taskDeleted",
+    "task.moved": "taskMoved",
     "comment.created": "commentCreated",
   } satisfies Record<string, string>),
 );
@@ -62,6 +63,10 @@ export function ActivityItem({ activity }: ActivityItemProps) {
           typeof eventData.ticketId === "string" ? eventData.ticketId : "",
         taskTitle:
           typeof eventData.taskTitle === "string" ? eventData.taskTitle : "",
+        fromTicketId:
+          typeof eventData.fromTicketId === "string"
+            ? eventData.fromTicketId
+            : "",
       })
     : t("home.activity.unknown");
   const elapsed = formatDistanceToNow(new Date(activity.createdAt));

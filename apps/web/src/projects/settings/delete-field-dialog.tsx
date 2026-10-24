@@ -38,13 +38,11 @@ export function DeleteFieldDialog({
   });
   const count =
     usage && deletion
-      ? usage
-          .filter(
-            (row) =>
-              row.fieldId === deletion.field.id &&
-              (!deletion.option || row.optionId === deletion.option.id),
-          )
-          .reduce((sum, row) => sum + row.count, 0)
+      ? (usage.find(
+          (row) =>
+            row.fieldId === deletion.field.id &&
+            row.optionId === (deletion.option?.id ?? null),
+        )?.count ?? 0)
       : null;
   const kind = deletion?.option ? "option" : "field";
 

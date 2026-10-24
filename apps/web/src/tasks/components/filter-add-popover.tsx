@@ -21,7 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/design-system/ui/tooltip";
-import { countMatching, type TaskFilter } from "../lib/filters";
+import { countMatching, NO_RELATIONS, type TaskFilter } from "../lib/filters";
 import { localeWeekStart } from "../lib/calendar-day";
 import { FilterOptionList } from "./filter-option-list";
 import { useFilterOptions } from "./use-filter-options";
@@ -50,7 +50,7 @@ export function FilterAddPopover({
   tasks: readonly TaskRow[];
 }) {
   const { t } = useTranslation("tasks");
-  const { optionsFor, subjectLabel } = useFilterOptions();
+  const { optionsFor, subjectLabel, typedCreate } = useFilterOptions();
   const { fields, meId, today } = useTaskView();
   const subjects: FilterSubject[] = [
     ...FILTER_SUBJECTS.filter(
@@ -91,9 +91,15 @@ export function FilterAddPopover({
                   )
                 }
                 tasks={tasks}
-                context={{ meId, today, weekStartsOn: localeWeekStart() }}
+                context={{
+                  meId,
+                  today,
+                  weekStartsOn: localeWeekStart(),
+                  relations: NO_RELATIONS,
+                }}
                 label={subjectLabel(subject)}
                 optionsFor={optionsFor}
+                typedCreate={typedCreate}
                 onPick={(value) => onToggleValue(subject, value)}
               />
             </MenuSubPopup>
@@ -112,6 +118,7 @@ function SubjectValues({
   context,
   label,
   optionsFor,
+  typedCreate,
   onPick,
 }: {
   subject: FilterSubject;
@@ -120,11 +127,16 @@ function SubjectValues({
   context: Parameters<typeof countMatching>[3];
   label: string;
   optionsFor: ReturnType<typeof useFilterOptions>["optionsFor"];
+  typedCreate: ReturnType<typeof useFilterOptions>["typedCreate"];
   onPick: (value: string) => void;
 }) {
   const options = optionsFor(subject).map((option) => ({
     ...option,
-    count: countMatching(tasks, subject, option.value, context),
+    // Relations are not counted: they read as plain choices.
+    count:
+      subject === "relation"
+        ? undefined
+        : countMatching(tasks, subject, option.value, context),
   }));
   return (
     // Typing in the search box must not trigger the menu's own typeahead.
@@ -135,6 +147,7 @@ function SubjectValues({
         selected={selected}
         label={label}
         onPick={onPick}
+        create={typedCreate(subject, onPick)}
       />
     </div>
   );

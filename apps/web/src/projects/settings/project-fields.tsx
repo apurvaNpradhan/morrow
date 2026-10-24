@@ -8,7 +8,7 @@ import { useWorkspacePermission } from "@/workspace";
 import { createField, updateField } from "../actions/field-actions";
 import { useSortableList } from "../lib/use-sortable-list";
 import { useProjectFields } from "../queries/use-project-fields";
-import { AddNameForm } from "./add-name-form";
+import { AddFieldForm } from "./add-field-form";
 import { DeleteFieldDialog, type FieldDeletion } from "./delete-field-dialog";
 import { FieldCard } from "./field-card";
 
@@ -60,12 +60,9 @@ export function ProjectFields({
         ) : null}
         {disabled ? null : (
           <SettingsCard>
-            <AddNameForm
-              placeholder={t("fields.addFieldPlaceholder")}
-              addLabel={t("fields.addField")}
-              errorFallback={t("fields.addFieldError")}
-              onAdd={(name) =>
-                createField({ workspaceId, projectId: project.id }, name)
+            <AddFieldForm
+              onAdd={(field) =>
+                createField({ workspaceId, projectId: project.id }, field)
               }
             />
           </SettingsCard>

@@ -31,6 +31,7 @@ export {
   taskLinkTable,
   taskRelationTable,
   taskTable,
+  taskTicketAliasTable,
 } from "#api/tasks/tables";
 export { assetTable } from "#api/storage/tables";
 export {

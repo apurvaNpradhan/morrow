@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import type { DbOrTx } from "#api/members/index";
-import { fieldNotFound } from "#api/projects/errors";
+import { isChoiceType } from "@morrow/sync-schemas";
+import { fieldNotFound, projectError } from "#api/projects/errors";
 import { projectFieldTable } from "#api/projects/tables";
 
 /**
@@ -25,5 +26,17 @@ export async function findField(
     );
   const [field] = await (lock ? query.for(lock) : query);
   if (!field) throw fieldNotFound();
+  return field;
+}
+
+/** A Field that has options to edit; text, number, date and checkbox Fields have none. */
+export async function findChoiceField(
+  tx: DbOrTx,
+  projectId: string,
+  fieldId: string,
+  lock?: "share" | "update",
+) {
+  const field = await findField(tx, projectId, fieldId, lock);
+  if (!isChoiceType(field.type)) throw projectError("FIELD_HAS_NO_OPTIONS");
   return field;
 }

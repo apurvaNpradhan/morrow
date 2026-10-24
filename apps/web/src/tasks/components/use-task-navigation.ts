@@ -1,4 +1,4 @@
-import { ticketId, type TaskRow } from "@morrow/sync-schemas";
+import { parseTicketId, ticketId, type TaskRow } from "@morrow/sync-schemas";
 import { useNavigate } from "@tanstack/react-router";
 
 /**
@@ -22,9 +22,9 @@ export function useTaskNavigation({
         : ("/$slug/projects/$key/list" as const),
     params: { slug: workspaceSlug, key: projectKey },
   };
-  const taskRoute = (number: number) => ({
+  const taskRoute = (number: number, key = projectKey) => ({
     to: "/$slug/tasks/$ticketId" as const,
-    params: { slug: workspaceSlug, ticketId: ticketId(projectKey, number) },
+    params: { slug: workspaceSlug, ticketId: ticketId(key, number) },
   });
 
   return {
@@ -44,6 +44,18 @@ export function useTaskNavigation({
             ? "/$slug/projects/$key/board"
             : "/$slug/projects/$key/list",
         params: { slug: workspaceSlug, key: projectKey },
+      });
+    },
+    /** The open task moved: the sheet shows it again under its new Ticket id, without a new Back entry. */
+    followMoved(movedTicket: string) {
+      const parsed = parseTicketId(movedTicket);
+      if (!parsed) return;
+      void navigate({
+        ...view,
+        params: { slug: workspaceSlug, key: parsed.key },
+        search: { task: parsed.number },
+        mask: taskRoute(parsed.number, parsed.key),
+        replace: true,
       });
     },
     closeSheet() {

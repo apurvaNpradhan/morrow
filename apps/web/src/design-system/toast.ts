@@ -25,6 +25,8 @@ function addToast(
   let id = "";
 
   const action = options?.action ?? options?.cancel;
+  // With both, `cancel` is the quieter second button.
+  const secondary = options?.action ? options.cancel : undefined;
   const key = JSON.stringify([variant, title, options?.description]);
   const open = openToasts.get(key);
   if (open) {
@@ -40,6 +42,17 @@ function addToast(
     title,
     description: options?.description,
     type: variant,
+    data: secondary
+      ? {
+          secondary: {
+            label: secondary.label,
+            onClick: () => {
+              secondary.onClick?.();
+              toastManager.close(id);
+            },
+          },
+        }
+      : undefined,
     onClose: () => openToasts.delete(key),
     actionProps: action
       ? {

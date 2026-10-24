@@ -15,6 +15,7 @@ import {
 import { selectAll } from "../lib/selection";
 import { toggleSelected } from "../lib/select-gesture";
 import { currentView } from "../lib/view-order-store";
+import { requestMoveTasks } from "../lib/move-store";
 import { requestDeleteTasks } from "./delete-task-dialog";
 import { useTaskView } from "./task-view-context";
 import { revealSheetField } from "./reveal-sheet-field";
@@ -22,7 +23,7 @@ import { revealSheetField } from "./reveal-sheet-field";
 /**
  * The shortcuts that edit the focused task, or the one open in the sheet or on
  * its page: `S` status, `P` priority, `A` assignee, `L` labels, `Shift+F` custom Fields, due date,
- * "assign to me" and delete. Mounted by the project page and the task page.
+ * "assign to me", `M` move to another project and delete. Mounted by the project page and the task page.
  */
 export function useTaskFieldHotkeys() {
   const hotkeys = useAppHotkeys();
@@ -109,6 +110,19 @@ export function useTaskFieldHotkeys() {
         }
         const task = currentTask();
         if (task && editable && meId) void actions.setAssignee(task, meId);
+      }),
+    },
+    {
+      hotkey: hotkeys.moveTask,
+      callback: guarded(() => {
+        if (!editable || !can.create) return;
+        const selection = selectionTarget();
+        if (selection.length > 0) {
+          requestMoveTasks(selection);
+          return;
+        }
+        const task = currentTask();
+        if (task) requestMoveTasks([task]);
       }),
     },
     {

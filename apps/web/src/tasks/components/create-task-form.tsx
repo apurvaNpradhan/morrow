@@ -24,6 +24,7 @@ import { useWorkspacePermission } from "@/workspace";
 import { createTask } from "../actions/task-actions";
 import { useCreatedToast } from "../actions/use-created-toast";
 import { parseDay } from "../lib/calendar-day";
+import { fieldHeld } from "../lib/field-value";
 import {
   closeCreateTask,
   type CreateTaskPreset,
@@ -120,8 +121,8 @@ export function CreateTaskForm({
         // Values chosen for another Project's Fields (the Project was changed after) are left out.
         fieldValues: Object.fromEntries(
           fields.flatMap((field) => {
-            const optionId = draft.fieldValues[field.id];
-            return optionId === undefined ? [] : [[field.id, optionId]];
+            const value = fieldHeld(field, draft.fieldValues);
+            return value === undefined ? [] : [[field.id, value]];
           }),
         ),
         userId: meId,

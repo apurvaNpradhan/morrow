@@ -31,8 +31,33 @@ type Sortable = Pick<
 /** The Fields a sort by `field:<id>` reads: each one's options, in any order. */
 export type SortableField = {
   id: string;
+  /** Left out for a choice Field. */
+  type?: string;
   options: readonly { id: string; position: string }[];
 };
+
+/** The value a task is ordered by for a Field: an option's rank, a number or a string; null when it has none. */
+function sortKey(
+  value: TaskRow["fieldValues"][string] | undefined,
+  /** The ranks of a choice Field's options; null for the other types. */
+  optionRank: ReadonlyMap<string, number> | null,
+): number | string | null {
+  if (value === undefined) return null;
+  if (typeof value === "string" && optionRank) {
+    return optionRank.get(value) ?? null;
+  }
+  if (typeof value === "number" || typeof value === "string") return value;
+  if (value === true) return 0;
+  if (!optionRank) return null;
+  // A multi choice sorts by its first option in the Field's order.
+  const ranks = value.flatMap((id) => optionRank.get(id) ?? []);
+  return ranks.length > 0 ? Math.min(...ranks) : null;
+}
+
+function compareKeys(a: number | string, b: number | string) {
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return collator.compare(String(a), String(b));
+}
 
 // One collator and a rank lookup: a sort of 30k tasks calls the comparator
 // hundreds of thousands of times, and `localeCompare` and `indexOf` cost far
@@ -50,7 +75,8 @@ function direct(order: number, direction: SortDirection) {
  * Orders tasks for display. Manual is the board's own order (by position);
  * any other field ignores position. Tasks without a due date, or without a
  * value for the Field sorted by, always come last, whichever way the sort runs.
- * A choice Field orders by its options' order, not their names.
+ * A choice Field orders by its options' order, not their names; a number
+ * numerically, a date by day, a text by locale, and a checked box before an unchecked one.
  */
 export function sortTasks<T extends Sortable>(
   tasks: readonly T[],
@@ -58,21 +84,26 @@ export function sortTasks<T extends Sortable>(
   fields: readonly SortableField[] = [],
 ): T[] {
   const fieldId = fieldIdOf(field);
-  const optionRank = new Map(
-    [...(fields.find((candidate) => candidate.id === fieldId)?.options ?? [])]
-      .sort((a, b) => (a.position < b.position ? -1 : 1))
-      .map((option, rank) => [option.id, rank]),
-  );
+  const sortedField = fields.find((candidate) => candidate.id === fieldId);
+  const isChoice =
+    sortedField?.type === undefined || sortedField.type.endsWith("_choice");
+  const optionRank = isChoice
+    ? new Map(
+        [...(sortedField?.options ?? [])]
+          .sort((a, b) => (a.position < b.position ? -1 : 1))
+          .map((option, rank) => [option.id, rank]),
+      )
+    : null;
   const byNumber = (a: T, b: T) =>
     a.number - b.number || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   return [...tasks].sort((a, b) => {
     if (fieldId !== null) {
-      const rankA = optionRank.get(a.fieldValues[fieldId] ?? "");
-      const rankB = optionRank.get(b.fieldValues[fieldId] ?? "");
-      if (rankA === rankB) return byNumber(a, b);
-      if (rankA === undefined) return 1;
-      if (rankB === undefined) return -1;
-      return direct(rankA - rankB, direction);
+      const keyA = sortKey(a.fieldValues[fieldId], optionRank);
+      const keyB = sortKey(b.fieldValues[fieldId], optionRank);
+      if (keyA === keyB) return byNumber(a, b);
+      if (keyA === null) return 1;
+      if (keyB === null) return -1;
+      return direct(compareKeys(keyA, keyB), direction) || byNumber(a, b);
     }
     switch (field) {
       case "manual":

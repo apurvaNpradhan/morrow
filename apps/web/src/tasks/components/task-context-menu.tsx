@@ -4,6 +4,7 @@ import {
   ArchiveRestore,
   CalendarDays,
   Copy,
+  FolderInput,
   Trash2,
   UserRound,
 } from "lucide-react";
@@ -27,6 +28,7 @@ import { taskCollection } from "../collections/task-collection";
 import { useSelectedIds } from "../lib/selection-store";
 import { SelectionMenuItems } from "./selection-menu-items";
 import { openDatePicker } from "../lib/date-picker-store";
+import { requestMoveTasks } from "../lib/move-store";
 import { requestDeleteTasks } from "./delete-task-dialog";
 import { ColumnMarker } from "./column-marker";
 import {
@@ -192,6 +194,13 @@ function TaskMenuItems({
             <MenuItem onClick={() => void actions.duplicate(task)}>
               <Copy aria-hidden="true" />
               {t("menu.duplicate")}
+            </MenuItem>
+          ) : null}
+          {can.create ? (
+            <MenuItem onClick={() => requestMoveTasks([task])}>
+              <FolderInput aria-hidden="true" />
+              {t("menu.moveToProject")}
+              <MenuHint hotkeyId="moveTask" />
             </MenuItem>
           ) : null}
           {task.archivedAt ? (

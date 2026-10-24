@@ -7,6 +7,7 @@ import {
   CirclePlus,
   Copy,
   Flag,
+  FolderInput,
   Link2,
   ListTree,
   SlidersHorizontal,
@@ -77,5 +78,7 @@ export function TaskEventIcon({
       return <Link2 aria-hidden="true" className={icon} />;
     case "duplicated":
       return <Copy aria-hidden="true" className={icon} />;
+    case "project_moved":
+      return <FolderInput aria-hidden="true" className={icon} />;
   }
 }

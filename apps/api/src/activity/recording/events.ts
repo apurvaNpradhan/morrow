@@ -71,6 +71,18 @@ export const workspaceActivityEventSchema = z.discriminatedUnion("type", [
     taskTitle: z.string(),
   }),
   z.object({
+    type: z.literal("task.moved"),
+    workspaceId: z.string(),
+    // The Project it moved to, and the ticket id it has there.
+    projectId: z.string(),
+    taskId: z.string(),
+    ticketId: z.string(),
+    taskTitle: z.string(),
+    fromTicketId: z.string(),
+    fromProjectName: z.string(),
+    toProjectName: z.string(),
+  }),
+  z.object({
     type: z.literal("comment.created"),
     workspaceId: z.string(),
     projectId: z.string(),

@@ -8,7 +8,7 @@ Large work could not be broken into Tasks, and nothing recorded that one Task wa
 
 ## Decision: subtasks
 
-**One parent, same Project.** The task row has a nullable `parent_id` (`ON DELETE SET NULL`, indexed). Tasks never change Project, so the parent is always in the same Project. Deleting a parent keeps its subtasks as top-level Tasks.
+**One parent, same Project.** The task row has a nullable `parent_id` (`ON DELETE SET NULL`, indexed). A Task can change Project only with its subtree or by leaving its Parent ([0011](0011-moving-tasks-between-projects.md)), so the parent is always in the same Project. Deleting a parent keeps its subtasks as top-level Tasks.
 
 **Cycle guard.** Setting a parent runs under `lockProject`; a recursive CTE walks the proposed parent's ancestors and refuses (`PARENT_CYCLE`) if it reaches the Task. A Task as its own parent is the same refusal. A parent outside the Project is `PARENT_NOT_IN_PROJECT`.
 

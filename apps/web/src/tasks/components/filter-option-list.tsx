@@ -31,6 +31,8 @@ export function FilterOptionList({
   create?: {
     label: (name: string) => string;
     onCreate: (name: string) => void;
+    /** Whether what was typed can be used at all; the row is hidden when not. */
+    accepts?: (name: string) => boolean;
   };
   /** The options come from a search: typing is reported here and they are not narrowed again. */
   onSearch?: (query: string) => void;
@@ -49,6 +51,7 @@ export function FilterOptionList({
   const offerCreate =
     create !== undefined &&
     needle !== "" &&
+    (create.accepts?.(typed) ?? true) &&
     !options.some((option) => option.label.toLowerCase() === needle);
   const shown: Array<FilterOption & { creates?: boolean }> = offerCreate
     ? [

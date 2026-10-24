@@ -1,6 +1,6 @@
 # Bulk select and bulk actions
 
-Status: ready-for-agent
+Status: shipped
 
 Ticket: MOR-3. Follow-up: MOR-50 (batches across Projects, once views land).
 

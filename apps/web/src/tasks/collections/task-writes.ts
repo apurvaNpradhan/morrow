@@ -1,6 +1,7 @@
 import type { TaskRow } from "@morrow/sync-schemas";
 import { rpc } from "@/app/lib/orpc";
 import { projectCollection } from "@/projects";
+import { sameFieldValue } from "../lib/field-value";
 
 type TaskMutation = { original: TaskRow; changes: Partial<TaskRow> };
 
@@ -74,7 +75,7 @@ export async function writeTaskChanges({ original, changes }: TaskMutation) {
     const now = changes.fieldValues;
     const before = original.fieldValues;
     for (const [fieldId, value] of Object.entries(now)) {
-      if (before[fieldId] !== value) {
+      if (!sameFieldValue(before[fieldId], value)) {
         await keep(rpc.tasks.setFieldValue({ ...target, fieldId, value }));
       }
     }

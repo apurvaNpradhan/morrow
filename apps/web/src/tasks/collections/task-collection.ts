@@ -24,7 +24,7 @@ export const taskCollection = registerSyncedCollection(
       // `archivedAt`.
       defaultIndexType: BTreeIndex,
       autoIndex: "eager",
-      shapeOptions: shapeOptions(tasksShape.name),
+      shapeOptions: shapeOptions(tasksShape.name, tasksShape.replica),
       onInsert: async ({ transaction, collection }) => {
         const { modified, metadata } = transaction.mutations[0];
         const target = {

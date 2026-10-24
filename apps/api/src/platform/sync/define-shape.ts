@@ -18,7 +18,7 @@ type ShapeDefinitionInput<Schema extends z.ZodObject, Table extends PgTable> = {
    * sent, in camelCase; the schema's keys are the allowlist. Shared with the
    * web app through `@morrow/sync-schemas`.
    */
-  shape: { name: string; schema: Schema };
+  shape: { name: string; schema: Schema; replica?: "full" };
   table: Table;
   /** Which rows this user may read. Everything comes from the session, never the request. */
   where: (context: ShapeContext) => ShapeFilter;
@@ -30,6 +30,8 @@ export type ShapeDefinition = {
   table: string;
   /** The allowed Postgres column names. */
   columns: string[];
+  /** Send whole rows in updates, not only the changed columns. */
+  replica?: "full";
   where: (context: ShapeContext) => ShapeFilter;
 };
 
@@ -60,6 +62,7 @@ export function defineShape<Schema extends z.ZodObject, Table extends PgTable>(
     name: input.shape.name,
     table: getTableName(input.table),
     columns,
+    replica: input.shape.replica,
     where: input.where,
   };
 }

@@ -111,7 +111,7 @@ function LoadedProjectTasks({
                 }
               >
                 <Settings aria-hidden="true" />
-                {t("board.settings")}
+                <span className="max-md:sr-only">{t("board.settings")}</span>
               </Button>
             ) : null}
           </>
@@ -135,6 +135,7 @@ function LoadedProjectTasks({
                 ticketNumber={ticketNumber}
                 openTask={navigation.openTask}
                 closeSheet={navigation.closeSheet}
+                followMoved={navigation.followMoved}
               />
             </div>
           </div>

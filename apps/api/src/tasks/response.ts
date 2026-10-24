@@ -1,5 +1,7 @@
 import {
   colorHex,
+  fieldConfigSchema,
+  namedFieldValueSchema,
   RELATION_DIRECTIONS,
   RELATION_TYPES,
   TASK_PRIORITIES,
@@ -25,6 +27,35 @@ export const createdResult = z.object({
   id: z.string(),
   number: z.number().describe("The Project's next ticket number."),
   txid,
+});
+
+export const moveResult = z.object({
+  moved: z.array(
+    z.object({
+      taskId: z.string(),
+      fromTicketId: z.string(),
+      toTicketId: z.string(),
+      column: z.string().describe("The Column it landed in."),
+      droppedValues: z.array(
+        z.object({ field: z.string(), value: namedFieldValueSchema }),
+      ),
+      detachedFrom: z
+        .string()
+        .nullable()
+        .describe("The Parent it left, by its old Ticket id."),
+    }),
+  ),
+  txid,
+});
+
+export const ticketTask = z.object({
+  id: z.string(),
+  projectId: z.string(),
+  ticketId: z
+    .string()
+    .describe(
+      "Its current Ticket id, which may differ from the one asked for.",
+    ),
 });
 
 export const archivedColumnResult = z.object({
@@ -59,6 +90,11 @@ const importWarning = z.discriminatedUnion("kind", [
     kind: z.literal("option_dropped"),
     field: z.string(),
     option: z.string(),
+    count: z.number(),
+  }),
+  z.object({
+    kind: z.literal("value_dropped"),
+    field: z.string(),
     count: z.number(),
   }),
   z.object({
@@ -104,8 +140,10 @@ export const taskListItem = z.object({
 });
 
 const namedFields = z
-  .record(z.string(), z.string())
-  .describe("Option name by Field name; Fields without a value are absent.");
+  .record(z.string(), namedFieldValueSchema)
+  .describe(
+    "Value by Field name: option name(s) for a choice, a string, number or YYYY-MM-DD date, true for a checked checkbox; Fields without a value are absent.",
+  );
 
 export const taskSearchResult = z.object({
   truncated: z.boolean().describe("More tasks matched than were returned."),
@@ -141,6 +179,7 @@ export const exportDocument = z.object({
     z.object({
       name: z.string(),
       type: z.string(),
+      config: fieldConfigSchema,
       options: z.array(z.object({ name: z.string(), color: colorHex })),
     }),
   ),
@@ -158,9 +197,7 @@ export const exportDocument = z.object({
       archivedAt: z.string().nullable(),
       createdAt: z.string(),
       labels: z.array(z.string()),
-      fields: z
-        .record(z.string(), z.string())
-        .describe("Option name by Field name."),
+      fields: namedFields,
       comments: z.array(
         z.object({
           authorEmail: z.string().nullable(),
@@ -176,6 +213,9 @@ export const exportDocument = z.object({
 /** One task with its labels and comments, for readers outside the web app (MCP). */
 export const taskDetail = z.object({
   id: z.string(),
+  projectId: z
+    .string()
+    .describe("Its Project, which is not the one asked for after a move."),
   ticketId: z.string(),
   parent: z.object({ ticketId: z.string(), title: z.string() }).nullable(),
   subtaskDone: z.number(),

@@ -1,19 +1,26 @@
+import type { FieldConfig, FieldType } from "@morrow/sync-schemas";
 import { rpc } from "@/app/lib/orpc";
 import { projectFieldCollection } from "../collections/project-field-collection";
 
 type Target = { workspaceId: string; projectId: string };
 
-/** Adds a Field at the end and waits for it to sync; resolves with its id. */
-export async function createField(target: Target, name: string) {
-  const { id, txid } = await rpc.projects.fields.create({ ...target, name });
+/** Adds a Field of a type at the end and waits for it to sync; resolves with its id. */
+export async function createField(
+  target: Target,
+  field: { name: string; type: FieldType; config?: FieldConfig },
+) {
+  const { id, txid } = await rpc.projects.fields.create({
+    ...target,
+    ...field,
+  });
   await projectFieldCollection.utils.awaitTxId(txid);
   return id;
 }
 
-/** Renames or repositions a Field; resolves when the change has synced back. */
+/** Renames, repositions or reconfigures a Field; resolves when the change has synced back. */
 export async function updateField(
   fieldId: string,
-  patch: { name?: string; position?: string },
+  patch: { name?: string; position?: string; config?: FieldConfig },
 ) {
   const transaction = projectFieldCollection.update(fieldId, (draft) => {
     Object.assign(draft, patch);

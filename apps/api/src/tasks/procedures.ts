@@ -18,6 +18,8 @@ import { getTask } from "./operations/get-task";
 import { importTasks } from "./operations/import-tasks";
 import { listTasks } from "./operations/list-tasks";
 import { moveTask } from "./operations/move-task";
+import { moveTasksToProject } from "./operations/move-tasks-to-project";
+import { resolveTicket } from "./operations/resolve-ticket";
 import { searchTasks, SEARCH_TASKS_MAX } from "./operations/search-tasks";
 import { setTaskParent } from "./operations/set-task-parent";
 import { setFieldValue } from "./operations/set-field-value";
@@ -30,7 +32,9 @@ import {
   createdResult,
   exportDocument,
   importResult,
+  moveResult,
   taskDetail,
+  ticketTask,
   taskSearchResult,
   taskListItem,
   txidResult,
@@ -46,6 +50,7 @@ import {
   fieldValue,
   fieldValues,
   labelId,
+  moveTaskIds,
   newTaskId,
   position,
   priority,
@@ -58,7 +63,8 @@ import {
 const canRead = requireWorkspacePermission({ workspace: ["read"] });
 const canCreate = requireWorkspacePermission({ task: ["create"] });
 const canUpdate = requireWorkspacePermission({ task: ["update"] });
-const canDuplicate = requireWorkspacePermission({
+// Duplicating and moving between Projects both write what a new Task would.
+const canCreateAndUpdate = requireWorkspacePermission({
   task: ["create", "update"],
 });
 const canDelete = requireWorkspacePermission({ task: ["delete"] });
@@ -141,6 +147,14 @@ const get = authed
   .output(taskDetail)
   .handler(({ input }) =>
     getTask(input.workspaceId, input.projectId, input.ticketId),
+  );
+
+const resolve = authed
+  .input(forProject.extend({ ticketId: z.string().trim().min(1) }))
+  .use(canRead)
+  .output(ticketTask)
+  .handler(({ input }) =>
+    resolveTicket(input.workspaceId, input.projectId, input.ticketId),
   );
 
 const create = authed
@@ -307,6 +321,29 @@ const move = authed
     }),
   );
 
+const moveToProject = authed
+  .input(
+    z.object({
+      workspaceId,
+      taskIds: moveTaskIds,
+      toProjectId: projectId,
+      columnId: columnId
+        .optional()
+        .describe(
+          "A Column of the destination for the Tasks named in taskIds.",
+        ),
+      withSubtasks: z.boolean().default(true),
+    }),
+  )
+  .use(canCreateAndUpdate)
+  .output(moveResult)
+  .handler(({ input }) =>
+    moveTasksToProject(input.workspaceId, input.toProjectId, input.taskIds, {
+      columnId: input.columnId,
+      withSubtasks: input.withSubtasks,
+    }),
+  );
+
 const archive = authed
   .input(forTask)
   .use(canUpdate)
@@ -333,7 +370,7 @@ const archiveCompleted = authed
 
 const duplicate = authed
   .input(forTask.extend({ id: newTaskId, position }))
-  .use(canDuplicate)
+  .use(canCreateAndUpdate)
   .output(createdResult)
   .handler(async ({ input, context }) =>
     duplicateTask(
@@ -421,6 +458,7 @@ export const tasksRouter = {
   columnCounts,
   search,
   get,
+  resolveTicket: resolve,
   create,
   updateTitle,
   updateDescription,
@@ -432,6 +470,7 @@ export const tasksRouter = {
   removeLabel,
   setFieldValue: updateFieldValue,
   move,
+  moveToProject,
   archive,
   unarchive,
   archiveCompleted,

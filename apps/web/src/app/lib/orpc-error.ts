@@ -61,6 +61,8 @@ const DOMAIN_KEYS = new Map(
     RELATION_SELF: "common:errors.relationSelf",
     RELATION_CYCLE: "common:errors.relationCycle",
     RELATION_TASK_NOT_IN_WORKSPACE: "common:errors.relationTaskNotInWorkspace",
+    MOVE_TOO_LARGE: "common:errors.taskMoveTooLarge",
+    MOVE_SAME_PROJECT: "common:errors.taskMoveSameProject",
   } satisfies Record<string, string>),
 );
 

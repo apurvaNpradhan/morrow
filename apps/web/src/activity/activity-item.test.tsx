@@ -81,6 +81,11 @@ describe("workspace activity item", () => {
       { ticketId: "MOR-12", taskTitle: "Write docs" },
       "MOR-12 “Write docs” was deleted",
     ],
+    [
+      "task.moved",
+      { ticketId: "WEB-3", fromTicketId: "MOR-12", taskTitle: "Write docs" },
+      "MOR-12 “Write docs” moved to WEB-3",
+    ],
   ])("describes %s", async (type, eventData, text) => {
     await preloadNamespaces("en-US");
     render(

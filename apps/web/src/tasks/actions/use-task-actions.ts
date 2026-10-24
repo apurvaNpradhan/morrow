@@ -1,4 +1,4 @@
-import type { TaskPriority, TaskRow } from "@morrow/sync-schemas";
+import type { FieldValue, TaskPriority, TaskRow } from "@morrow/sync-schemas";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
@@ -50,12 +50,12 @@ export function useTaskActions() {
       /** `null` makes the task a top-level one again. */
       setParent: (task: TaskRow, parentId: string | null) =>
         attempt(() => updateTask(task.id, { parentId })),
-      /** Sets a Field's value to an option id, or clears it with null. */
+      /** Sets a Field's value (an option id for a choice), or clears it with null. */
       setFieldValue: (
         task: TaskRow,
         fieldId: string,
-        optionId: string | null,
-      ) => attempt(() => setTaskFieldValue(task.id, fieldId, optionId)),
+        value: FieldValue | null,
+      ) => attempt(() => setTaskFieldValue(task.id, fieldId, value)),
       toggleLabel: (task: TaskRow, labelId: string) =>
         attempt(() => toggleTaskLabel(task.id, labelId)),
       setColumn: (task: TaskRow, columnId: string) => {

@@ -26,6 +26,7 @@ export const FILTER_SUBJECTS = [
   "dueDate",
   "column",
   "label",
+  "relation",
 ] as const;
 export type FilterSubject = (typeof FILTER_SUBJECTS)[number] | FieldSubject;
 

@@ -73,6 +73,11 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
             : null;
 
           const shakes = (toast.data as { shake?: number } | undefined)?.shake;
+          const secondary = (
+            toast.data as
+              | { secondary?: { label: string; onClick: () => void } }
+              | undefined
+          )?.secondary;
 
           return (
             <Toast.Root
@@ -155,12 +160,27 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
                   </div>
                 </div>
                 {toast.actionProps && (
-                  <Toast.Action
-                    className={buttonVariants({ size: "xs" })}
-                    data-slot="toast-action"
-                  >
-                    {toast.actionProps.children}
-                  </Toast.Action>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {secondary && (
+                      <button
+                        type="button"
+                        className={buttonVariants({
+                          size: "xs",
+                          variant: "outline",
+                        })}
+                        data-slot="toast-secondary-action"
+                        onClick={secondary.onClick}
+                      >
+                        {secondary.label}
+                      </button>
+                    )}
+                    <Toast.Action
+                      className={buttonVariants({ size: "xs" })}
+                      data-slot="toast-action"
+                    >
+                      {toast.actionProps.children}
+                    </Toast.Action>
+                  </div>
                 )}
               </Toast.Content>
             </Toast.Root>

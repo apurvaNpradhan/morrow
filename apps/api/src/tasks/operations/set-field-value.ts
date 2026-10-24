@@ -1,3 +1,8 @@
+import {
+  type FieldValue,
+  isChoiceType,
+  optionsHeld,
+} from "@morrow/sync-schemas";
 import { eq, sql } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { findField, lockProject } from "#api/projects/index";
@@ -5,6 +10,8 @@ import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { checkFieldValue } from "#api/tasks/lib/field-values";
 import { findTask } from "#api/tasks/lib/find-task";
 import { taskTable } from "#api/tasks/tables";
+
+type FieldRow = Awaited<ReturnType<typeof findField>>;
 
 /**
  * Sets a Task's value for a Field, or clears it with `null`. Touches only that
@@ -32,26 +39,34 @@ export async function setFieldValue(
         fieldValues:
           next === null
             ? sql`${taskTable.fieldValues} - ${fieldId}::text`
-            : sql`jsonb_set(${taskTable.fieldValues}, ARRAY[${fieldId}]::text[], to_jsonb(${next}::text))`,
+            : sql`jsonb_set(${taskTable.fieldValues}, ARRAY[${fieldId}]::text[], ${JSON.stringify(next)}::jsonb)`,
       })
       .where(eq(taskTable.id, taskId));
     const was = task.fieldValues[fieldId] ?? null;
-    if (was !== next) {
-      const ref = (id: string | null) => {
-        const option = field.options.find((candidate) => candidate.id === id);
-        return option
-          ? { id: option.id, name: option.name, color: option.color }
-          : null;
-      };
+    if (JSON.stringify(was) !== JSON.stringify(next)) {
       await recordTaskEvent(tx, projectId, taskId, {
         type: "field_changed",
         data: {
           field: { id: field.id, name: field.name },
-          from: ref(was),
-          to: ref(next),
+          from: snapshot(field, was),
+          to: snapshot(field, next),
         },
       });
     }
   });
   return { txid };
+}
+
+/** What a Field held, with option names and colours as they are now, for the history. */
+function snapshot(field: FieldRow, value: FieldValue | null) {
+  if (value === null) return null;
+  if (!isChoiceType(field.type))
+    return { value: value as string | number | true };
+  const held = optionsHeld(field, value).map(({ id, name, color }) => ({
+    id,
+    name,
+    color,
+  }));
+  if (field.type === "multi_choice") return { options: held };
+  return held[0] ?? null;
 }

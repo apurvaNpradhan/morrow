@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { fieldOptionSchema, FIELD_TYPES, fieldValuesSchema } from "./fields.js";
+import {
+  fieldConfigSchema,
+  fieldOptionSchema,
+  FIELD_TYPES,
+  fieldValuesSchema,
+} from "./fields.js";
 import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
 import { RELATION_TYPES } from "./relations.js";
 import { TASK_PRIORITIES } from "./tasks.js";
@@ -10,6 +15,8 @@ export * from "./fields.js";
 export * from "./task-events.js";
 export * from "./labels.js";
 export * from "./links.js";
+export * from "./match-column.js";
+export * from "./move-fields.js";
 export * from "./projects.js";
 export * from "./relations.js";
 export * from "./search.js";
@@ -23,12 +30,18 @@ export * from "./tasks.js";
  * if it is listed here.
  */
 
-/** A shape's name (what the browser asks for) with the columns it may send. */
+/**
+ * A shape's name (what the browser asks for) with the columns it may send.
+ * `replica: "full"` makes every update carry the whole row, not only what
+ * changed: a collection that loads on demand can then take in a row it never
+ * held, as when a Task moves into the Project a board shows.
+ */
 function shape<Name extends string, Schema extends z.ZodObject>(
   name: Name,
   schema: Schema,
+  options: { replica?: "full" } = {},
 ) {
-  return { name, schema };
+  return { name, schema, replica: options.replica };
 }
 
 export const workspaceMembersShape = shape(
@@ -136,6 +149,7 @@ export const projectFieldsShape = shape(
     type: z.enum(FIELD_TYPES),
     position: z.string(),
     options: z.array(fieldOptionSchema),
+    config: fieldConfigSchema,
     createdAt: z.date(),
     updatedAt: z.date(),
   }),
@@ -174,6 +188,9 @@ export const tasksShape = shape(
     createdAt: z.date(),
     updatedAt: z.date(),
   }),
+  // A Task moved to another Project arrives as an update of a row the board
+  // showing its new Project never held.
+  { replica: "full" },
 );
 
 export type TaskRow = z.infer<typeof tasksShape.schema>;

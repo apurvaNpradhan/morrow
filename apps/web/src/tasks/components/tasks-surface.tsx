@@ -10,6 +10,7 @@ import { useTaskViewPreferences } from "../lib/use-task-view-preferences";
 import { BoardView } from "./board-view";
 import { BoardSkeleton } from "./board-skeleton";
 import { DeleteTaskDialog } from "./delete-task-dialog";
+import { MoveTasksDialog } from "./move-tasks-dialog";
 import { DueDateDialog } from "./due-date-dialog";
 import { ListSkeleton } from "./list-skeleton";
 import { ListView } from "./list-view";
@@ -30,12 +31,15 @@ export function TasksSurface({
   ticketNumber,
   openTask,
   closeSheet,
+  followMoved,
 }: {
   layout: "board" | "list";
   /** The ticket number open in the sheet; null when none is. */
   ticketNumber: number | null;
   openTask: (task: TaskRow) => void;
   closeSheet: () => void;
+  /** The open task moved to another Project; shows it under its new Ticket id. */
+  followMoved: (ticket: string) => void;
 }) {
   const { t } = useTranslation("tasks");
   const { project } = useTaskView();
@@ -99,9 +103,14 @@ export function TasksSurface({
         </div>
       </TaskContextMenu>
       <SelectionBar />
-      <TaskSheet number={ticketNumber} onClose={closeSheet} />
+      <TaskSheet
+        number={ticketNumber}
+        onClose={closeSheet}
+        onMoved={followMoved}
+      />
       <TaskFieldPicker />
       <DueDateDialog />
+      <MoveTasksDialog />
       <DeleteTaskDialog
         onDeleted={(tasks) => {
           if (tasks.some((task) => task.number === ticketNumber)) closeSheet();

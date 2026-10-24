@@ -1,6 +1,6 @@
 # 0007. Custom fields
 
-Status: accepted (2026-10-19). Builds on [0003](0003-projects-and-columns.md), [0004](0004-tasks.md) and [0006](0006-labels-comments-history.md): Fields belong to a Project like Columns, and their values sit on the task row like `label_ids`.
+Status: accepted (2026-10-19); field types added 2026-10-21. Builds on [0003](0003-projects-and-columns.md), [0004](0004-tasks.md) and [0006](0006-labels-comments-history.md): Fields belong to a Project like Columns, and their values sit on the task row like `label_ids`.
 
 ## Context
 
@@ -16,7 +16,7 @@ A Project needs properties of its own ("Size", "Customer", "Story points") that 
 
 **A Field belongs to one Project** (`project_field`: name, type, fractional-index `position`, `options jsonb`, timestamps). The Project cascades. Names are 1–50 characters and unique per Project ignoring case; a Project has at most 20 Fields. **The type is fixed at creation.** If ever needed, single and multi choice may switch between each other; no other conversion is allowed.
 
-**v1 has one type: single choice.** Text, number, date and multi choice follow in MOR-44; number and date need their own filter operators.
+**Types:** single choice, multi choice, text, number, date and checkbox (MOR-44). What Kaneo calls rating, progress and duration are a number with bounds, a percent format or a unit; a link is a text with the `url` format. Person, task link and computed Fields are not offered.
 
 **Options are objects with ids**, stored in the Field's `options` as `{ id, name, color, position }`: at most 50 per Field, names unique within the Field ignoring case, colour a required hex from the label palette, the next one picked automatically. Tasks store the option id, so renaming, recolouring or reordering an option is one write to the Field row and every card updates.
 
@@ -24,7 +24,7 @@ A Project needs properties of its own ("Size", "Customer", "Story points") that 
 
 **Writing a value** is one Procedure, `tasks.setFieldValue({ taskId, fieldId, value | null })`, in `withTxid` under the Project lock. It takes a share lock on the `project_field` row first, validates the value against the type's schema and checks that the option exists, then sets the key with `jsonb_set` or drops it with `-`. Two people setting different Fields on one Task both land; a Field delete in flight either strips the value afterwards or makes the write fail.
 
-**Deleting a Field or an option is the single path that keeps `field_values` consistent.** In one transaction it locks the Field row, removes the key (Field) or every value holding the option id (option) from the Project's Tasks, then deletes the Field or rewrites its options. The web app confirms with the number of Tasks that hold a value, read from the `projects.fields.usage` Procedure because the `tasks` shape is on demand and the browser does not hold every Task. Moving those Tasks to another option instead is MOR-42, after bulk actions. A Task moved to another Project loses its values (MOR-15).
+**Deleting a Field or an option is the single path that keeps `field_values` consistent.** In one transaction it locks the Field row, removes the key (Field) or every value holding the option id (option) from the Project's Tasks, then deletes the Field or rewrites its options. The web app confirms with the number of Tasks that hold a value, read from the `projects.fields.usage` Procedure because the `tasks` shape is on demand and the browser does not hold every Task. Moving those Tasks to another option instead is MOR-42, after bulk actions. A Task moved to another Project keeps the values whose Field (same name and type) and option (same name) the new Project has, and loses the rest ([0011](0011-moving-tasks-between-projects.md)).
 
 **No required flag and no default.** "Required" only means something if it blocks creating a Task, which hurts quick create, MCP and import; a default backfilled into existing Tasks is a bulk edit. If defaults come, they apply when a Task is created and are never backfilled.
 
@@ -40,13 +40,29 @@ A Project needs properties of its own ("Size", "Customer", "Story points") that 
 
 **Import and export.** Export carries the Project's Fields and options by name and each Task's values by name. Import matches Fields by name, then options by name; a missing Field or option is created when the importer has `project: update`, otherwise dropped with a warning. MCP tools for Fields come with MOR-7.
 
+## Field types
+
+**Config.** `project_field.config jsonb` (default `{}`) holds how a text or number Field reads, validated per type by `parseFieldConfig`: text `format` plain or url (a value must then be an http or https address); number `format` plain, currency or percent, `unit` (a currency's ISO code, else a label up to 8 characters; none for percent) and `min`/`max`. A bound applies to writes after it is set, not to values already stored. Every other type takes `{}`. `fields.update` takes a name, a config, or both.
+
+**Values** (`FIELD_VALUE_SCHEMAS`, one schema per type, and `checkFieldValue`, shared by the API and the web app): single choice an option id; multi choice an array of distinct option ids, at least one, in any order (the web app shows them in option order); text a trimmed string of 1–200 characters; number a finite JSON number within ±1e15; date `"YYYY-MM-DD"`; checkbox `true`, and unchecking removes the key. Options belong to the choice types only: option Procedures refuse other Fields with `FIELD_HAS_NO_OPTIONS`.
+
+**Deletes.** Deleting a multi choice option removes its id from every array and drops the key where none is left, in the same transaction. `projects.fields.usage` returns one row per Field with `optionId: null` (Tasks holding any value) and, for choice Fields, one per option, so a Task with two options counts once per option and once for the Field.
+
+**Filters.** Values stay strings in the stored filter and are told apart by prefix, so matching needs no Field type: choice options by id (a multi choice matches when any of its options does); `noValue` and `hasValue` for any type; `checked` for a checkbox (unchecked is `noValue`); `date:overdue|today|thisWeek|nextWeek` for a date (overdue ignores task completion, unlike the due date); `num:gt|gte|lt|lte|eq:<n>` for a number, typed in the value list as `> 5`; `text:<words>` for a text, a case-insensitive substring. Stored filters whose values the Field's type can no longer hold are dropped like those naming deleted options.
+
+**Sort.** Choice Fields by option order (a multi choice by its first option in that order), numbers numerically, dates by day, texts by locale, a checked box before an unchecked one; Tasks without a value are always last.
+
+**History.** `field_changed` snapshots a value as one option `{ id, name, color }`, `{ options: [...] }` for a multi choice, or `{ value }` for the rest; edits fold per Field by identity (option ids, or the value), and an edit back to where it began deletes the entry.
+
+**Import, export and MCP.** A value travels as people write it: option names (a list for multi choice), a string, a number, a `YYYY-MM-DD` date, `true` for a checked box. Export carries each Field's `config`. Import creates a missing Field only from a declaration (or a bare option name, as a single choice) and drops a value that does not fit its Field, with a `value_dropped` warning. MCP `create_tasks` and `update_tasks` take the same shapes (`null` clears; `false` clears a checkbox) and refuse a bad one per item; `list_fields` reports `config`.
+
 ## Compared with Kaneo
 
 Values typed by one shared schema instead of strings checked three ways; options with ids, so rename and recolour rewrite nothing and delete cascades instead of being refused; no required flag or backfilled defaults; values on the task row instead of a second table and filter-values query; per-Field card toggles; value changes in task history; one Procedure per value write with a txid.
 
 ## Not now
 
-Text, number, date and multi choice types; required Fields and defaults; Fields shared across Projects; type changes; replace-on-delete (MOR-42); group-by (MOR-37); MCP tools (MOR-7); setting values from the context menu; search over option names.
+Person, task-link and computed types; required Fields and defaults; Fields shared across Projects; type changes; replace-on-delete (MOR-42); group-by (MOR-37); MCP tools (MOR-7); setting values from the context menu; search over option names.
 
 ## Consequences
 

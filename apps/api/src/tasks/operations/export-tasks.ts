@@ -8,6 +8,7 @@ import {
   projectNotFound,
   projectTable,
 } from "#api/projects/index";
+import { namedFieldValues } from "#api/tasks/lib/named-field-values";
 import {
   taskCommentTable,
   taskDescriptionTable,
@@ -98,9 +99,10 @@ export async function exportTasks(workspaceId: string, projectId: string) {
       .filter((label) => usedLabelIds.has(label.id))
       .map(({ name, color }) => ({ name, color })),
     columns: columns.map(({ name, category }) => ({ name, category })),
-    fields: fields.map(({ name, type, options }) => ({
+    fields: fields.map(({ name, type, config, options }) => ({
       name,
       type,
+      config,
       options: [...options]
         .sort(comparePosition)
         .map(({ name, color }) => ({ name, color })),
@@ -123,13 +125,7 @@ export async function exportTasks(workspaceId: string, projectId: string) {
           const label = labelById.get(id);
           return label ? [label.name] : [];
         }),
-        fields: Object.fromEntries(
-          Object.entries(task.fieldValues).flatMap(([fieldId, optionId]) => {
-            const field = fieldById.get(fieldId);
-            const option = field?.options.find((o) => o.id === optionId);
-            return field && option ? [[field.name, option.name]] : [];
-          }),
-        ),
+        fields: namedFieldValues(task.fieldValues, fieldById),
         comments: (commentsByTask.get(task.id) ?? []).map(
           ({ comment, authorEmail }) => ({
             authorEmail,

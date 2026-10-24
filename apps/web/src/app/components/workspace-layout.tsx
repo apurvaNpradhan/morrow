@@ -42,8 +42,8 @@ export function WorkspaceLayout({
   return (
     <Layout>
       <Layout.Header>
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-1 w-full">
+        <div className="flex w-full min-w-0 items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1 w-full">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -58,16 +58,16 @@ export function WorkspaceLayout({
               </Tooltip>
             </TooltipProvider>
             <div className="mx-1.5 h-4 w-px shrink-0 bg-border/80" />
-            <Breadcrumb className="flex items-center gap-1 text-xs w-full">
-              <BreadcrumbList>
-                <BreadcrumbItem>
+            <Breadcrumb className="flex min-w-0 items-center gap-1 text-xs w-full">
+              <BreadcrumbList className="flex-nowrap">
+                <BreadcrumbItem className="max-md:hidden">
                   <BreadcrumbLink href="/">
                     <span className="text-xs font-normal text-card-foreground">
                       {workspace?.name}
                     </span>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
+                <BreadcrumbSeparator className="max-md:hidden" />
                 {crumbs ?? (
                   <BreadcrumbItem>
                     <span className="text-xs font-normal text-card-foreground">
@@ -78,7 +78,7 @@ export function WorkspaceLayout({
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className={`${cn("flex items-center gap-1.5", className)}`}>
+          <div className={cn("flex shrink-0 items-center gap-1.5", className)}>
             {headerActions}
           </div>
         </div>

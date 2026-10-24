@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Sheet, SheetDescription, SheetPopup } from "@/design-system/ui/sheet";
 import { Skeleton } from "@/design-system/ui/skeleton";
 import { markFocusRestore } from "../lib/active-task-store";
+import { useFollowMovedTask } from "../queries/use-follow-moved-task";
 import { useTicketTask } from "../queries/use-task-queries";
 import { TaskSheetBody } from "./task-sheet-body";
 import { useTaskView } from "./task-view-context";
@@ -14,13 +15,24 @@ import { useTaskView } from "./task-view-context";
 export function TaskSheet({
   number,
   onClose,
+  onMoved,
 }: {
   number: number | null;
   onClose: () => void;
+  /** The task moved to another Project: show it under this Ticket id. */
+  onMoved: (ticket: string) => void;
 }) {
   const { t } = useTranslation("tasks");
-  const { project } = useTaskView();
+  const { workspace, project } = useTaskView();
   const { task, isReady } = useTicketTask(project.id, number);
+  const { gone } = useFollowMovedTask({
+    workspace,
+    project,
+    number,
+    task,
+    ready: isReady,
+    follow: onMoved,
+  });
 
   return (
     <Sheet
@@ -40,7 +52,7 @@ export function TaskSheet({
         {task ? (
           // A different task starts with its own editor and title.
           <TaskSheetBody key={task.id} task={task} />
-        ) : isReady ? (
+        ) : gone ? (
           <p className="p-6 text-sm text-muted-foreground">
             {t("sheet.notFound", { key: project.key, number })}
           </p>

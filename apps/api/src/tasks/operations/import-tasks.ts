@@ -7,6 +7,7 @@ import {
   compareColumns,
   isClosedCategory,
   LABEL_NAME_MAX,
+  matchColumn,
   MAX_TASK_LABELS,
   normalizeLabelName,
 } from "@morrow/sync-schemas";
@@ -29,7 +30,6 @@ import {
   MAX_IMPORT_TASKS,
 } from "#api/tasks/lib/import-document";
 import { importFields } from "#api/tasks/lib/import-fields";
-import { matchColumn } from "#api/tasks/lib/match-column";
 import type { ImportWarning } from "#api/tasks/response";
 import {
   taskCommentTable,

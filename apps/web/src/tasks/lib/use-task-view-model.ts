@@ -6,6 +6,7 @@ import type {
 import { useDeferredValue, useMemo } from "react";
 import { localeWeekStart } from "./calendar-day";
 import { matchesFilters, type TaskFilter } from "./filters";
+import { useRelationSets } from "../queries/use-relation-sets";
 import { matchesSearch } from "./search";
 import { sortTasks, type TaskSort } from "./sort";
 
@@ -53,6 +54,9 @@ export function useTaskViewModel({
   }, [columns, fields, sort, tasks]);
 
   const deferredSearch = useDeferredValue(search);
+  const relations = useRelationSets(
+    filters.some((filter) => filter.subject === "relation"),
+  );
 
   return useMemo(() => {
     if (deferredSearch.trim() === "" && filters.length === 0) {
@@ -63,7 +67,7 @@ export function useTaskViewModel({
         narrowed: false,
       };
     }
-    const context = { meId, today, weekStartsOn: localeWeekStart() };
+    const context = { meId, today, weekStartsOn: localeWeekStart(), relations };
     const byColumn = new Map<string, TaskRow[]>();
     let shown = 0;
     for (const [columnId, inColumn] of sorted) {
@@ -81,5 +85,14 @@ export function useTaskViewModel({
       shown,
       narrowed: shown !== tasks.length,
     };
-  }, [deferredSearch, filters, meId, projectKey, sorted, tasks, today]);
+  }, [
+    deferredSearch,
+    filters,
+    meId,
+    projectKey,
+    relations,
+    sorted,
+    tasks,
+    today,
+  ]);
 }

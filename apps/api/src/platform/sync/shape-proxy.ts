@@ -32,6 +32,7 @@ export const shapeRoutes = new Hono<{
   upstream.searchParams.set("table", shape.table);
   upstream.searchParams.set("columns", shape.columns.join(","));
   upstream.searchParams.set("where", filter.sql);
+  if (shape.replica) upstream.searchParams.set("replica", shape.replica);
   filter.params.forEach((value, index) => {
     upstream.searchParams.set(`params[${index + 1}]`, value);
   });

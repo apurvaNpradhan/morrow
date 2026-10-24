@@ -9,6 +9,7 @@ import {
   projectTable,
 } from "#api/projects/index";
 import { taskNotFound } from "#api/tasks/errors";
+import { findTicketTaskId } from "#api/tasks/lib/find-ticket";
 import {
   fieldsOfProjects,
   namedFieldValues,
@@ -24,7 +25,9 @@ import {
 /**
  * One task by ticket id with what the list leaves out: its description, its
  * labels (names and colours) and its comments, oldest first. History is not
- * included. A ticket id of another project is "not found".
+ * included. A ticket id of another project is "not found". A ticket id a
+ * moved task left behind finds the task, which reports its current ticket id
+ * and project.
  */
 export async function getTask(
   workspaceId: string,
@@ -43,15 +46,19 @@ export async function getTask(
   if (!project) throw projectNotFound();
   const parsed = parseTicketId(ticket);
   if (!parsed || parsed.key !== project.key) throw taskNotFound();
+  const taskId = await findTicketTaskId(db, projectId, parsed.number);
+  if (!taskId) throw taskNotFound();
 
   const [found] = await db
     .select({
       task: taskTable,
+      project: projectTable,
       column: projectColumnTable,
       assigneeName: schema.userTable.name,
       description: sql<string>`coalesce(${taskDescriptionTable.description}, '')`,
     })
     .from(taskTable)
+    .innerJoin(projectTable, eq(projectTable.id, taskTable.projectId))
     .innerJoin(
       projectColumnTable,
       eq(projectColumnTable.id, taskTable.columnId),
@@ -62,13 +69,10 @@ export async function getTask(
       eq(taskDescriptionTable.taskId, taskTable.id),
     )
     .where(
-      and(
-        eq(taskTable.projectId, projectId),
-        eq(taskTable.number, parsed.number),
-      ),
+      and(eq(taskTable.id, taskId), eq(projectTable.workspaceId, workspaceId)),
     );
   if (!found) throw taskNotFound();
-  const { task, column } = found;
+  const { task, column, project: home } = found;
   const [parent] = task.parentId
     ? await db
         .select({ number: taskTable.number, title: taskTable.title })
@@ -76,7 +80,7 @@ export async function getTask(
         .where(eq(taskTable.id, task.parentId))
     : [];
 
-  const fieldById = await fieldsOfProjects([projectId]);
+  const fieldById = await fieldsOfProjects([home.id]);
   const labels = await db
     .select({
       id: labelTable.id,
@@ -143,9 +147,10 @@ export async function getTask(
 
   return {
     id: task.id,
-    ticketId: ticketId(project.key, task.number),
+    projectId: home.id,
+    ticketId: ticketId(home.key, task.number),
     parent: parent
-      ? { ticketId: ticketId(project.key, parent.number), title: parent.title }
+      ? { ticketId: ticketId(home.key, parent.number), title: parent.title }
       : null,
     subtaskDone: task.subtaskDone,
     subtaskTotal: task.subtaskTotal,

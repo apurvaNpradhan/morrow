@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { matchColumn } from "./match-column";
+import { matchColumn } from "./match-column.js";
 
 const columns = [
   { id: "a", name: "Backlog", category: "backlog" as const },

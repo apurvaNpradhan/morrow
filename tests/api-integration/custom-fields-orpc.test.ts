@@ -324,9 +324,13 @@ describe("deleting an option or a Field", () => {
 
     const usage = await client.projects.fields.usage(base);
 
-    expect(usage).toEqual([
-      { fieldId: size.id, optionId: size.options.Large, count: 2 },
-    ]);
+    expect(usage).toEqual(
+      expect.arrayContaining([
+        { fieldId: size.id, optionId: null, count: 2 },
+        { fieldId: size.id, optionId: size.options.Large, count: 2 },
+      ]),
+    );
+    expect(usage).toHaveLength(2);
   });
 
   it("never leaves a dangling key when a value write races a Field delete", async () => {
@@ -539,6 +543,7 @@ describe("exporting and importing Fields", () => {
       {
         name: "Size",
         type: "single_choice",
+        config: {},
         options: [
           { name: "Small", color: expect.any(String) },
           { name: "Large", color: expect.any(String) },
@@ -547,6 +552,7 @@ describe("exporting and importing Fields", () => {
       {
         name: "Customer",
         type: "single_choice",
+        config: {},
         options: [{ name: "Acme", color: expect.any(String) }],
       },
     ]);

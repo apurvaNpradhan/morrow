@@ -37,9 +37,12 @@ async function isSignedOut() {
  * `/api/shapes/:name` for a shape by name; the server decides the table,
  * columns and rows (see the shape registry in the API).
  */
-export function shapeOptions(name: string) {
+export function shapeOptions(name: string, replica?: "full") {
   return {
     url: `${env.apiBaseUrl}/shapes/${name}`,
+    // Tells the collection that updates carry whole rows. The server decides
+    // what Electric sends; it never reads this parameter.
+    ...(replica && { params: { replica } }),
     columnMapper: snakeCamelMapper(),
     parser,
     // Development only: logs shape requests and applies the devtools' faults.
