@@ -210,9 +210,8 @@ test("hiding due dates on the Preferences page applies to the board", async ({
   await admin.goto(`/${slug}/projects/DSP/board`);
   await createTasks(admin, "To Do", ["Due today"]);
   await card(admin, "DSP-1", "Due today").click();
-  // Due date is not shown until it is added; adding it opens its menu.
-  await sheetOf(admin).getByRole("button", { name: "Add property" }).click();
-  await admin.getByRole("menuitem", { name: "Due date", exact: true }).click();
+  // Due date is not shown until it is added; its shortcut adds it and opens its menu.
+  await admin.keyboard.press("Shift+D");
   await admin.getByRole("menuitem", { name: "Today", exact: true }).click();
   await admin.keyboard.press("Escape");
   const dueChip = card(admin, "DSP-1", "Due today").getByText("Today");

@@ -4,6 +4,7 @@ import {
   ArchiveRestore,
   CalendarDays,
   Circle,
+  FolderInput,
   Tag,
   Trash2,
   UserRound,
@@ -19,6 +20,7 @@ import {
 } from "../lib/selection-store";
 import { openFieldPicker, type PickerField } from "../lib/field-picker-store";
 import { useSelectedTasks } from "../queries/use-task-queries";
+import { requestMoveTasks } from "../lib/move-store";
 import { requestDeleteTasks } from "./delete-task-dialog";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { useTaskView } from "./task-view-context";
@@ -108,6 +110,16 @@ export function SelectionBar() {
           >
             <CalendarDays aria-hidden="true" />
           </Button>
+          {can.create ? (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t("selection.move")}
+              onClick={() => requestMoveTasks(selectedTasks(project.id))}
+            >
+              <FolderInput aria-hidden="true" />
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             size="icon-xs"

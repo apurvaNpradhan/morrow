@@ -37,6 +37,7 @@ export const appHotkeys = defineAppHotkeys({
   setTaskDueDate: { hotkey: "Shift+D", meta: { group: "tasks" } },
   setTaskLabels: { hotkey: "L", meta: { group: "tasks" } },
   setTaskField: { hotkey: "Shift+F", meta: { group: "tasks" } },
+  moveTask: { hotkey: "M", meta: { group: "tasks" } },
   toggleTaskSelection: {
     hotkey: "X",
     meta: { group: "tasks" },

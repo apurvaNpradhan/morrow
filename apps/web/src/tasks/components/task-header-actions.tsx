@@ -5,6 +5,7 @@ import {
   ArchiveRestore,
   Ellipsis,
   Expand,
+  FolderInput,
   Link2,
   Trash2,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import {
 import { useTaskActions } from "../actions/use-task-actions";
 import { displayTicketId, taskUrl } from "../lib/task-links";
 import { TaskCopyItems } from "./task-copy-items";
+import { requestMoveTasks } from "../lib/move-store";
 import { requestDeleteTasks } from "./delete-task-dialog";
 import { useTaskView } from "./task-view-context";
 
@@ -82,6 +84,13 @@ export function TaskHeaderActions({
           {editable ? (
             <>
               <MenuSeparator />
+              {can.create ? (
+                <MenuItem onClick={() => requestMoveTasks([task])}>
+                  <FolderInput aria-hidden="true" />
+                  {t("menu.moveToProject")}
+                  <MenuHint hotkeyId="moveTask" />
+                </MenuItem>
+              ) : null}
               {task.archivedAt ? (
                 <MenuItem onClick={() => void actions.unarchive(task)}>
                   <ArchiveRestore aria-hidden="true" />

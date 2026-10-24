@@ -8,7 +8,13 @@ import {
   txidResult,
 } from "#api/projects/response";
 import { position, projectId, workspaceId } from "#api/projects/schemas";
-import { fieldId, fieldName, optionColor, optionId } from "./schemas";
+import {
+  fieldConfig,
+  fieldId,
+  fieldName,
+  optionColor,
+  optionId,
+} from "./schemas";
 import { createField } from "./operations/create-field";
 import { createOption } from "./operations/create-option";
 import { deleteField } from "./operations/delete-field";
@@ -32,6 +38,7 @@ const create = authed
     forProject.extend({
       name: fieldName,
       type: z.enum(FIELD_TYPES).default("single_choice"),
+      config: fieldConfig.optional(),
     }),
   )
   .use(canUpdate)
@@ -40,16 +47,24 @@ const create = authed
     createField(input.workspaceId, input.projectId, {
       name: input.name,
       type: input.type,
+      config: input.config,
     }),
   );
 
 const update = authed
-  .input(forField.extend({ name: fieldName }))
+  .input(
+    forField
+      .extend({ name: fieldName.optional(), config: fieldConfig.optional() })
+      .refine(
+        (input) => input.name !== undefined || input.config !== undefined,
+      ),
+  )
   .use(canUpdate)
   .output(txidResult)
   .handler(({ input }) =>
     updateField(input.workspaceId, input.projectId, input.fieldId, {
       name: input.name,
+      config: input.config,
     }),
   );
 

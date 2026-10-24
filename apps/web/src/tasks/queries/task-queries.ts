@@ -70,3 +70,14 @@ export function ticketTask(projectId: string, number: number) {
     ),
   );
 }
+
+/** Every task of a Project, archived and closed ones included: what a move counts and checks. */
+export function projectTasks(projectId: string) {
+  return once(`project:${projectId}`, () =>
+    createLiveQueryCollection((q) =>
+      q
+        .from({ task: taskCollection })
+        .where(({ task }) => eq(task.projectId, projectId)),
+    ),
+  );
+}

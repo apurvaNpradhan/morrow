@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import {
   COLUMN_CATEGORIES,
   FIELD_TYPES,
+  type FieldConfig,
   type FieldOption,
 } from "@morrow/sync-schemas";
 import { sql } from "drizzle-orm";
@@ -121,6 +122,11 @@ export const projectFieldTable = pgTable(
       .$type<FieldOption[]>()
       .notNull()
       .default(sql`'[]'::jsonb`),
+    // How a text or number Field reads (format, unit, bounds); `{}` for the rest.
+    config: jsonb("config")
+      .$type<FieldConfig>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     createdAt: timestamp("created_at", { mode: "date" })
       .default(utcNow)
       .notNull(),
@@ -139,6 +145,9 @@ export const projectFieldTable = pgTable(
       table.projectId,
       table.position,
     ),
-    check("project_field_type_check", sql`${table.type} IN ('single_choice')`),
+    check(
+      "project_field_type_check",
+      sql`${table.type} IN ('single_choice', 'multi_choice', 'text', 'number', 'date', 'checkbox')`,
+    ),
   ],
 );

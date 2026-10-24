@@ -1,7 +1,11 @@
 import { ORPCError } from "@orpc/server";
 import { createId } from "@paralleldrive/cuid2";
 import { generateKeyBetween } from "fractional-indexing";
-import { COLUMN_COLOR_BY_NAME } from "@morrow/sync-schemas";
+import {
+  COLUMN_COLOR_BY_NAME,
+  type NamedFieldValue,
+  unnameFieldValue,
+} from "@morrow/sync-schemas";
 import type { McpClient } from "#api/platform/orpc/mcp-tool";
 
 /** MCP callers name things; the procedures want ids. These look them up. */
@@ -18,7 +22,8 @@ export async function resolveTask(
 ) {
   try {
     const task = await client.tasks.get({ ...scope, ticketId });
-    return { ...scope, taskId: task.id };
+    // A moved task answers to its old ticket id but lives in another project.
+    return { ...scope, projectId: task.projectId, taskId: task.id };
   } catch (error) {
     if (error instanceof ORPCError && error.code === "NOT_FOUND") {
       throw new ORPCError("NOT_FOUND", {
@@ -91,33 +96,46 @@ export function taskPositions(
 }
 
 /**
- * Field ids and option ids for Fields and options given by name (any letter
- * case); `null` stays `null`, which clears a value. An unknown name is refused
- * with the names that exist.
+ * Field ids and stored values for Fields given by name (any letter case) and
+ * values given the way people write them: option names, a number, a
+ * YYYY-MM-DD date, a boolean for a checkbox. `null` stays `null`, which clears
+ * a value. An unknown field or option, or a value of the wrong kind, is refused
+ * with what exists.
  */
 export async function resolveFieldValues(
   client: McpClient,
   scope: { workspaceId: string; projectId: string },
-  named: Record<string, string | null>,
+  named: Record<string, NamedFieldValue | null>,
 ) {
   const fields = await client.projects.fields.list(scope);
-  return Object.entries(named).map(([fieldName, optionName]) => {
+  return Object.entries(named).map(([fieldName, given]) => {
     const field = fields.find((f) => same(f.name, fieldName));
     if (!field) {
       throw refused(
         `No field named "${fieldName}". Fields: ${fields.map((f) => f.name).join(", ") || "none"}`,
       );
     }
-    if (optionName === null) return { fieldId: field.id, value: null };
-    const option = field.options.find((o) => same(o.name, optionName));
-    if (!option) {
+    const options = field.options.map((o) => ({ ...o, position: "" }));
+    const result = unnameFieldValue({ ...field, options }, given);
+    if (!result.ok) {
       throw refused(
-        `No option "${optionName}" in field "${field.name}". Options: ${field.options.map((o) => o.name).join(", ")}`,
+        result.unknownOption !== undefined
+          ? `No option "${result.unknownOption}" in field "${field.name}". Options: ${field.options.map((o) => o.name).join(", ")}`
+          : `Invalid value for ${FIELD_TYPE_LABEL[field.type]} field "${field.name}".`,
       );
     }
-    return { fieldId: field.id, value: option.id };
+    return { fieldId: field.id, value: result.value };
   });
 }
+
+const FIELD_TYPE_LABEL = {
+  single_choice: "single choice",
+  multi_choice: "multi choice",
+  text: "text",
+  number: "number",
+  date: "date (YYYY-MM-DD)",
+  checkbox: "checkbox (true or false)",
+} as const;
 
 /**
  * Label ids for names, creating the ones that do not exist yet (default

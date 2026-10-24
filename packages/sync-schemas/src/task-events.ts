@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { namedFieldValueSchema } from "./fields.js";
 import { colorHex, COLUMN_CATEGORIES } from "./projects.js";
 import { RELATION_DIRECTIONS, RELATION_TYPES } from "./relations.js";
 import { TASK_PRIORITIES } from "./tasks.js";
@@ -22,8 +23,21 @@ const labelRef = z.object({
   color: colorHex,
 });
 const fieldRef = z.object({ id: z.string(), name: z.string() });
-const optionRef = z
-  .object({ id: z.string(), name: z.string(), color: colorHex })
+const optionRef = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: colorHex,
+});
+/**
+ * What a Field held, as a snapshot: one option, the options of a multi choice,
+ * or the plain value of a text, number, date or checkbox Field. Null is no value.
+ */
+const fieldValueRef = z
+  .union([
+    optionRef,
+    z.object({ options: z.array(optionRef) }),
+    z.object({ value: z.union([z.string(), z.number(), z.literal(true)]) }),
+  ])
   .nullable();
 const none = z.object({});
 // The other Task's ticket id is a snapshot; the direction is as this Task sees it.
@@ -31,6 +45,15 @@ const relationData = z.object({
   type: z.enum(RELATION_TYPES),
   direction: z.enum(RELATION_DIRECTIONS),
   ticketId: z.string(),
+});
+
+// Where a moved Task was or went, with names snapshotted so the entry reads on after a rename.
+const movedEnd = z.object({
+  projectId: z.string(),
+  key: z.string(),
+  name: z.string(),
+  ticketId: z.string(),
+  column: columnRef,
 });
 
 function event<Type extends string, Data extends z.ZodObject>(
@@ -61,7 +84,7 @@ export const taskEventSchema = z.discriminatedUnion("type", [
   ),
   event(
     "field_changed",
-    z.object({ field: fieldRef, from: optionRef, to: optionRef }),
+    z.object({ field: fieldRef, from: fieldValueRef, to: fieldValueRef }),
   ),
   event("archived", none),
   event("unarchived", none),
@@ -72,6 +95,16 @@ export const taskEventSchema = z.discriminatedUnion("type", [
   ),
   event("subtask_added", z.object({ ticketId: z.string() })),
   event("subtask_removed", z.object({ ticketId: z.string() })),
+  event(
+    "project_moved",
+    z.object({
+      from: movedEnd,
+      to: movedEnd,
+      droppedValues: z.array(
+        z.object({ field: z.string(), value: namedFieldValueSchema }),
+      ),
+    }),
+  ),
   event("relation_added", relationData),
   event("relation_removed", relationData),
 ]);
@@ -79,4 +112,5 @@ export const taskEventSchema = z.discriminatedUnion("type", [
 export type TaskEvent = z.infer<typeof taskEventSchema>;
 export type TaskEventType = TaskEvent["type"];
 export type TaskEventLabelRef = z.infer<typeof labelRef>;
-export type TaskEventOptionRef = NonNullable<z.infer<typeof optionRef>>;
+export type TaskEventOptionRef = z.infer<typeof optionRef>;
+export type TaskEventFieldValueRef = z.infer<typeof fieldValueRef>;

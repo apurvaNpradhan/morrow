@@ -2,7 +2,7 @@ import { normalizeFieldName } from "@morrow/sync-schemas";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { optionNotFound, projectError } from "#api/projects/errors";
 import { lockProject } from "#api/projects/lib/lock-project";
-import { findField } from "../lib/find-field";
+import { findChoiceField } from "../lib/find-field";
 import { writeOptions } from "../lib/write-options";
 
 /**
@@ -18,7 +18,7 @@ export async function updateOption(
 ) {
   const { txid } = await withTxid(async (tx) => {
     await lockProject(tx, workspaceId, projectId);
-    const field = await findField(tx, projectId, fieldId, "update");
+    const field = await findChoiceField(tx, projectId, fieldId, "update");
     if (!field.options.some((o) => o.id === optionId)) throw optionNotFound();
     if (changes.name !== undefined) {
       const name = normalizeFieldName(changes.name);

@@ -1,5 +1,9 @@
 import { createId } from "@paralleldrive/cuid2";
-import { RELATION_TYPES, TASK_PRIORITIES } from "@morrow/sync-schemas";
+import {
+  type FieldValues,
+  RELATION_TYPES,
+  TASK_PRIORITIES,
+} from "@morrow/sync-schemas";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -9,6 +13,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -68,11 +73,12 @@ export const taskTable = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),
-    // Custom Field values keyed by Field id (option id for a choice Field). A
+    // Custom Field values keyed by Field id (option id, or ids for a multi
+    // choice, for a choice Field; see `FieldValue`). A
     // value not set is a missing key, never null. No foreign key, like
     // `label_ids`: Field and option delete keep it consistent.
     fieldValues: jsonb("field_values")
-      .$type<Record<string, string>>()
+      .$type<FieldValues>()
       .notNull()
       .default(sql`'{}'::jsonb`),
     position: text("position").notNull(),
@@ -106,6 +112,31 @@ export const taskTable = pgTable(
       "task_priority_check",
       sql`${table.priority} IN ('none', 'low', 'medium', 'high', 'urgent')`,
     ),
+  ],
+);
+
+/*
+ * A Ticket id a Task left when it moved to another Project: the Project it was
+ * in and the number it had there. Lookup tries the live `(project, number)`
+ * first, then this table, so the old id keeps resolving. Numbers are never
+ * reused, so a row never clashes with a live Task, and a Task moving back
+ * takes its old number again and deletes the row. It keys on the Project, not
+ * its key, so a key rename leaves it working.
+ */
+export const taskTicketAliasTable = pgTable(
+  "task_ticket_alias",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projectTable.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    taskId: text("task_id")
+      .notNull()
+      .references(() => taskTable.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.projectId, table.number] }),
+    index("task_ticket_alias_taskId_idx").on(table.taskId),
   ],
 );
 

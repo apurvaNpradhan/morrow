@@ -9,6 +9,7 @@ export { ProjectFieldsPage } from "./settings/project-fields-page";
 export { ProjectWorkflowPage } from "./settings/project-workflow-page";
 export { ProjectsSettingsIndex } from "./settings/projects-settings-index";
 export { CreateProjectDialog } from "./components/create-project-dialog";
+export { FieldTypeIcon } from "./components/field-type-icon";
 export {
   CATEGORY_ICONS,
   colorDotStyle,

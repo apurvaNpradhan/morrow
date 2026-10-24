@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
+  type FieldValues,
   isClosedCategory,
   nextCompletedAt,
   type ProjectColumnRow,
@@ -45,7 +46,7 @@ export type NewTask = {
   labelIds?: string[];
   /** Makes the new task a subtask of this one. */
   parentId?: string;
-  fieldValues?: Record<string, string>;
+  fieldValues?: FieldValues;
   /** The signed-in user, recorded as the creator. */
   userId: string;
 };

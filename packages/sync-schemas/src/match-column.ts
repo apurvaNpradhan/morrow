@@ -1,4 +1,4 @@
-import type { ColumnCategory } from "@morrow/sync-schemas";
+import type { ColumnCategory } from "./projects.js";
 
 type Column = { id: string; name: string; category: ColumnCategory };
 
@@ -8,8 +8,8 @@ type Column = { id: string; name: string; category: ColumnCategory };
  * column name), else the first `unstarted` one. `exact` is false when the name
  * did not match, which the importer reports.
  */
-export function matchColumn(
-  columns: Column[],
+export function matchColumn<Match extends Column>(
+  columns: Match[],
   imported: { column: string; category?: ColumnCategory },
   fileColumns: { name: string; category: ColumnCategory }[],
 ) {

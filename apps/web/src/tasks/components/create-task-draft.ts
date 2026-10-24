@@ -1,4 +1,4 @@
-import type { TaskPriority } from "@morrow/sync-schemas";
+import type { FieldValues, TaskPriority } from "@morrow/sync-schemas";
 
 /** What the create dialog has collected so far. */
 export type TaskDraft = {
@@ -11,7 +11,7 @@ export type TaskDraft = {
   dueDate: string | null;
   labelIds: string[];
   /** Custom Field values by Field id, for the chosen Project. */
-  fieldValues: Record<string, string>;
+  fieldValues: FieldValues;
 };
 
 export const EMPTY_DRAFT: TaskDraft = {

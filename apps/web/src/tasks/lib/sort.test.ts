@@ -9,7 +9,7 @@ function task(id: string, overrides: Record<string, unknown> = {}) {
     position: `a${id.slice(1)}`,
     priority: "none" as const,
     dueDate: null as string | null,
-    fieldValues: {} as Record<string, string>,
+    fieldValues: {} as Record<string, string | number | true | string[]>,
     createdAt: new Date(2026, 0, Number(id.slice(1))),
     ...overrides,
   };
@@ -111,5 +111,79 @@ describe("sorting by a choice Field", () => {
     expect(
       ids(sortTasks(tasks, { field: "field:f1", direction: "desc" }, fields)),
     ).toEqual(["t1", "t4", "t3", "t5", "t2", "t6"]);
+  });
+});
+
+describe("sorting by Fields of other types", () => {
+  const withValue = (id: string, value?: string | number | true | string[]) =>
+    task(id, { fieldValues: value === undefined ? {} : { f1: value } });
+  const sort = (
+    tasks: ReturnType<typeof task>[],
+    type: string,
+    direction: "asc" | "desc" = "asc",
+    options: { id: string; position: string }[] = [],
+  ) =>
+    ids(
+      sortTasks(tasks, { field: "field:f1", direction }, [
+        { id: "f1", type, options },
+      ]),
+    );
+
+  it("orders numbers by value, not as text, with unset last either way", () => {
+    const tasks = [
+      withValue("t1", 10),
+      withValue("t2"),
+      withValue("t3", 9),
+      withValue("t4", -2),
+      withValue("t5", 0),
+    ];
+    expect(sort(tasks, "number")).toEqual(["t4", "t5", "t3", "t1", "t2"]);
+    expect(sort(tasks, "number", "desc")).toEqual([
+      "t1",
+      "t3",
+      "t5",
+      "t4",
+      "t2",
+    ]);
+  });
+
+  it("orders dates by day and texts alphabetically", () => {
+    const dates = [
+      withValue("t1", "2026-12-01"),
+      withValue("t2", "2026-01-31"),
+      withValue("t3"),
+    ];
+    expect(sort(dates, "date")).toEqual(["t2", "t1", "t3"]);
+    const texts = [
+      withValue("t1", "beta"),
+      withValue("t2", "Alpha"),
+      withValue("t3"),
+    ];
+    expect(sort(texts, "text")).toEqual(["t2", "t1", "t3"]);
+  });
+
+  it("puts checked boxes before unchecked ones when ascending", () => {
+    const tasks = [withValue("t1"), withValue("t2", true)];
+    expect(sort(tasks, "checkbox")).toEqual(["t2", "t1"]);
+  });
+
+  it("orders a multi choice by its first option in the Field's order", () => {
+    const options = [
+      { id: "a", position: "a0" },
+      { id: "b", position: "a1" },
+      { id: "c", position: "a2" },
+    ];
+    const tasks = [
+      withValue("t1", ["c"]),
+      withValue("t2", ["c", "a"]),
+      withValue("t3", ["b"]),
+      withValue("t4", ["ghost"]),
+    ];
+    expect(sort(tasks, "multi_choice", "asc", options)).toEqual([
+      "t2",
+      "t3",
+      "t1",
+      "t4",
+    ]);
   });
 });

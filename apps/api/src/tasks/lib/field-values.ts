@@ -1,5 +1,5 @@
 import {
-  FIELD_VALUE_SCHEMAS,
+  checkFieldValue as checkValue,
   type FieldValues,
   fieldValuesSchema,
 } from "@morrow/sync-schemas";
@@ -11,16 +11,13 @@ import { taskError } from "#api/tasks/errors";
 type FieldRow = typeof projectFieldTable.$inferSelect;
 
 /**
- * The value as it is stored, once it is the right type for the Field and, for a
- * choice, one of its options; anything else is INVALID_FIELD_VALUE.
+ * The value as it is stored, once it is right for the Field (its type, its
+ * options, its config's bounds); anything else is INVALID_FIELD_VALUE.
  */
 export function checkFieldValue(field: FieldRow, value: unknown) {
-  const parsed = FIELD_VALUE_SCHEMAS[field.type].safeParse(value);
-  if (!parsed.success) throw taskError("INVALID_FIELD_VALUE");
-  if (!field.options.some((option) => option.id === parsed.data)) {
-    throw taskError("INVALID_FIELD_VALUE");
-  }
-  return parsed.data;
+  const checked = checkValue(field, value);
+  if (!checked.ok) throw taskError("INVALID_FIELD_VALUE");
+  return checked.value;
 }
 
 /**

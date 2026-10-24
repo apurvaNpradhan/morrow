@@ -18,7 +18,7 @@ function workspaceOf(projectId: string) {
  * Custom Fields of every project the user can see, with their options. Adding a
  * Field is not an insert here (the server assigns the id and position), and
  * option edits go through their own Procedures (see the field actions);
- * renames, moves and deletes of a Field are.
+ * renames, config changes, moves and deletes of a Field are.
  */
 export const projectFieldCollection = registerSyncedCollection(
   createCollection(
@@ -38,10 +38,11 @@ export const projectFieldCollection = registerSyncedCollection(
             projectId: original.projectId,
             fieldId: original.id,
           };
-          if (changes.name !== undefined) {
+          if (changes.name !== undefined || changes.config !== undefined) {
             const { txid } = await rpc.projects.fields.update({
               ...target,
               name: changes.name,
+              config: changes.config,
             });
             await collection.utils.awaitTxId(txid);
           }

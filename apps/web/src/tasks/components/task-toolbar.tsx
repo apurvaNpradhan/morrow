@@ -69,7 +69,7 @@ export function TaskToolbar({
         <div className="me-auto">
           <ProjectProgress />
         </div>
-        <div className="relative">
+        <div className="relative max-md:order-last max-md:w-full">
           <Search
             aria-hidden="true"
             className="pointer-events-none absolute start-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
@@ -78,7 +78,7 @@ export function TaskToolbar({
             ref={searchRef}
             type="search"
             size="sm"
-            className="h-7 w-48 ps-7 pe-7"
+            className="h-7 w-full ps-7 pe-7 md:w-48"
             value={search}
             placeholder={t("toolbar.search")}
             aria-label={t("toolbar.search")}

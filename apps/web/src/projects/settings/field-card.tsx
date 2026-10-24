@@ -1,4 +1,8 @@
-import type { FieldOption, ProjectFieldRow } from "@morrow/sync-schemas";
+import {
+  type FieldOption,
+  isChoiceType,
+  type ProjectFieldRow,
+} from "@morrow/sync-schemas";
 import { GripVertical, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "@/app/lib/error-message";
@@ -13,7 +17,9 @@ import {
 } from "../actions/field-actions";
 import { BlurSaveInput } from "../components/blur-save-input";
 import { useSortableList } from "../lib/use-sortable-list";
+import { FieldTypeIcon } from "../components/field-type-icon";
 import { AddNameForm } from "./add-name-form";
+import { FieldConfigEditor } from "./field-config-editor";
 import { FieldOptionRow } from "./field-option-row";
 
 /** One Field: its name and handle, its options, and a row to add an option. */
@@ -82,6 +88,13 @@ export function FieldCard({
         >
           <GripVertical aria-hidden="true" className="size-4" />
         </button>
+        <span
+          className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
+          title={t(`fields.type.${field.type}`)}
+        >
+          <FieldTypeIcon type={field.type} />
+          <span className="sr-only">{t(`fields.type.${field.type}`)}</span>
+        </span>
         <BlurSaveInput
           size="sm"
           className="min-w-0 flex-1 font-medium"
@@ -103,38 +116,44 @@ export function FieldCard({
           <Trash2 aria-hidden="true" />
         </Button>
       </header>
-      <SettingsCard>
-        {field.options.length > 0 ? (
-          <ul className="divide-y divide-border">
-            {field.options.map((option, index) => (
-              <FieldOptionRow
-                key={option.id}
-                field={field}
-                option={option}
-                workspaceId={workspaceId}
-                disabled={disabled}
-                onDelete={(picked) => onDeleteOption(field, picked)}
-                dropIndicator={sortable.dropIndicator(option.id)}
-                dragging={sortable.isDragging(option.id)}
-                rowProps={sortable.rowProps(option, index)}
-                handleProps={sortable.handleProps(option, index)}
-              />
-            ))}
-          </ul>
-        ) : (
-          <p className="px-4 py-3 text-xs text-muted-foreground">
-            {t("fields.noOptions")}
-          </p>
-        )}
-        {disabled ? null : (
-          <AddNameForm
-            placeholder={t("fields.addOptionPlaceholder")}
-            addLabel={t("fields.addOption")}
-            errorFallback={t("fields.addOptionError")}
-            onAdd={(name) => createOption(target, name)}
-          />
-        )}
-      </SettingsCard>
+      {isChoiceType(field.type) ? (
+        <SettingsCard>
+          {field.options.length > 0 ? (
+            <ul className="divide-y divide-border">
+              {field.options.map((option, index) => (
+                <FieldOptionRow
+                  key={option.id}
+                  field={field}
+                  option={option}
+                  workspaceId={workspaceId}
+                  disabled={disabled}
+                  onDelete={(picked) => onDeleteOption(field, picked)}
+                  dropIndicator={sortable.dropIndicator(option.id)}
+                  dragging={sortable.isDragging(option.id)}
+                  rowProps={sortable.rowProps(option, index)}
+                  handleProps={sortable.handleProps(option, index)}
+                />
+              ))}
+            </ul>
+          ) : (
+            <p className="px-4 py-3 text-xs text-muted-foreground">
+              {t("fields.noOptions")}
+            </p>
+          )}
+          {disabled ? null : (
+            <AddNameForm
+              placeholder={t("fields.addOptionPlaceholder")}
+              addLabel={t("fields.addOption")}
+              errorFallback={t("fields.addOptionError")}
+              onAdd={(name) => createOption(target, name)}
+            />
+          )}
+        </SettingsCard>
+      ) : field.type === "text" || field.type === "number" ? (
+        <SettingsCard>
+          <FieldConfigEditor field={field} disabled={disabled} />
+        </SettingsCard>
+      ) : null}
     </section>
   );
 }

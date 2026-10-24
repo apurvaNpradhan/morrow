@@ -1,4 +1,4 @@
-import { CalendarDays, SlidersHorizontal, Tag, UserRound } from "lucide-react";
+import { CalendarDays, Tag, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
@@ -9,16 +9,16 @@ import {
   PopoverTrigger,
 } from "@/design-system/ui/popover";
 import { cn } from "@/design-system/cn";
-import { LabelChips, LabelDot, labelsOfTask } from "@/labels";
-import { optionHeld } from "../lib/field-value";
+import { LabelChips, labelsOfTask } from "@/labels";
+import { fieldHeld } from "../lib/field-value";
 import { useTaskActions } from "../actions/use-task-actions";
 import { openDatePicker } from "../lib/date-picker-store";
 import { parseDay } from "../lib/calendar-day";
-import { AddPropertyMenu } from "./add-property-menu";
 import { REVEAL_SHEET_FIELD } from "./reveal-sheet-field";
 import { ColumnMarker } from "./column-marker";
 import { FieldValueItems } from "./field-value-items";
 import { FieldChipMenu } from "./field-chip-menu";
+import { useFieldChipFace } from "./use-field-chip-face";
 import { PersonAvatar } from "./person-avatar";
 import {
   AssigneeItems,
@@ -33,8 +33,8 @@ import { useTaskView } from "./task-view-context";
 /**
  * A task's fields in the sheet: a rail on wide screens, a wrapping row of
  * chips on narrow ones. Read-only when the user cannot edit. Due date and
- * custom Fields show only once they have a value or are added from the last
- * row; what was added stays until the task closes.
+ * custom Fields show only once they have a value or a shortcut adds them; what
+ * was added stays until the task closes.
  */
 export function TaskProperties({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
@@ -51,6 +51,7 @@ export function TaskProperties({ task }: { task: TaskRow }) {
     frozen,
   } = useTaskView();
   const actions = useTaskActions();
+  const chipFace = useFieldChipFace();
   const editable = can.edit && !frozen;
   const column = columnById.get(task.columnId);
   const assignee = task.assigneeId
@@ -63,11 +64,11 @@ export function TaskProperties({ task }: { task: TaskRow }) {
   });
   const showDueDate = task.dueDate !== null || added.names.includes("dueDate");
   const unsetFields = fields.filter(
-    (field) => !optionHeld(field, task.fieldValues),
+    (field) => fieldHeld(field, task.fieldValues) === undefined,
   );
   const shownFields = fields.filter(
     (field) =>
-      optionHeld(field, task.fieldValues) ||
+      fieldHeld(field, task.fieldValues) !== undefined ||
       added.names.includes(`field:${field.id}`),
   );
   const addable = [
@@ -203,28 +204,23 @@ export function TaskProperties({ task }: { task: TaskRow }) {
         <RailHeading>{t("fieldValues.heading")}</RailHeading>
       ) : null}
       {shownFields.map((field) => {
-        const held = optionHeld(field, task.fieldValues);
+        const held = fieldHeld(field, task.fieldValues);
+        const face = chipFace(field, held);
         return (
           <Field key={field.id} label={field.name}>
             <FieldChipMenu
               label={field.name}
               sheetField={`field:${field.id}`}
               disabled={!editable}
-              muted={!held}
-              icon={
-                held ? (
-                  <LabelDot color={held.color} />
-                ) : (
-                  <SlidersHorizontal aria-hidden="true" className="size-3.5" />
-                )
-              }
-              value={held?.name ?? field.name}
+              muted={face.muted}
+              icon={face.icon}
+              value={face.text}
             >
               <FieldValueItems
                 field={field}
-                fieldValues={task.fieldValues}
-                onSelect={(optionId) =>
-                  void actions.setFieldValue(task, field.id, optionId)
+                value={held}
+                onSelect={(value) =>
+                  void actions.setFieldValue(task, field.id, value)
                 }
               />
             </FieldChipMenu>
@@ -262,7 +258,6 @@ export function TaskProperties({ task }: { task: TaskRow }) {
           </PopoverPopup>
         </Popover>
       </Field>
-      {editable ? <AddPropertyMenu properties={addable} onAdd={add} /> : null}
     </dl>
   );
 }

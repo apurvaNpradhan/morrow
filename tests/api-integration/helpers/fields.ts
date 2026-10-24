@@ -9,8 +9,15 @@ export async function addField(
   { client, base }: Pick<Context, "client" | "base">,
   name: string,
   optionNames: string[] = [],
+  definition: Partial<
+    Pick<Parameters<typeof client.projects.fields.create>[0], "type" | "config">
+  > = {},
 ) {
-  const field = await client.projects.fields.create({ ...base, name });
+  const field = await client.projects.fields.create({
+    ...base,
+    name,
+    ...definition,
+  });
   const options: Record<string, string> = {};
   for (const optionName of optionNames) {
     const option = await client.projects.fields.options.create({

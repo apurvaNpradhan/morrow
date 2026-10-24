@@ -1,4 +1,4 @@
-import type { TaskEvent } from "@morrow/sync-schemas";
+import type { TaskEvent, TaskEventFieldValueRef } from "@morrow/sync-schemas";
 
 /** How long the same person's repeated edit still folds into their last one. */
 export const TASK_EVENT_FOLD_WINDOW_MS = 10 * 60 * 1000;
@@ -38,6 +38,18 @@ function ends(event: Moved): Ends {
   }
 }
 
+/** A Field's held value by identity: options by id, plain values by value. */
+function valueKey(ref: TaskEventFieldValueRef) {
+  if (ref === null) return "";
+  if ("id" in ref) return `o:${ref.id}`;
+  if ("options" in ref)
+    return `m:${ref.options
+      .map((o) => o.id)
+      .sort()
+      .join(",")}`;
+  return `v:${JSON.stringify(ref.value)}`;
+}
+
 const isMoved = (event: TaskEvent): event is Moved =>
   event.type === "title" ||
   event.type === "priority" ||
@@ -51,7 +63,7 @@ const isMoved = (event: TaskEvent): event is Moved =>
  * keeping its original "from"; folding it back to where it began deletes the
  * event, so the history shows only real changes. Label events fold their added
  * and removed sets, a label added then removed cancelling out; Field events
- * fold per Field, by option id; description edits fold into one. Anything else (another person, another field, an older
+ * fold per Field, by option id or value; description edits fold into one. Anything else (another person, another field, an older
  * event, a beginning or an archive) is a new event.
  */
 export function foldTaskEvent(
@@ -96,7 +108,7 @@ export function foldTaskEvent(
     if (before.data.field.id !== after.data.field.id) {
       return { kind: "insert" };
     }
-    if ((before.data.from?.id ?? null) === (after.data.to?.id ?? null)) {
+    if (valueKey(before.data.from) === valueKey(after.data.to)) {
       return { kind: "delete" };
     }
     return {

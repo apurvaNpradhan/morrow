@@ -15,9 +15,11 @@ import type { ProjectRow } from "@morrow/sync-schemas";
 import { useTaskCommands } from "../actions/use-task-commands";
 import { useTaskFieldHotkeys } from "./use-task-field-hotkeys";
 import { displayTicketId } from "../lib/task-links";
+import { useFollowMovedTask } from "../queries/use-follow-moved-task";
 import { useTicketTask } from "../queries/use-task-queries";
 import { DeleteTaskDialog } from "./delete-task-dialog";
 import { DueDateDialog } from "./due-date-dialog";
+import { MoveTasksDialog } from "./move-tasks-dialog";
 import { ProjectTaskViewProvider } from "./project-task-view-provider";
 import { SelectionBar } from "./selection-bar";
 import { TaskDetails } from "./task-details";
@@ -95,6 +97,20 @@ function LoadedTaskPage({
   const goBack = useGoBack(workspace);
   const { task, isReady } = useTicketTask(project.id, number);
   const ticket = displayTicketId(project.key, number);
+  // Moved to another Project (here or elsewhere): the address follows it.
+  const { gone } = useFollowMovedTask({
+    workspace,
+    project,
+    number,
+    task,
+    ready: isReady,
+    follow: (moved) =>
+      void navigate({
+        to: "/$slug/tasks/$ticketId",
+        params: { slug: workspace.slug, ticketId: moved },
+        replace: true,
+      }),
+  });
 
   // Nothing recorded (a reload, a pasted link): step back in the app's own
   // history, else go Home. The task's project board is not where you were.
@@ -146,7 +162,7 @@ function LoadedTaskPage({
       <div className="flex h-full min-h-0 w-full flex-col">
         {task ? (
           <TaskDetails key={task.id} task={task} fullPage />
-        ) : isReady ? (
+        ) : gone ? (
           <p className="p-6 text-sm text-muted-foreground">
             {t("sheet.notFound", { key: project.key, number })}
           </p>
@@ -160,6 +176,7 @@ function LoadedTaskPage({
       <SelectionBar />
       <TaskFieldPicker />
       <DueDateDialog />
+      <MoveTasksDialog />
       <DeleteTaskDialog onDeleted={leave} />
     </WorkspaceLayout>
   );

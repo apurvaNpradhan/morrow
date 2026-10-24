@@ -1,6 +1,6 @@
 # Subtasks and task relations
 
-Status: ready-for-agent
+Status: shipped
 
 Tickets: MOR-4 (umbrella), MOR-45 (subtasks), MOR-46 (relations), MOR-47 (blocked mark), MOR-48 (UI). Follow-ups: MOR-43 (marking a Task a duplicate cancels it), MOR-49 (export and import).
 

@@ -6,14 +6,41 @@ import {
   FILTER_SUBJECTS,
   type FilterSubject,
 } from "@/app/preferences/task-view-options";
-import { DUE_VALUES, ME, NO_FIELD_VALUE, UNASSIGNED } from "../lib/filters";
+import {
+  CHECKED_FIELD_VALUE,
+  DATE_FIELD_PRESETS,
+  dateFieldValue,
+  DUE_VALUES,
+  HAS_FIELD_VALUE,
+  RELATION_VALUES,
+  ME,
+  NO_FIELD_VALUE,
+  type NumberFieldOperator,
+  numberFieldValue,
+  parseNumberFieldValue,
+  textFieldValue,
+  UNASSIGNED,
+} from "../lib/filters";
 import { LabelDot } from "@/labels";
+import { RelationIcon } from "./relation-icon";
 import { ColumnMarker } from "./column-marker";
 import { PersonAvatar } from "./person-avatar";
 import { TaskPriorityIcon } from "./task-priority-icon";
 import { useTaskView } from "./task-view-context";
 
 type BuiltInSubject = (typeof FILTER_SUBJECTS)[number];
+
+const NUMBER_SIGNS = { gt: ">", gte: "≥", lt: "<", lte: "≤", eq: "=" } as const;
+const TYPED_NUMBER = /^\s*(>=|<=|≥|≤|>|<|=)?\s*(-?\d+(?:\.\d+)?)\s*$/;
+const TYPED_OPERATORS = {
+  ">": "gt",
+  ">=": "gte",
+  "≥": "gte",
+  "<": "lt",
+  "<=": "lte",
+  "≤": "lte",
+  "=": "eq",
+} as const satisfies Record<string, NumberFieldOperator>;
 
 export type FilterOption = {
   value: string;
@@ -39,14 +66,38 @@ export function useFilterOptions() {
   function optionsFor(subject: FilterSubject): FilterOption[] {
     const fieldId = fieldIdOf(subject);
     if (fieldId !== null) {
-      return [
-        { value: NO_FIELD_VALUE, label: t("filter.noValue") },
-        ...(fieldById.get(fieldId)?.options ?? []).map((option) => ({
-          value: option.id,
-          label: option.name,
-          glyph: <LabelDot color={option.color} />,
-        })),
-      ];
+      const noValue = { value: NO_FIELD_VALUE, label: t("filter.noValue") };
+      const field = fieldById.get(fieldId);
+      switch (field?.type) {
+        case "checkbox":
+          return [
+            { value: CHECKED_FIELD_VALUE, label: t("filter.checked") },
+            { value: NO_FIELD_VALUE, label: t("filter.unchecked") },
+          ];
+        case "date":
+          return [
+            ...DATE_FIELD_PRESETS.map((preset) => ({
+              value: dateFieldValue(preset),
+              label: t(`filter.datePreset.${preset}`),
+            })),
+            noValue,
+          ];
+        case "number":
+        case "text":
+          return [
+            noValue,
+            { value: HAS_FIELD_VALUE, label: t("filter.hasValue") },
+          ];
+        default:
+          return [
+            noValue,
+            ...(field?.options ?? []).map((option) => ({
+              value: option.id,
+              label: option.name,
+              glyph: <LabelDot color={option.color} />,
+            })),
+          ];
+      }
     }
     switch (subject) {
       case "assignee":
@@ -71,6 +122,12 @@ export function useFilterOptions() {
         return DUE_VALUES.map((value) => ({
           value,
           label: t(`filter.due.${value}`),
+        }));
+      case "relation":
+        return RELATION_VALUES.map((value) => ({
+          value,
+          label: t(`filter.relation.${value}`),
+          glyph: <RelationIcon value={value} />,
         }));
       case "column":
         return columns.map((column) => ({
@@ -97,9 +154,55 @@ export function useFilterOptions() {
   function labelFor(subject: FilterSubject, value: string) {
     return (
       optionsFor(subject).find((option) => option.value === value)?.label ??
-      value
+      typedLabel(value)
     );
   }
 
-  return { optionsFor, labelFor, subjectLabel };
+  /** A value the user typed, in words: "> 5", "Contains “ana”". */
+  function typedLabel(value: string) {
+    const number = parseNumberFieldValue(value);
+    if (number) return `${NUMBER_SIGNS[number.operator]} ${number.n}`;
+    if (value.startsWith("text:")) {
+      return t("filter.textContains", { text: value.slice(5) });
+    }
+    return value;
+  }
+
+  /**
+   * For a text or number Field, the "use what I typed" row of the value list:
+   * `> 5` or `3` for a number, any words for a text. Undefined for the rest.
+   */
+  function typedCreate(
+    subject: FilterSubject,
+    onPick: (value: string) => void,
+  ) {
+    const type = fieldById.get(fieldIdOf(subject) ?? "")?.type;
+    if (type === "text") {
+      return {
+        label: (text: string) => typedLabel(textFieldValue(text)),
+        accepts: () => true,
+        onCreate: (text: string) => onPick(textFieldValue(text)),
+      };
+    }
+    if (type !== "number") return undefined;
+    const parse = (text: string) => {
+      const match = TYPED_NUMBER.exec(text);
+      return match
+        ? numberFieldValue(
+            TYPED_OPERATORS[(match[1] ?? "=") as keyof typeof TYPED_OPERATORS],
+            Number(match[2]),
+          )
+        : null;
+    };
+    return {
+      label: (text: string) => typedLabel(parse(text) ?? text),
+      accepts: (text: string) => parse(text) !== null,
+      onCreate: (text: string) => {
+        const value = parse(text);
+        if (value) onPick(value);
+      },
+    };
+  }
+
+  return { optionsFor, labelFor, subjectLabel, typedCreate };
 }

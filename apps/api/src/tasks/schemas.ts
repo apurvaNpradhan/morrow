@@ -1,6 +1,8 @@
 import {
   COMMENT_BODY_MAX,
+  fieldValuesSchema,
   MAX_BULK_TASKS,
+  MAX_MOVE_TASKS,
   isCalendarDate,
   isHttpUrl,
   LINK_TITLE_MAX,
@@ -30,7 +32,7 @@ export const fieldId = z.string().min(1);
 /** A custom Field value of any type; `null` clears it. The operation checks it against the Field. */
 export const fieldValue = z.json();
 /** Values for a new Task, by Field id; the operation checks every one. */
-export const fieldValues = z.record(fieldId, z.string());
+export const fieldValues = fieldValuesSchema;
 export const commentId = z.string().min(1);
 
 /** A client-chosen id; its format is checked by the operation (INVALID_COMMENT_ID). */
@@ -67,6 +69,12 @@ export const position = z.string().min(1).max(64);
 
 /** The Tasks of one bulk action, in view order; repeats are dropped by the operation. */
 export const bulkTaskIds = z.array(taskId).min(1).max(MAX_BULK_TASKS);
+
+/** The Tasks of one move; the operation counts their Subtasks and refuses past `MAX_MOVE_TASKS`. */
+export const moveTaskIds = z
+  .array(taskId)
+  .min(1)
+  .max(MAX_MOVE_TASKS * 10);
 
 /** What a bulk action does to every Task it names. */
 export const bulkChange = z.discriminatedUnion("type", [

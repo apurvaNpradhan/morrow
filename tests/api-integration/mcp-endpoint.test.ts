@@ -143,6 +143,7 @@ describe("MCP endpoint", () => {
       "manage_link",
       "manage_relation",
       "move_task",
+      "move_tasks",
       "update_project",
       "update_tasks",
       "whoami",
@@ -151,7 +152,7 @@ describe("MCP endpoint", () => {
       name: string;
       annotations?: { readOnlyHint?: boolean };
     }>;
-    expect(advertised).toHaveLength(23);
+    expect(advertised).toHaveLength(24);
     // Reads say so, so a client can run them without asking; writes do not.
     expect(
       advertised
@@ -1221,6 +1222,94 @@ describe("MCP tools for fields, duplicates and batch changes", () => {
     expect(listed.body.tasks[0]).not.toHaveProperty("fields");
   });
 
+  it("reads and writes text, number, date, checkbox and multi choice fields by name", async () => {
+    const { run, projectId } = await setup();
+    await db.insert(schema.projectFieldTable).values([
+      {
+        projectId,
+        name: "Points",
+        type: "number",
+        position: "a1",
+        config: { min: 0, max: 20, unit: "pts" },
+      },
+      { projectId, name: "Note", type: "text", position: "a2" },
+      { projectId, name: "Target", type: "date", position: "a3" },
+      { projectId, name: "Reviewed", type: "checkbox", position: "a4" },
+      {
+        projectId,
+        name: "Areas",
+        type: "multi_choice",
+        position: "a5",
+        options: [
+          { id: "area-api", name: "API", color: "#22c55e", position: "a0" },
+          { id: "area-web", name: "Web", color: "#ef4444", position: "a1" },
+        ],
+      },
+    ]);
+
+    const fields = await run("list_fields", { projectId });
+    expect(
+      fields.body.find((f: { name: string }) => f.name === "Points"),
+    ).toEqual({
+      name: "Points",
+      type: "number",
+      config: { min: 0, max: 20, unit: "pts" },
+      options: [],
+    });
+
+    await run("create_tasks", {
+      projectId,
+      items: [
+        {
+          title: "Typed",
+          fields: {
+            Points: 5,
+            Note: "call Ana",
+            Target: "2026-11-01",
+            Reviewed: true,
+            Areas: ["api", "Web"],
+          },
+        },
+        { title: "Other" },
+      ],
+    });
+    const created = await run("get_task", { projectId, ticketId: "MOR-1" });
+    expect(created.body.fields).toEqual({
+      Points: 5,
+      Note: "call Ana",
+      Target: "2026-11-01",
+      Reviewed: true,
+      Areas: ["API", "Web"],
+    });
+
+    const updated = await run("update_tasks", {
+      projectId,
+      items: [
+        {
+          ticketId: "MOR-1",
+          fields: { Points: 9, Reviewed: false, Areas: "Web" },
+        },
+        { ticketId: "MOR-1", fields: { Points: 99 } },
+        { ticketId: "MOR-1", fields: { Target: "tomorrow" } },
+        { ticketId: "MOR-1", fields: { Areas: ["Nope"] } },
+        { ticketId: "MOR-1", fields: { Note: null } },
+      ],
+    });
+    expect(updated.body).toMatchObject([
+      { index: 0, ticketId: "MOR-1", changed: ["fields"] },
+      { index: 1, error: expect.stringContaining('number field "Points"') },
+      { index: 2, error: expect.stringContaining("date") },
+      { index: 3, error: expect.stringContaining('No option "Nope"') },
+      { index: 4, ticketId: "MOR-1", changed: ["fields"] },
+    ]);
+    const after = await run("get_task", { projectId, ticketId: "MOR-1" });
+    expect(after.body.fields).toEqual({
+      Points: 9,
+      Target: "2026-11-01",
+      Areas: ["Web"],
+    });
+  });
+
   it("duplicates a task with its description, labels and field values, right after the original", async () => {
     const { run, projectId } = await setup();
     await run("create_tasks", {
@@ -1320,5 +1409,201 @@ describe("MCP tools for fields, duplicates and batch changes", () => {
       "One",
       "Two",
     ]);
+  });
+});
+
+describe("MCP move_tasks", () => {
+  async function setup() {
+    const owner = await signUp("Owner");
+    const [workspace] = await db
+      .insert(schema.workspaceTable)
+      .values({ name: "Moves", slug: "mcp-moves", createdAt: new Date() })
+      .returning();
+    await db.insert(schema.workspaceUserTable).values({
+      workspaceId: workspace.id,
+      userId: owner.user.id,
+      role: "owner",
+      joinedAt: new Date(),
+    });
+    const run = async (name: string, args: Record<string, unknown>) => {
+      const response = await call(owner.token, name, {
+        workspaceId: workspace.id,
+        ...args,
+      });
+      return {
+        failed: response.result?.isError === true,
+        body: JSON.parse(response.result!.content[0].text),
+      };
+    };
+    const project = async (key: string) =>
+      (await run("create_project", { name: key, key })).body
+        .projectId as string;
+    return { run, project, workspace };
+  }
+
+  it("moves tasks by key and column name from several projects, refusing bad items on their own", async () => {
+    const { run, project } = await setup();
+    const mor = await project("MOR");
+    const thr = await project("THR");
+    const web = await project("WEB");
+    await run("create_tasks", {
+      projectId: mor,
+      items: [{ title: "Epic", column: "In Progress" }, { title: "Other" }],
+    });
+    await run("create_tasks", { projectId: thr, items: [{ title: "Third" }] });
+    await run("create_tasks", {
+      projectId: mor,
+      items: [{ title: "Child", parentId: "MOR-1", column: "Done" }],
+    });
+    await run("create_tasks", {
+      projectId: web,
+      items: [{ title: "Resident" }],
+    });
+
+    const moved = await run("move_tasks", {
+      ticketIds: ["MOR-1", "THR-1", "MOR-99", "NOPE-1", "WEB-1"],
+      project: "web",
+      column: "Backlog",
+    });
+
+    expect(moved.failed).toBe(false);
+    expect(moved.body.moved).toEqual([
+      { from: "MOR-1", to: "WEB-2", column: "Backlog" },
+      // A Subtask follows its own state, not the picked column.
+      { from: "MOR-3", to: "WEB-3", column: "Done" },
+      { from: "THR-1", to: "WEB-4", column: "Backlog" },
+    ]);
+    expect(moved.body.refused).toEqual([
+      { index: 2, ticketId: "MOR-99", error: "No task MOR-99" },
+      {
+        index: 3,
+        ticketId: "NOPE-1",
+        error: expect.stringContaining("No project"),
+      },
+      { index: 4, ticketId: "WEB-1", error: "WEB-1 is already in WEB" },
+    ]);
+    const listed = await run("list_tasks", { projectId: web });
+    expect(
+      listed.body.tasks.map((t: { ticketId: string }) => t.ticketId),
+    ).toEqual(["WEB-1", "WEB-2", "WEB-4", "WEB-3"]);
+  });
+
+  it("moves subtasks along by default and leaves them behind when asked", async () => {
+    const { run, project } = await setup();
+    const mor = await project("MOR");
+    await project("WEB");
+    await run("create_tasks", {
+      projectId: mor,
+      items: [{ title: "Epic" }, { title: "Piece", parentId: "MOR-1" }],
+    });
+    await run("create_tasks", {
+      projectId: mor,
+      items: [{ title: "Epic 2" }, { title: "Piece 2", parentId: "MOR-3" }],
+    });
+
+    const along = await run("move_tasks", {
+      ticketIds: ["MOR-1"],
+      project: "WEB",
+    });
+    const alone = await run("move_tasks", {
+      ticketIds: ["MOR-3"],
+      project: "WEB",
+      withSubtasks: false,
+    });
+
+    expect(along.body.moved.map((t: { to: string }) => t.to)).toEqual([
+      "WEB-1",
+      "WEB-2",
+    ]);
+    expect(alone.body.moved).toEqual([
+      { from: "MOR-3", to: "WEB-3", column: "Backlog" },
+    ]);
+    const stayed = await run("get_task", { projectId: mor, ticketId: "MOR-4" });
+    expect(stayed.body).toMatchObject({ ticketId: "MOR-4", parent: null });
+  });
+
+  it("reports dropped field values and the parent a task left", async () => {
+    const { run, project, workspace } = await setup();
+    const mor = await project("MOR");
+    await project("WEB");
+    await db.insert(schema.projectFieldTable).values({
+      projectId: mor,
+      name: "Size",
+      type: "single_choice",
+      position: "a0",
+      options: [
+        { id: "opt-l", name: "Large", color: "#ef4444", position: "a0" },
+      ],
+    });
+    await run("create_tasks", {
+      projectId: mor,
+      items: [
+        { title: "Epic" },
+        { title: "Piece", parentId: "MOR-1", fields: { Size: "Large" } },
+      ],
+    });
+
+    const moved = await run("move_tasks", {
+      ticketIds: ["MOR-2"],
+      project: "WEB",
+    });
+
+    expect(moved.body.moved).toEqual([
+      {
+        from: "MOR-2",
+        to: "WEB-1",
+        column: "Backlog",
+        droppedFields: [{ field: "Size", value: "Large" }],
+        leftParent: "MOR-1",
+      },
+    ]);
+    void workspace;
+  });
+
+  it("resolves an old ticket id with get_task and works on the moved task", async () => {
+    const { run, project } = await setup();
+    const mor = await project("MOR");
+    await project("WEB");
+    await run("create_tasks", {
+      projectId: mor,
+      items: [{ title: "Wandering" }],
+    });
+    await run("move_tasks", { ticketIds: ["MOR-1"], project: "WEB" });
+
+    const viaOld = await run("get_task", { projectId: mor, ticketId: "MOR-1" });
+    const comment = await run("comment_task", {
+      projectId: mor,
+      ticketId: "MOR-1",
+      action: "create",
+      body: "still here",
+    });
+
+    expect(viaOld.body).toMatchObject({
+      ticketId: "WEB-1",
+      title: "Wandering",
+    });
+    expect(comment.failed).toBe(false);
+  });
+
+  it("refuses an unknown project or column for the whole call", async () => {
+    const { run, project } = await setup();
+    const mor = await project("MOR");
+    await project("WEB");
+    await run("create_tasks", { projectId: mor, items: [{ title: "A" }] });
+
+    const noProject = await run("move_tasks", {
+      ticketIds: ["MOR-1"],
+      project: "ZZZ",
+    });
+    const noColumn = await run("move_tasks", {
+      ticketIds: ["MOR-1"],
+      project: "WEB",
+      column: "Nowhere",
+    });
+
+    expect(noProject.failed).toBe(true);
+    expect(noColumn.failed).toBe(true);
+    const still = await run("get_task", { projectId: mor, ticketId: "MOR-1" });
+    expect(still.body.ticketId).toBe("MOR-1");
   });
 });

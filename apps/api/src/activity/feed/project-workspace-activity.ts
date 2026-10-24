@@ -78,6 +78,19 @@ export function projectWorkspaceActivity(
           taskTitle: event.taskTitle,
         },
       };
+    case "task.moved":
+      return {
+        resourceType: "task",
+        resourceId: event.taskId,
+        eventData: {
+          projectId: event.projectId,
+          ticketId: event.ticketId,
+          taskTitle: event.taskTitle,
+          fromTicketId: event.fromTicketId,
+          fromProjectName: event.fromProjectName,
+          toProjectName: event.toProjectName,
+        },
+      };
     case "project.key_changed":
       return {
         resourceType: "project",
@@ -132,6 +145,14 @@ export function projectStoredWorkspaceActivity(input: {
       "task.completed": ["projectId", "ticketId", "taskTitle"],
       "task.canceled": ["projectId", "ticketId", "taskTitle"],
       "task.deleted": ["projectId", "ticketId", "taskTitle"],
+      "task.moved": [
+        "projectId",
+        "ticketId",
+        "taskTitle",
+        "fromTicketId",
+        "fromProjectName",
+        "toProjectName",
+      ],
       "comment.created": ["projectId", "ticketId", "taskTitle"],
     } satisfies Record<string, string[]>),
   );

@@ -76,3 +76,6 @@ export function parseTicketId(
 
 /** The most Tasks one bulk action may touch; past it the actions are refused. */
 export const MAX_BULK_TASKS = 200;
+
+/** The most Tasks one move may carry, Subtasks counted; past it the move is refused. */
+export const MAX_MOVE_TASKS = 500;

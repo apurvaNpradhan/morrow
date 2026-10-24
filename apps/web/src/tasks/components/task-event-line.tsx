@@ -1,4 +1,8 @@
-import { relationKind, type TaskEvent } from "@morrow/sync-schemas";
+import {
+  relationKind,
+  type TaskEvent,
+  type TaskEventFieldValueRef,
+} from "@morrow/sync-schemas";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,7 +11,9 @@ import {
   formatRelativeTime,
 } from "@/design-system/format";
 import { parseDay } from "../lib/calendar-day";
+import { formatFieldDate, formatFieldNumber } from "../lib/field-value";
 import type { TimelineEvent } from "../lib/timeline";
+import { ticketsNamedBy, useLiveTickets } from "../queries/use-live-tickets";
 import { PersonAvatar } from "./person-avatar";
 import { TaskEventIcon } from "./task-event-icon";
 import { useTaskView } from "./task-view-context";
@@ -27,8 +33,10 @@ const day = (value: string) =>
  */
 export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
   const { t } = useTranslation("tasks");
-  const { columnById, fieldById, labelById, personById } = useTaskView();
+  const { workspace, columnById, fieldById, labelById, personById } =
+    useTaskView();
   const { row, event } = entry;
+  const ticket = useLiveTickets(workspace.id, ticketsNamedBy(event));
   const actor = row.actorId ? personById.get(row.actorId) : undefined;
 
   const columnName = (ref: { id: string; name: string }) =>
@@ -37,14 +45,22 @@ export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
     ref ? (personById.get(ref.id)?.name ?? ref.name) : "";
   const fieldName = (ref: { id: string; name: string }) =>
     fieldById.get(ref.id)?.name ?? ref.name;
-  const optionName = (
-    fieldId: string,
-    ref: { id: string; name: string } | null,
-  ) =>
-    ref
-      ? (fieldById.get(fieldId)?.options.find((o) => o.id === ref.id)?.name ??
-        ref.name)
-      : "";
+  /** A Field's held value in words: live option names, else the snapshot's. */
+  const valueText = (fieldId: string, ref: TaskEventFieldValueRef) => {
+    if (ref === null) return "";
+    const field = fieldById.get(fieldId);
+    const liveName = (option: { id: string; name: string }) =>
+      field?.options.find((o) => o.id === option.id)?.name ?? option.name;
+    if ("id" in ref) return liveName(ref);
+    if ("options" in ref) return ref.options.map(liveName).join(", ");
+    if (ref.value === true) return t("fieldValues.checked");
+    if (typeof ref.value === "number") {
+      return field
+        ? formatFieldNumber(field.config, ref.value)
+        : String(ref.value);
+    }
+    return field?.type === "date" ? formatFieldDate(ref.value) : ref.value;
+  };
   const labelNames = (refs: readonly { id: string; name: string }[]) =>
     refs.map((ref) => labelById.get(ref.id)?.name ?? ref.name).join(", ");
 
@@ -66,7 +82,8 @@ export function TaskEventLine({ entry }: { entry: TimelineEvent }) {
           personName,
           labelNames,
           fieldName,
-          optionName,
+          valueText,
+          ticket,
         })}
       </span>
       <time
@@ -85,10 +102,9 @@ type Names = {
   personName: (ref: { id: string; name: string } | null) => string;
   labelNames: (refs: readonly { id: string; name: string }[]) => string;
   fieldName: (ref: { id: string; name: string }) => string;
-  optionName: (
-    fieldId: string,
-    ref: { id: string; name: string } | null,
-  ) => string;
+  valueText: (fieldId: string, ref: TaskEventFieldValueRef) => string;
+  /** The Ticket id a task has now, for one written into an entry. */
+  ticket: (id: string) => string;
 };
 
 /** What the actor did, as the rest of the sentence. */
@@ -99,7 +115,9 @@ function sentence(t: TFunction, event: TaskEvent, names: Names): string {
     case "imported":
       return t("history.imported");
     case "duplicated":
-      return t("history.duplicated", { ticket: event.data.sourceTicketId });
+      return t("history.duplicated", {
+        ticket: names.ticket(event.data.sourceTicketId),
+      });
     case "title":
       return t("history.title", event.data);
     case "column":
@@ -155,18 +173,18 @@ function sentence(t: TFunction, event: TaskEvent, names: Names): string {
       if (to === null) {
         return t("history.fieldCleared", {
           field: name,
-          from: names.optionName(field.id, from),
+          from: names.valueText(field.id, from),
         });
       }
       return from === null
         ? t("history.fieldSet", {
             field: name,
-            to: names.optionName(field.id, to),
+            to: names.valueText(field.id, to),
           })
         : t("history.fieldChanged", {
             field: name,
-            from: names.optionName(field.id, from),
-            to: names.optionName(field.id, to),
+            from: names.valueText(field.id, from),
+            to: names.valueText(field.id, to),
           });
     }
     case "archived":
@@ -177,22 +195,49 @@ function sentence(t: TFunction, event: TaskEvent, names: Names): string {
       return t("history.description");
     case "parent": {
       const { from, to } = event.data;
-      if (to === null) return t("history.parentCleared", { from });
+      if (to === null) {
+        return t("history.parentCleared", { from: names.ticket(from ?? "") });
+      }
       return from === null
-        ? t("history.parentSet", { to })
-        : t("history.parentChanged", { from, to });
+        ? t("history.parentSet", { to: names.ticket(to) })
+        : t("history.parentChanged", {
+            from: names.ticket(from),
+            to: names.ticket(to),
+          });
     }
     case "subtask_added":
-      return t("history.subtaskAdded", { ticket: event.data.ticketId });
+      return t("history.subtaskAdded", {
+        ticket: names.ticket(event.data.ticketId),
+      });
     case "subtask_removed":
-      return t("history.subtaskRemoved", { ticket: event.data.ticketId });
+      return t("history.subtaskRemoved", {
+        ticket: names.ticket(event.data.ticketId),
+      });
+    case "project_moved": {
+      const { from, to, droppedValues } = event.data;
+      const moved = t("history.projectMoved", {
+        from: from.ticketId,
+        to: to.ticketId,
+        column: to.column.name,
+      });
+      if (droppedValues.length === 0) return moved;
+      const lost = droppedValues.map((dropped) =>
+        t("history.projectMovedDropped", {
+          field: dropped.field,
+          value: Array.isArray(dropped.value)
+            ? dropped.value.join(", ")
+            : String(dropped.value),
+        }),
+      );
+      return `${moved}. ${lost.join("; ")}`;
+    }
     case "relation_added":
     case "relation_removed": {
       const { type, direction, ticketId } = event.data;
       const verb =
         event.type === "relation_added" ? "relationAdded" : "relationRemoved";
       return t(`history.${verb}.${relationKind(type, direction)}`, {
-        ticket: ticketId,
+        ticket: names.ticket(ticketId),
       });
     }
   }

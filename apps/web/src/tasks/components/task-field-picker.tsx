@@ -5,6 +5,7 @@ import { useBulkActions } from "../actions/use-bulk-actions";
 import { useTaskActions } from "../actions/use-task-actions";
 import { taskCollection } from "../collections/task-collection";
 import { openDatePicker } from "../lib/date-picker-store";
+import { fieldHeld } from "../lib/field-value";
 import {
   closeFieldPicker,
   openFieldPicker,
@@ -159,12 +160,17 @@ export function TaskFieldPicker() {
             {pickedField ? (
               <FieldValueItems
                 field={pickedField}
-                fieldValues={task.fieldValues}
-                onSelect={(optionId) =>
-                  choose(() =>
-                    actions.setFieldValue(task, pickedField.id, optionId),
-                  )
-                }
+                value={fieldHeld(pickedField, task.fieldValues)}
+                onSelect={(value) => {
+                  // A multi choice stays open for the next option.
+                  if (pickedField.type === "multi_choice") {
+                    void actions.setFieldValue(task, pickedField.id, value);
+                  } else {
+                    choose(() =>
+                      actions.setFieldValue(task, pickedField.id, value),
+                    );
+                  }
+                }}
               />
             ) : null}
             {picker.field === "dueDate" ? (

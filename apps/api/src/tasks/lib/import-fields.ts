@@ -3,13 +3,18 @@ import {
   colorHex,
   FIELD_NAME_MAX,
   FIELD_TYPES,
+  type FieldConfig,
   type FieldOption,
   type FieldType,
   type FieldValues,
+  isChoiceType,
   MAX_FIELD_OPTIONS,
   MAX_PROJECT_FIELDS,
+  type NamedFieldValue,
   nextOptionColor,
   normalizeFieldName,
+  parseFieldConfig,
+  unnameFieldValue,
 } from "@morrow/sync-schemas";
 import { eq } from "drizzle-orm";
 import { generateKeyBetween } from "fractional-indexing";
@@ -20,6 +25,7 @@ import type { ImportWarning } from "#api/tasks/response";
 type DeclaredField = {
   name: string;
   type?: string;
+  config?: unknown;
   options: { name: string; color?: string }[];
 };
 
@@ -27,6 +33,7 @@ type Working = {
   id: string;
   name: string;
   type: FieldType;
+  config: FieldConfig;
   position: string;
   options: FieldOption[];
   isNew: boolean;
@@ -68,6 +75,7 @@ export async function importFields(
   // What could not be matched or created, with how many Tasks named it. A
   // declared Field or option no Task uses is still reported, with a count of 0.
   const droppedFields = new Map<string, { field: string; count: number }>();
+  const droppedValues = new Map<string, { field: string; count: number }>();
   const droppedOptions = new Map<
     string,
     { field: string; option: string; count: number }
@@ -82,6 +90,13 @@ export async function importFields(
     });
   }
 
+  function noteValueDropped(field: Working) {
+    droppedValues.set(field.id, {
+      field: field.name,
+      count: (droppedValues.get(field.id)?.count ?? 0) + 1,
+    });
+  }
+
   function noteOptionDropped(field: Working, option: string, tasks: 0 | 1) {
     const key = `${field.id}\u0000${normalizeFieldName(option)}`;
     const known = droppedOptions.get(key);
@@ -92,7 +107,11 @@ export async function importFields(
     });
   }
 
-  function findOrCreateField(name: string, type = "single_choice") {
+  function findOrCreateField(
+    name: string,
+    type = "single_choice",
+    config?: unknown,
+  ) {
     const known = byName.get(normalizeFieldName(name));
     if (known) return known;
     if (
@@ -109,6 +128,7 @@ export async function importFields(
       id: createId(),
       name,
       type,
+      config: parseFieldConfig(type, config ?? {}) ?? {},
       position: lastPosition,
       options: [],
       isNew: true,
@@ -152,7 +172,7 @@ export async function importFields(
 
   for (const definition of declared) {
     const name = definition.name.trim();
-    const field = findOrCreateField(name, definition.type);
+    const field = findOrCreateField(name, definition.type, definition.config);
     if (!field) {
       if (name !== "") noteFieldDropped(name, 0);
       continue;
@@ -175,27 +195,46 @@ export async function importFields(
         (o) => normalizeFieldName(o.name) === normalizeFieldName(optionName),
       )?.color;
 
-  /** A Task's imported values, by Field and option name, as stored values. */
-  function valuesFor(imported: Record<string, string>): FieldValues {
+  /** A Task's imported values, by Field name, as stored values. */
+  function valuesFor(imported: Record<string, NamedFieldValue>): FieldValues {
     const values: FieldValues = {};
-    for (const [rawField, rawOption] of Object.entries(imported)) {
+    for (const [rawField, named] of Object.entries(imported)) {
       const fieldName = rawField.trim();
-      const optionName = rawOption.trim();
-      const field = findOrCreateField(fieldName);
+      // Only a bare option name can create a Field nobody declared.
+      const field =
+        byName.get(normalizeFieldName(fieldName)) ??
+        (typeof named === "string" ? findOrCreateField(fieldName) : undefined);
       if (!field) {
         noteFieldDropped(fieldName, 1);
         continue;
       }
-      const option = findOrCreateOption(
-        field,
-        optionName,
-        colorOf(fieldName, optionName),
-      );
-      if (!option) {
-        noteOptionDropped(field, optionName, 1);
+      if (!isChoiceType(field.type)) {
+        const result = unnameFieldValue(field, named);
+        if (!result.ok) noteValueDropped(field);
+        else if (result.value !== null) values[field.id] = result.value;
         continue;
       }
-      values[field.id] = option.id;
+      const names = typeof named === "string" ? [named] : named;
+      if (
+        !Array.isArray(names) ||
+        (field.type === "single_choice" && names.length !== 1)
+      ) {
+        noteValueDropped(field);
+        continue;
+      }
+      const ids: string[] = [];
+      for (const raw of names) {
+        const optionName = raw.trim();
+        const option = findOrCreateOption(
+          field,
+          optionName,
+          colorOf(fieldName, optionName),
+        );
+        if (!option) noteOptionDropped(field, optionName, 1);
+        else if (!ids.includes(option.id)) ids.push(option.id);
+      }
+      if (ids.length === 0) continue;
+      values[field.id] = field.type === "single_choice" ? ids[0]! : ids;
     }
     return values;
   }
@@ -209,6 +248,7 @@ export async function importFields(
           projectId,
           name: field.name,
           type: field.type,
+          config: field.config,
           position: field.position,
           options: field.options,
         });
@@ -225,6 +265,10 @@ export async function importFields(
     return [
       ...[...droppedFields.values()].map((dropped): ImportWarning => ({
         kind: "field_dropped",
+        ...dropped,
+      })),
+      ...[...droppedValues.values()].map((dropped): ImportWarning => ({
+        kind: "value_dropped",
         ...dropped,
       })),
       ...[...droppedOptions.values()].map((dropped): ImportWarning => ({

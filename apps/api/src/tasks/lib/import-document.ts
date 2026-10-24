@@ -2,6 +2,7 @@ import {
   COLUMN_CATEGORIES,
   COMMENT_BODY_MAX,
   isCalendarDate,
+  namedFieldValueSchema,
   TASK_DESCRIPTION_MAX,
   TASK_PRIORITIES,
   TASK_TITLE_MAX,
@@ -28,6 +29,7 @@ export const importDocument = z.object({
       z.object({
         name: z.string(),
         type: z.string().optional(),
+        config: z.unknown().optional(),
         options: z
           .array(z.object({ name: z.string(), color: z.string().optional() }))
           .default([]),
@@ -48,7 +50,7 @@ export const importDocument = z.object({
       archivedAt: isoDate.nullable().default(null),
       createdAt: isoDate.nullable().default(null),
       labels: z.array(z.string()).default([]),
-      fields: z.record(z.string(), z.string()).default({}),
+      fields: z.record(z.string(), namedFieldValueSchema).default({}),
       comments: z
         .array(
           z.object({

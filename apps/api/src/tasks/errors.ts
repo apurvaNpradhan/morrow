@@ -31,12 +31,17 @@ const CODES = {
   RELATION_SELF: "BAD_REQUEST",
   RELATION_TASK_NOT_IN_WORKSPACE: "BAD_REQUEST",
   RELATION_CYCLE: "BAD_REQUEST",
+  MOVE_TOO_LARGE: "BAD_REQUEST",
+  MOVE_SAME_PROJECT: "BAD_REQUEST",
 } as const;
 
 export type TaskErrorCode = keyof typeof CODES;
 
-export function taskError(code: TaskErrorCode) {
-  return new ORPCError(CODES[code], { data: { code } });
+export function taskError(
+  code: TaskErrorCode,
+  extra: Record<string, unknown> = {},
+) {
+  return new ORPCError(CODES[code], { data: { code, ...extra } });
 }
 
 export const taskNotFound = () =>

@@ -125,7 +125,9 @@
 			"relationExists": "Those tasks are already linked that way.",
 			"relationSelf": "A task can't be linked to itself.",
 			"relationCycle": "That would make a task wait on itself.",
-			"relationTaskNotInWorkspace": "That task isn't in this workspace."
+			"relationTaskNotInWorkspace": "That task isn't in this workspace.",
+			"taskMoveTooLarge": "At most 500 tasks can move at once.",
+			"taskMoveSameProject": "Some of those tasks are already in that project."
 		}
 	},
 	"auth": {
@@ -866,7 +868,8 @@
 			"search": "Search",
 			"setTaskField": "Set field",
 			"toggleTaskSelection": "Select task",
-			"selectAllTasks": "Select all tasks"
+			"selectAllTasks": "Select all tasks",
+			"moveTask": "Move to project"
 		},
 		"sidebar": {
 			"home": "Home"
@@ -1005,7 +1008,8 @@
 					"taskCompleted": "{{ticketId}} “{{taskTitle}}” was completed",
 					"taskCanceled": "{{ticketId}} “{{taskTitle}}” was canceled",
 					"taskDeleted": "{{ticketId}} “{{taskTitle}}” was deleted",
-					"commentCreated": "New comment on {{ticketId}} “{{taskTitle}}”"
+					"commentCreated": "New comment on {{ticketId}} “{{taskTitle}}”",
+					"taskMoved": "{{fromTicketId}} “{{taskTitle}}” moved to {{ticketId}}"
 				}
 			}
 		},
@@ -1292,7 +1296,7 @@
 		},
 		"fields": {
 			"title": "Fields",
-			"subtitle": "The custom fields of {{name}}. Each task can hold one choice per field. Drag a field or an option to reorder it.",
+			"subtitle": "The custom fields of {{name}}: choices, text, numbers, dates and checkboxes. Drag a field or an option to reorder it.",
 			"empty": "No fields yet. Add one to start tracking something of your own, like size or customer.",
 			"addFieldPlaceholder": "Add a field",
 			"addField": "Add field",
@@ -1323,7 +1327,28 @@
 			"optionDeleteDescription_other": "{{count}} tasks have this option. Deleting it clears the value on all of them.",
 			"optionDeleteConfirm": "Delete option",
 			"optionDeleteSuccess": "Option deleted",
-			"optionDeleteError": "Couldn't delete the option."
+			"optionDeleteError": "Couldn't delete the option.",
+			"typeLabel": "Type of the field",
+			"type": {
+				"single_choice": "Single choice",
+				"multi_choice": "Multi choice",
+				"text": "Text",
+				"number": "Number",
+				"date": "Date",
+				"checkbox": "Checkbox"
+			},
+			"formatLabel": "Format",
+			"format": {
+				"plain": "Plain",
+				"url": "Link",
+				"currency": "Currency",
+				"percent": "Percent"
+			},
+			"currencyLabel": "Currency code",
+			"unitLabel": "Unit",
+			"minLabel": "Lowest value",
+			"maxLabel": "Highest value",
+			"configInvalid": "That setting isn't valid. A currency needs a three-letter code, and the lowest value can't be above the highest."
 		}
 	},
 	"tasks": {
@@ -1402,7 +1427,8 @@
 			"duplicate": "Duplicate",
 			"archive": "Archive",
 			"unarchive": "Unarchive",
-			"delete": "Delete…"
+			"delete": "Delete…",
+			"moveToProject": "Move to project…"
 		},
 		"archiveCompleted": {
 			"button": "Archive all tasks in {{name}}",
@@ -1466,6 +1492,16 @@
 				"nextWeek": "Next week",
 				"none": "No due date"
 			},
+			"datePreset": {
+				"overdue": "Past",
+				"today": "Today",
+				"thisWeek": "This week",
+				"nextWeek": "Next week"
+			},
+			"checked": "Checked",
+			"unchecked": "Unchecked",
+			"hasValue": "Has a value",
+			"textContains": "Contains “{{text}}”",
 			"noValue": "No value"
 		},
 		"display": {
@@ -1519,7 +1555,6 @@
 			"label": "Task",
 			"description": "Task details",
 			"properties": "Properties",
-			"addProperty": "Add property",
 			"details": "Details",
 			"createdBy": "Created by {{name}}",
 			"titleLabel": "Title",
@@ -1542,7 +1577,6 @@
 		"subtasks": {
 			"title": "Sub-tasks",
 			"add": "Add a sub-task",
-			"addLink": "Add sub-tasks",
 			"addUnder": "Add a sub-task",
 			"removeFromParent": "Remove from parent",
 			"titleLabel": "Sub-task title",
@@ -1625,7 +1659,8 @@
 			"labels": "Labels",
 			"archive": "Archive",
 			"unarchive": "Unarchive",
-			"delete": "Delete"
+			"delete": "Delete",
+			"move": "Move to project"
 		},
 		"errors": {
 			"generic": "Couldn't save that change. It has been undone."
@@ -1671,7 +1706,9 @@
 				"optionDropped_one": "The option “{{option}}” of “{{field}}” was left off {{count}} task: you can't create options.",
 				"optionDropped_other": "The option “{{option}}” of “{{field}}” was left off {{count}} tasks: you can't create options.",
 				"fieldDroppedUnused": "The field “{{field}}” was not imported: you can't create fields.",
-				"optionDroppedUnused": "The option “{{option}}” of “{{field}}” was not imported: you can't create options."
+				"optionDroppedUnused": "The option “{{option}}” of “{{field}}” was not imported: you can't create options.",
+				"valueDropped_one": "A value of “{{field}}” was left off {{count}} task: it doesn't fit the field.",
+				"valueDropped_other": "Values of “{{field}}” were left off {{count}} tasks: they don't fit the field."
 			}
 		},
 		"preferences": {
@@ -1763,11 +1800,46 @@
 			},
 			"fieldSet": "set {{field}} to {{to}}",
 			"fieldChanged": "changed {{field}} from {{from}} to {{to}}",
-			"fieldCleared": "cleared {{field}} (was {{from}})"
+			"fieldCleared": "cleared {{field}} (was {{from}})",
+			"projectMoved": "moved this from {{from}} to {{to}} ({{column}})",
+			"projectMovedDropped": "{{field}}: {{value}} did not carry over"
 		},
 		"fieldValues": {
 			"noValue": "No value",
-			"heading": "Fields"
+			"heading": "Fields",
+			"clear": "Clear",
+			"checked": "Checked",
+			"unchecked": "Unchecked",
+			"set": "Set to {{value}}",
+			"typeText": "Type a value, then Enter",
+			"typeUrl": "Paste a link, then Enter",
+			"typeNumber": "Type a number, then Enter",
+			"numberBetween": "A number from {{min}} to {{max}}"
+		},
+		"move": {
+			"title": "Move {{id}}",
+			"bulkTitle_one": "Move {{count}} task",
+			"bulkTitle_other": "Move {{count}} tasks",
+			"searchPlaceholder": "Move to project…",
+			"empty": "No other project to move to.",
+			"confirmTitle": "Move to {{project}}",
+			"summary_one": "Moves {{count}} task.",
+			"summary_other": "Moves {{count}} tasks.",
+			"tooMany": "Moves {{count}} tasks. At most {{max}} can move at once.",
+			"column": "Column",
+			"keepState": "Keep each task’s state",
+			"subtasks": "Move subtasks too",
+			"droppedTitle": "These values won’t carry over:",
+			"droppedItem": "{{ticket}} · {{field}}: {{value}}",
+			"confirm_one": "Move {{count}} task",
+			"confirm_other": "Move {{count}} tasks",
+			"pending": "Moving…",
+			"done_one": "Moved {{count}} task to {{project}}",
+			"done_other": "Moved {{count}} tasks to {{project}}",
+			"open": "Open in {{project}}",
+			"undo": "Undo",
+			"undone": "Moved back",
+			"back": "Back"
 		}
 	},
 	"labels": {

@@ -109,15 +109,6 @@ export function TaskSubtasks({ task }: { task: TaskRow }) {
           parent={composeFor}
           onClose={() => setComposeFor(null)}
         />
-      ) : editable && open ? (
-        <button
-          type="button"
-          className="flex cursor-pointer items-center gap-1.5 rounded-md px-1 py-1 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={() => setComposeFor(task)}
-        >
-          <Plus aria-hidden="true" className="size-3.5" />
-          {t("subtasks.addLink")}
-        </button>
       ) : null}
     </section>
   );

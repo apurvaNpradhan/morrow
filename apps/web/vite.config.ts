@@ -139,6 +139,8 @@ export default defineConfig({
   ]),
   server: {
     host: true,
+    // Tailscale Serve reaches the dev server under the machine's tailnet name.
+    allowedHosts: [".ts.net"],
     hmr: true,
     port: 5173,
     // The API is same-origin in production, so dev proxies to it instead of

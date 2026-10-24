@@ -24,6 +24,7 @@ export async function listFields(workspaceId: string, projectId: string) {
     id: field.id,
     name: field.name,
     type: field.type,
+    config: field.config,
     options: [...field.options]
       .sort(comparePosition)
       .map(({ id, name, color }) => ({ id, name, color })),
