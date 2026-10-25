@@ -1,29 +1,12 @@
 import type { TaskRow } from "@morrow/sync-schemas";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Archive,
-  ArchiveRestore,
-  Ellipsis,
-  Expand,
-  FolderInput,
-  Link2,
-  Trash2,
-} from "lucide-react";
+import { Ellipsis, Expand, Link2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { MenuHint } from "@/design-system/tooltip-label";
 import { Button } from "@/design-system/ui/button";
-import {
-  Menu,
-  MenuItem,
-  MenuPopup,
-  MenuSeparator,
-  MenuTrigger,
-} from "@/design-system/ui/menu";
+import { Menu, MenuPopup, MenuTrigger } from "@/design-system/ui/menu";
 import { useTaskActions } from "../actions/use-task-actions";
 import { displayTicketId, taskUrl } from "../lib/task-links";
-import { TaskCopyItems } from "./task-copy-items";
-import { requestMoveTasks } from "../lib/move-store";
-import { requestDeleteTasks } from "./delete-task-dialog";
+import { TaskMenuItems } from "./task-context-menu";
 import { useTaskView } from "./task-view-context";
 
 /**
@@ -40,12 +23,11 @@ export function TaskHeaderActions({
   fullPage?: boolean;
 }) {
   const { t } = useTranslation("tasks");
-  const { workspace, project, can, frozen } = useTaskView();
+  const { workspace, project } = useTaskView();
   const actions = useTaskActions();
   const navigate = useNavigate();
   const ticket = displayTicketId(project.key, task.number);
   const url = taskUrl(workspace.slug, project.key, task.number);
-  const editable = can.edit && !frozen;
 
   return (
     <>
@@ -80,40 +62,7 @@ export function TaskHeaderActions({
           <Ellipsis aria-hidden="true" />
         </MenuTrigger>
         <MenuPopup align="end" className="min-w-48">
-          <TaskCopyItems task={task} />
-          {editable ? (
-            <>
-              <MenuSeparator />
-              {can.create ? (
-                <MenuItem onClick={() => requestMoveTasks([task])}>
-                  <FolderInput aria-hidden="true" />
-                  {t("menu.moveToProject")}
-                  <MenuHint hotkeyId="moveTask" />
-                </MenuItem>
-              ) : null}
-              {task.archivedAt ? (
-                <MenuItem onClick={() => void actions.unarchive(task)}>
-                  <ArchiveRestore aria-hidden="true" />
-                  {t("menu.unarchive")}
-                </MenuItem>
-              ) : (
-                <MenuItem onClick={() => void actions.archive(task)}>
-                  <Archive aria-hidden="true" />
-                  {t("menu.archive")}
-                </MenuItem>
-              )}
-            </>
-          ) : null}
-          {can.delete && !frozen ? (
-            <MenuItem
-              variant="destructive"
-              onClick={() => requestDeleteTasks([task])}
-            >
-              <Trash2 aria-hidden="true" />
-              {t("menu.delete")}
-              <MenuHint hotkeyId="deleteTask" />
-            </MenuItem>
-          ) : null}
+          <TaskMenuItems task={task} />
         </MenuPopup>
       </Menu>
     </>
