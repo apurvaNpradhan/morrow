@@ -102,7 +102,8 @@ export function TaskContextMenu({
   );
 }
 
-function TaskMenuItems({
+/** Every action on one task: copy, fields, duplicate, move, archive, delete. The context menu and the sheet's ⋯ menu both show it. */
+export function TaskMenuItems({
   task,
   extraItems,
 }: {
