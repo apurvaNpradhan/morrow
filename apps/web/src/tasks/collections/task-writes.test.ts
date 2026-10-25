@@ -9,6 +9,7 @@ const rpc = vi.hoisted(() => {
       updateDescription: call(2),
       updatePriority: call(3),
       updateStartDate: call(10),
+      updateRecurrence: call(11),
       updateDueDate: call(4),
       updateAssignee: call(5),
       updateParent: call(9),
@@ -134,6 +135,21 @@ describe("writeTaskChanges", () => {
     expect(rpc.tasks.updateDueDate).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({ dueDate: "2026-10-30T09:30:00.000Z" }),
+    );
+  });
+
+  it("sends a repeat rule, and null to stop repeating", async () => {
+    const rule = "DTSTART;VALUE=DATE:20261030\nRRULE:FREQ=WEEKLY";
+    await writeTaskChanges({ original, changes: { recurrence: rule } });
+    await writeTaskChanges({ original, changes: { recurrence: null } });
+
+    expect(rpc.tasks.updateRecurrence).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ recurrence: rule }),
+    );
+    expect(rpc.tasks.updateRecurrence).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ recurrence: null }),
     );
   });
 

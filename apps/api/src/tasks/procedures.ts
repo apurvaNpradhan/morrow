@@ -22,6 +22,7 @@ import { moveTasksToProject } from "./operations/move-tasks-to-project";
 import { resolveTicket } from "./operations/resolve-ticket";
 import { searchTasks, SEARCH_TASKS_MAX } from "./operations/search-tasks";
 import { setTaskParent } from "./operations/set-task-parent";
+import { setTaskRecurrence } from "./operations/set-task-recurrence";
 import { setFieldValue } from "./operations/set-field-value";
 import { setTaskLabel } from "./operations/set-task-label";
 import { setTaskArchived } from "./operations/set-task-archived";
@@ -56,6 +57,7 @@ import {
   position,
   priority,
   projectId,
+  recurrence,
   taskId,
   title,
   workspaceId,
@@ -254,6 +256,19 @@ const updateStartDate = authed
       input.taskId,
       await actorOf(context, input.workspaceId),
       { startDate: input.startDate },
+    ),
+  );
+
+const updateRecurrence = authed
+  .input(forTask.extend({ recurrence: recurrence.nullable() }))
+  .use(canUpdate)
+  .output(txidResult)
+  .handler(({ input }) =>
+    setTaskRecurrence(
+      input.workspaceId,
+      input.projectId,
+      input.taskId,
+      input.recurrence,
     ),
   );
 
@@ -480,6 +495,7 @@ export const tasksRouter = {
   updateDescription,
   updatePriority,
   updateStartDate,
+  updateRecurrence,
   updateDueDate,
   updateAssignee,
   updateParent,

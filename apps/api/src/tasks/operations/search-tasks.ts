@@ -170,6 +170,7 @@ export async function searchTasks(workspaceId: string, search: TaskSearch) {
           assigneeName,
           startDate: startText(task),
           dueDate: dueText(task),
+          recurrence: task.recurrence,
           labels: task.labelIds.flatMap((id) => labelName.get(id) ?? []),
           fields: namedFieldValues(task.fieldValues, fieldById),
           completedAt: task.completedAt,

@@ -8,6 +8,11 @@ export { tasksShapes } from "./shapes";
 export { tasksMcpTools } from "./mcp-tools";
 export { commentsMcpTools } from "./comments/mcp-tools";
 export { taskCommentTable, taskTable } from "./tables";
+export {
+  endRecurrence,
+  settleRecurrence,
+  spawnNextOccurrence,
+} from "./operations/spawn-next-occurrence";
 export { refreshBlockedCounts } from "./lib/open-blocker-counts";
 export { refreshSubtaskCounts } from "./lib/subtask-counts";
 export { listTasks } from "./operations/list-tasks";

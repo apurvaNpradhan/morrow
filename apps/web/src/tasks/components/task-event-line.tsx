@@ -1,4 +1,5 @@
 import {
+  describeRecurrenceText,
   relationKind,
   type TaskEvent,
   type TaskEventFieldValueRef,
@@ -156,6 +157,21 @@ function sentence(t: TFunction, event: TaskEvent, names: Names): string {
             to: names.date(to),
           });
     }
+    case "recurrence": {
+      const { from, to } = event.data;
+      const words = (text: string) => describeRecurrenceText(text) ?? text;
+      if (to === null) return t("history.repeatStopped");
+      return from === null
+        ? t("history.repeatSet", { rule: words(to) })
+        : t("history.repeatChanged", { from: words(from), to: words(to) });
+    }
+    case "recurred":
+      return t(
+        event.data.direction === "to"
+          ? "history.recurredTo"
+          : "history.recurredFrom",
+        { ticket: names.ticket(event.data.ticketId) },
+      );
     case "labels": {
       const { added, removed } = event.data;
       if (added.length > 0 && removed.length > 0) {

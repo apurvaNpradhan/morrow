@@ -10,6 +10,9 @@ import {
   matchColumn,
   MAX_TASK_LABELS,
   normalizeLabelName,
+  parseRecurrence,
+  parseTaskDate,
+  recurrenceText,
 } from "@morrow/sync-schemas";
 import { eq, max, sql } from "drizzle-orm";
 import { generateNKeysBetween } from "fractional-indexing";
@@ -212,6 +215,16 @@ export async function importTasks(
       });
 
     const unmatched = new Map<string, { usedColumn: string; count: number }>();
+    // A repeat rule comes along only if it fits the task's due date.
+    let recurrenceDropped = 0;
+    const recurrenceFor = (task: (typeof document.tasks)[number]) => {
+      if (task.recurrence === null) return null;
+      const due = task.dueDate ? parseTaskDate(task.dueDate) : null;
+      const parsed = due ? parseRecurrence(task.recurrence, due) : null;
+      if (parsed?.ok) return recurrenceText(parsed.recurrence);
+      recurrenceDropped++;
+      return null;
+    };
     const placed = document.tasks.map((task, index) => {
       const { column, exact } = matchColumn(
         columns,
@@ -233,6 +246,7 @@ export async function importTasks(
         labelIds: labelIdsFor(task.labels),
         fieldValues: fields.valuesFor(task.fields),
         comments: commentsFor(task),
+        recurrence: recurrenceFor(task),
       };
     });
 
@@ -282,6 +296,7 @@ export async function importTasks(
         labelIds,
         fieldValues,
         comments,
+        recurrence,
       }) => ({
         id: createId(),
         projectId,
@@ -292,6 +307,7 @@ export async function importTasks(
         assigneeId,
         ...startColumns(task.startDate),
         ...dueColumns(task.dueDate),
+        recurrence,
         labelIds,
         fieldValues,
         commentCount: comments.length,
@@ -371,6 +387,9 @@ export async function importTasks(
       warnings.push({ kind: "assignee_dropped", count: dropped });
     for (const [label, count] of droppedLabels) {
       warnings.push({ kind: "label_dropped", label, count });
+    }
+    if (recurrenceDropped > 0) {
+      warnings.push({ kind: "recurrence_dropped", count: recurrenceDropped });
     }
     warnings.push(...fields.warnings());
     for (const [email, count] of unknownAuthors) {

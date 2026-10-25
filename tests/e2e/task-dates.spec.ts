@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { createProject, twoPeople } from "./helpers";
+import { createProject, drag, twoPeople } from "./helpers";
 
 const dialogOf = (page: Page) => page.locator('[data-slot="dialog-popup"]');
 const sheetOf = (page: Page) => page.locator('[data-slot="sheet-popup"]');
@@ -79,6 +79,45 @@ test("a start and a due date with times show as one range on the card", async ({
     card(admin, "RNG-1", "Plan the launch").getByText(
       /9:00\s?AM → .*5:00\s?PM/,
     ),
+  ).toBeVisible();
+  await close();
+});
+
+test("a repeating task creates the next one when it is dragged to Done", async ({
+  browser,
+}) => {
+  const { admin, slug, close } = await twoPeople(browser, "Repeat");
+  await createProject(admin, slug, "Repeat project", "RPT");
+  await admin.goto(`/${slug}/projects/RPT/board`);
+  await createTask(admin, "To Do", "Standup notes");
+
+  await card(admin, "RPT-1", "Standup notes").click();
+  await admin.keyboard.press("Shift+D");
+  await admin.getByRole("menuitem", { name: "Today", exact: true }).click();
+  await admin.keyboard.press("Escape");
+  await card(admin, "RPT-1", "Standup notes").click({ button: "right" });
+  await admin.getByRole("menuitem", { name: "Repeat", exact: true }).hover();
+  await admin.getByRole("menuitem", { name: /^Every week on / }).click();
+  await expect(
+    card(admin, "RPT-1", "Standup notes").getByTitle(/^every week on /),
+  ).toBeVisible();
+
+  await drag(
+    admin,
+    card(admin, "RPT-1", "Standup notes"),
+    admin.getByRole("region", { name: "Done", exact: true }),
+  );
+
+  const next = card(admin, "RPT-2", "Standup notes");
+  await expect(next).toBeVisible();
+  await expect(next.getByTitle(/^every week on /)).toBeVisible();
+  await expect(
+    card(admin, "RPT-1", "Standup notes").getByTitle(/^every week on /),
+  ).toHaveCount(0);
+
+  await next.click();
+  await expect(
+    sheetOf(admin).getByText("was created as the next occurrence of RPT-1"),
   ).toBeVisible();
   await close();
 });

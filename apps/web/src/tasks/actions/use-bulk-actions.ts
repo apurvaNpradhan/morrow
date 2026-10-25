@@ -5,6 +5,7 @@ import { errorMessage } from "@/app/lib/error-message";
 import { toast } from "@/design-system/toast";
 import { useTaskView } from "../components/task-view-context";
 import { dueFields, startsAfterDue } from "../lib/due-date";
+import { requestStopRepeating } from "../lib/stop-repeating-store";
 import { selectedTasks } from "../lib/selected-tasks";
 import {
   bulkRemoveTasks,
@@ -69,9 +70,17 @@ export function useBulkActions() {
         const clearsStart = batch().tasks.some((task) =>
           startsAfterDue({ ...task, ...due }),
         );
-        const done = await update({ type: "dueDate", dueDate });
-        if (done && clearsStart) toast.info(t("due.startCleared"));
-        return done;
+        const write = async () => {
+          const done = await update({ type: "dueDate", dueDate });
+          if (done && clearsStart) toast.info(t("due.startCleared"));
+          return done;
+        };
+        // Without a due date a task cannot repeat, so ask first.
+        if (dueDate === null && batch().tasks.some((task) => task.recurrence)) {
+          requestStopRepeating(write);
+          return false;
+        }
+        return write();
       },
       addLabel: (labelId: string) => update({ type: "addLabel", labelId }),
       removeLabel: (labelId: string) =>

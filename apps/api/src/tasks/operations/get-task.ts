@@ -167,6 +167,7 @@ export async function getTask(
         : null,
     startDate: startText(task),
     dueDate: dueText(task),
+    recurrence: task.recurrence,
     completedAt: task.completedAt,
     archivedAt: task.archivedAt,
     createdAt: task.createdAt,

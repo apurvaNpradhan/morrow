@@ -60,6 +60,14 @@ export async function writeTaskChanges({ original, changes }: TaskMutation) {
       }),
     );
   }
+  if (changes.recurrence !== undefined) {
+    await keep(
+      rpc.tasks.updateRecurrence({
+        ...target,
+        recurrence: changes.recurrence,
+      }),
+    );
+  }
   if (changes.assigneeId !== undefined) {
     await keep(
       rpc.tasks.updateAssignee({ ...target, assigneeId: changes.assigneeId }),

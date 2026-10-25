@@ -1,6 +1,7 @@
 import {
   MAX_TASK_LABELS,
   nextCompletedAt,
+  parseTaskDate,
   type TaskPriority,
 } from "@morrow/sync-schemas";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
@@ -28,6 +29,15 @@ import {
   startsAfterDue,
   startText,
 } from "#api/tasks/lib/task-date-columns";
+import {
+  endRecurrence,
+  settleRecurrence,
+} from "#api/tasks/operations/spawn-next-occurrence";
+import {
+  dueOf,
+  recurrenceAfterDueChange,
+  zoneOfUser,
+} from "#api/tasks/lib/recurrence";
 import { taskTable } from "#api/tasks/tables";
 
 /** What one bulk action does to every Task it names. */
@@ -129,6 +139,29 @@ export async function bulkUpdateTasks(
             startsAfterDue(startText(task), to),
           );
           await update(startColumns(null), backwards);
+          // Repeating tasks' rules follow the new date first, or go with it.
+          const repeating = tasks.filter((task) => task.recurrence !== null);
+          const zone = repeating.length
+            ? await zoneOfUser(tx, actor.userId)
+            : "UTC";
+          for (const task of repeating) {
+            const rule = recurrenceAfterDueChange(
+              task.recurrence,
+              dueOf(task),
+              to === null ? null : parseTaskDate(to),
+              zone,
+            );
+            await tx
+              .update(taskTable)
+              .set({ recurrence: rule })
+              .where(eq(taskTable.id, task.id));
+            if (rule !== task.recurrence) {
+              await record(task, {
+                type: "recurrence",
+                data: { from: task.recurrence, to: rule },
+              });
+            }
+          }
           await update(dueColumns(change.dueDate), tasks);
           for (const task of backwards) {
             await record(task, {
@@ -216,6 +249,8 @@ export async function bulkUpdateTasks(
               type: change.archived ? "archived" : "unarchived",
               data: {},
             });
+            // An archived task ends its series.
+            if (change.archived) await endRecurrence(tx, projectId, task.id);
           }
           break;
         }
@@ -278,18 +313,15 @@ async function moveTasks(
   for (const [index, task] of moving.entries()) {
     const from = columns.get(task.columnId);
     if (!from) continue;
+    const completedAt = nextCompletedAt(
+      task.completedAt,
+      from.category,
+      to.category,
+      now,
+    );
     await tx
       .update(taskTable)
-      .set({
-        columnId: to.id,
-        position: positions[index]!,
-        completedAt: nextCompletedAt(
-          task.completedAt,
-          from.category,
-          to.category,
-          now,
-        ),
-      })
+      .set({ columnId: to.id, position: positions[index]!, completedAt })
       .where(eq(taskTable.id, task.id));
     await recordTaskEvent(tx, projectId, task.id, {
       type: "column",
@@ -307,5 +339,12 @@ async function moveTasks(
         task,
       );
     }
+    await settleRecurrence(
+      tx,
+      { workspaceId, project },
+      task.id,
+      { before: task.completedAt, after: completedAt, category: to.category },
+      now,
+    );
   }
 }

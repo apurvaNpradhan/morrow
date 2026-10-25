@@ -8,6 +8,8 @@ export function ticketsNamedBy(event: TaskEvent): string[] {
   switch (event.type) {
     case "duplicated":
       return [event.data.sourceTicketId];
+    case "recurred":
+      return [event.data.ticketId];
     case "parent":
       return [event.data.from, event.data.to].filter((id) => id !== null);
     case "subtask_added":

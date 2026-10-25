@@ -71,6 +71,8 @@ export const taskTable = pgTable(
     startHasTime: boolean("start_has_time").notNull().default(false),
     dueAt: timestamp("due_at", { mode: "date" }),
     dueHasTime: boolean("due_has_time").notNull().default(false),
+    // An RFC 5545 rule (DTSTART + RRULE) whose DTSTART is the due date; see `recurrence.ts` in sync-schemas.
+    recurrence: text("recurrence"),
     // Ids of the Workspace's labels. No foreign key, on purpose: one row per
     // task, read straight off the card. Label delete keeps it consistent.
     labelIds: text("label_ids")
@@ -124,6 +126,14 @@ export const taskTable = pgTable(
     check(
       "task_start_before_due_check",
       sql`${table.startAt} IS NULL OR ${table.dueAt} IS NULL OR ${table.startAt} <= ${table.dueAt}`,
+    ),
+    check(
+      "task_recurrence_needs_due_check",
+      sql`${table.recurrence} IS NULL OR ${table.dueAt} IS NOT NULL`,
+    ),
+    check(
+      "task_recurrence_not_subtask_check",
+      sql`${table.recurrence} IS NULL OR ${table.parentId} IS NULL`,
     ),
     check(
       "task_priority_check",

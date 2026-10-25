@@ -1,6 +1,11 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { expect, type Browser, type Page } from "@playwright/test";
+import {
+  expect,
+  type Browser,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 
 /** The disposable stack's Morrow log; emails are written to it (no Resend key). */
 function morrowLogs() {
@@ -159,4 +164,19 @@ export async function createProject(
   await page.getByLabel("Key", { exact: true }).fill(key);
   await page.getByRole("button", { name: "Create project" }).click();
   await expect(page).toHaveURL(new RegExp(`/${slug}/projects/${key}/board$`));
+}
+
+/** A real pointer drag: hold past the sensor's delay, move in steps, release. */
+export async function drag(page: Page, source: Locator, target: Locator) {
+  const from = await source.boundingBox();
+  const to = await target.boundingBox();
+  if (!from || !to) throw new Error("Nothing to drag");
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(300);
+  await page.mouse.move(from.x + from.width / 2 + 12, from.y + 12, {
+    steps: 4,
+  });
+  await page.mouse.move(to.x + to.width / 2, to.y + 80, { steps: 20 });
+  await page.mouse.up();
 }

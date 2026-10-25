@@ -5,6 +5,7 @@ import { errorMessage } from "@/app/lib/error-message";
 import { copyToClipboard } from "@/design-system/copy-to-clipboard";
 import { toast } from "@/design-system/toast";
 import { dueFields, startFields, startsAfterDue } from "../lib/due-date";
+import { requestStopRepeating } from "../lib/stop-repeating-store";
 import { useTaskView } from "../components/task-view-context";
 import { useCreatedToast } from "./use-created-toast";
 import {
@@ -50,14 +51,24 @@ export function useTaskActions() {
       setDueDate: (task: TaskRow, dueDate: string | null) => {
         const due = dueFields(dueDate);
         const clearsStart = startsAfterDue({ ...task, ...due });
-        return attempt(async () => {
-          await updateTask(task.id, {
-            ...due,
-            ...(clearsStart && startFields(null)),
+        const write = () =>
+          attempt(async () => {
+            await updateTask(task.id, {
+              ...due,
+              ...(clearsStart && startFields(null)),
+            });
+            if (clearsStart) toast.info(t("due.startCleared"));
           });
-          if (clearsStart) toast.info(t("due.startCleared"));
-        });
+        // Without a due date a task cannot repeat, so ask first.
+        if (dueDate === null && task.recurrence !== null) {
+          requestStopRepeating(write);
+          return Promise.resolve(false);
+        }
+        return write();
       },
+      /** An RFC 5545 rule beginning on the due date, or null to stop repeating. */
+      setRecurrence: (task: TaskRow, recurrence: string | null) =>
+        attempt(() => updateTask(task.id, { recurrence })),
       setAssignee: (task: TaskRow, assigneeId: string | null) =>
         attempt(() => updateTask(task.id, { assigneeId })),
       /** `null` makes the task a top-level one again. */

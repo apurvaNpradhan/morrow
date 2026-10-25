@@ -18,6 +18,7 @@ export * from "./links.js";
 export * from "./match-column.js";
 export * from "./move-fields.js";
 export * from "./projects.js";
+export * from "./recurrence.js";
 export * from "./relations.js";
 export * from "./search.js";
 export * from "./shape-schema-version.js";
@@ -183,6 +184,7 @@ export const tasksShape = shape(
     startHasTime: z.boolean(),
     dueAt: z.date().nullable(),
     dueHasTime: z.boolean(),
+    recurrence: z.string().nullable(),
     labelIds: z.array(z.string()),
     fieldValues: fieldValuesSchema,
     commentCount: z.number(),
