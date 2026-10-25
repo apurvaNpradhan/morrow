@@ -708,3 +708,27 @@ describe("ending a series", () => {
     });
   });
 });
+
+describe("moving a repeating task to another Project", () => {
+  it("moves it with its subtasks and keeps the rule", async () => {
+    const context = await setup();
+    const parent = await context.repeating(weekly("20261030"), "2026-10-30");
+    await context.addTask("To Do", { title: "Kid", parentId: parent.id });
+    const web = await context.client.projects.create({
+      workspaceId: context.workspace.id,
+      name: "Website",
+      key: "WEB",
+    });
+
+    await context.client.tasks.moveToProject({
+      workspaceId: context.workspace.id,
+      taskIds: [parent.id],
+      toProjectId: web.id,
+    });
+
+    expect(await taskRow(parent.id)).toMatchObject({
+      projectId: web.id,
+      recurrence: weekly("20261030"),
+    });
+  });
+});
