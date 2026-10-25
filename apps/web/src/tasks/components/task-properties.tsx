@@ -17,6 +17,8 @@ import { cn } from "@/design-system/cn";
 import { LabelChips, labelsOfTask } from "@/labels";
 import { dueDay } from "../lib/due-date";
 import { nextDueDate, recurrenceSummary } from "../lib/recurrence-summary";
+import { ProjectIcon } from "@/projects";
+import { ProjectItems } from "./project-items";
 import { RecurrenceItems } from "./recurrence-items";
 import { fieldHeld } from "../lib/field-value";
 import { useTaskActions } from "../actions/use-task-actions";
@@ -47,6 +49,7 @@ import { useTaskView } from "./task-view-context";
 export function TaskProperties({ task }: { task: TaskRow }) {
   const { t } = useTranslation("tasks");
   const {
+    project,
     columns,
     columnById,
     fields,
@@ -134,6 +137,17 @@ export function TaskProperties({ task }: { task: TaskRow }) {
   return (
     <dl className="flex flex-wrap items-start gap-2 @min-[720px]:flex-col @min-[720px]:gap-0.5">
       <RailHeading>{t("sheet.properties")}</RailHeading>
+      <Field label={t("fields.project")}>
+        <FieldChipMenu
+          label={t("fields.project")}
+          sheetField="project"
+          disabled={!editable || !can.create}
+          icon={<ProjectIcon project={project} />}
+          value={project.name}
+        >
+          <ProjectItems task={task} />
+        </FieldChipMenu>
+      </Field>
       <Field label={t("fields.column")}>
         <FieldChipMenu
           label={t("fields.column")}
