@@ -1,5 +1,5 @@
 import { type ColumnCategory, isClosedCategory } from "@morrow/sync-schemas";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { rethrowViolation } from "#api/projects/errors";
 import { assertValidPosition } from "#api/projects/lib/position";
@@ -8,6 +8,7 @@ import { projectColumnTable } from "#api/projects/tables";
 import {
   refreshBlockedCounts,
   refreshSubtaskCounts,
+  settleRecurrence,
   taskTable,
 } from "#api/tasks/index";
 import { findColumn } from "../lib/find-column";
@@ -28,7 +29,7 @@ export async function moveColumn(
   assertValidPosition(target.position);
   try {
     const { txid } = await withTxid(async (tx) => {
-      await lockProject(tx, workspaceId, projectId);
+      const project = await lockProject(tx, workspaceId, projectId);
       const column = await findColumn(tx, projectId, columnId);
       if (column.category !== target.category) {
         await assertNotLastRequiredColumn(tx, projectId, column);
@@ -38,6 +39,18 @@ export async function moveColumn(
         .set({ category: target.category, position: target.position })
         .where(eq(projectColumnTable.id, columnId));
       if (column.category !== target.category) {
+        // Repeating tasks whose rule this category change settles: done spawns, canceled ends.
+        const repeating = isClosedCategory(target.category)
+          ? await tx
+              .select({ id: taskTable.id, completedAt: taskTable.completedAt })
+              .from(taskTable)
+              .where(
+                and(
+                  eq(taskTable.columnId, columnId),
+                  isNotNull(taskTable.recurrence),
+                ),
+              )
+          : [];
         const moved = await tx
           .update(taskTable)
           .set({
@@ -55,6 +68,16 @@ export async function moveColumn(
           tx,
           moved.map((task) => task.id),
         );
+        const now = new Date();
+        for (const { id, completedAt } of repeating) {
+          await settleRecurrence(
+            tx,
+            { workspaceId, project },
+            id,
+            { before: completedAt, after: now, category: target.category },
+            now,
+          );
+        }
       }
     });
     return { txid };

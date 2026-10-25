@@ -83,6 +83,14 @@ export const taskEventSchema = z.discriminatedUnion("type", [
     z.object({ from: z.string().nullable(), to: z.string().nullable() }),
   ),
   event(
+    "recurrence",
+    z.object({ from: z.string().nullable(), to: z.string().nullable() }),
+  ),
+  event(
+    "recurred",
+    z.object({ direction: z.enum(["from", "to"]), ticketId: z.string() }),
+  ),
+  event(
     "labels",
     z.object({ added: z.array(labelRef), removed: z.array(labelRef) }),
   ),

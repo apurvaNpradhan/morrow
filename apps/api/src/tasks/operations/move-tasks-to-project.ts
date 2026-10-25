@@ -27,6 +27,7 @@ import {
 } from "#api/tasks/errors";
 import { recordParentChange } from "#api/tasks/history/record-parent-change";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
+import { settleRecurrence } from "#api/tasks/operations/spawn-next-occurrence";
 import { refreshBlockedCounts } from "#api/tasks/lib/open-blocker-counts";
 import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { treeOrder } from "#api/tasks/lib/tree-order";
@@ -330,6 +331,13 @@ async function move(
   const now = new Date();
   const results: MovedTask[] = [];
   const story = new Map<string, MovedEvent>();
+  /** What each task's move did to its completion, for its repeat rule. */
+  const settling: Array<{
+    taskId: string;
+    before: Date | null;
+    after: Date | null;
+    category: string;
+  }> = [];
   for (const task of ordered) {
     const from = projects.get(task.projectId)!;
     const fromColumn = columnById.get(task.columnId)!;
@@ -340,6 +348,18 @@ async function move(
       task.fieldValues,
     );
     const number = numberOf.get(task.id)!;
+    const completedAt = nextCompletedAt(
+      task.completedAt,
+      fromColumn.category,
+      toColumn.category,
+      now,
+    );
+    settling.push({
+      taskId: task.id,
+      before: task.completedAt,
+      after: completedAt,
+      category: toColumn.category,
+    });
     await tx
       .update(taskTable)
       .set({
@@ -349,12 +369,7 @@ async function move(
         position: positionOf.get(task.id)!,
         parentId: detached.has(task.id) ? null : task.parentId,
         fieldValues: carried.values,
-        completedAt: nextCompletedAt(
-          task.completedAt,
-          fromColumn.category,
-          toColumn.category,
-          now,
-        ),
+        completedAt,
       })
       .where(eq(taskTable.id, task.id));
     const detachedFrom = detached.get(task.id);
@@ -406,6 +421,15 @@ async function move(
       type: "project_moved",
       data,
     });
+  }
+  for (const { taskId, ...change } of settling) {
+    await settleRecurrence(
+      tx,
+      { workspaceId, project: to },
+      taskId,
+      change,
+      now,
+    );
   }
   for (const result of results) {
     const task = movingTasks.get(result.taskId)!;

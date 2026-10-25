@@ -2,6 +2,7 @@ import {
   COLUMN_CATEGORIES,
   COMMENT_BODY_MAX,
   isTaskDateText,
+  RECURRENCE_TEXT_MAX,
   namedFieldValueSchema,
   TASK_DESCRIPTION_MAX,
   TASK_PRIORITIES,
@@ -48,6 +49,11 @@ export const importDocument = z.object({
         priority: z.enum(TASK_PRIORITIES).default("none"),
         startDate: z.string().refine(isTaskDateText).nullable().default(null),
         dueDate: z.string().refine(isTaskDateText).nullable().default(null),
+        recurrence: z
+          .string()
+          .max(RECURRENCE_TEXT_MAX)
+          .nullable()
+          .default(null),
         assigneeEmail: z.string().nullable().default(null),
         completedAt: isoDate.nullable().default(null),
         archivedAt: isoDate.nullable().default(null),

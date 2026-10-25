@@ -92,7 +92,7 @@ A Task has only a due date, and it is a calendar day with no time. You cannot sa
   - `rebaseRecurrence(rule, newDue)` rewrites `DTSTART` and lowers `COUNT` by the occurrences before `newDue`.
   - `describeRecurrence(rule)` wraps `toText()`. English only; the one place to switch to i18n keys when a second locale exists.
 - Rules: a rule needs a due date (`RECURRENCE_NEEDS_DUE_DATE`) and is refused on a subtask (`SUBTASK_CANNOT_REPEAT`) and on a Task with a parent being set (`setParent` refuses a repeating Task the same way). The zone in `TZID` is the setter's time-zone setting, or the browser's when none is set, sent by the client and validated like `user.time_zone`; it never changes when someone else edits the Task.
-- Procedure `tasks.setRecurrence({ taskId, rule: string | null })` in `withTxid` under `lockProject`, needing `task: update`. MCP `update_tasks` takes `recurrence` with the same validation.
+- Procedure `tasks.updateRecurrence({ taskId, recurrence: string | null })` in `withTxid` under `lockProject`, needing `task: update`. MCP `update_tasks` takes `recurrence` with the same validation.
 - **The due date drives the rule.** `setDueDate` on a repeating Task calls `rebaseRecurrence` in the same write; switching between a day and a moment switches `DTSTART` between `VALUE=DATE` and `TZID`. Clearing the due date clears the rule in the same write and records both events; the web app confirms first.
 - **Spawning.** `spawnNextOccurrence(tx, task, now)` runs wherever `completedAt` goes from null to set and the new Column is `done`, inside the same transaction: single moves, bulk updates, Column delete, Column category change and moves to another Project (the `nextCompletedAt` call sites). It:
   1. computes the next due date with `nextOccurrence`; if null, the series ends and nothing is created;
@@ -100,7 +100,7 @@ A Task has only a due date, and it is a calendar day with no time. You cannot sa
   3. recreates every direct subtask, and their subtasks, as open Tasks in the first `unstarted` Column, with the same copied fields and no dates;
   4. clears the rule on the completed Task;
   5. records `recurred` on both Tasks (`{ direction: "from" | "to", ticketId }`) and `task.created` activity for the new Task.
-- **Ending a series.** Entering a `canceled` Column, archiving, deleting or `setRecurrence(null)` leaves no Task with the rule, so the series ends; there is no series table. Reopening an old Task does nothing. Duplicating a Task drops the rule. Import keeps the rule from the file and never spawns.
+- **Ending a series.** Entering a `canceled` Column, archiving, deleting or `updateRecurrence(null)` leaves no Task with the rule, so the series ends; there is no series table. Reopening an old Task does nothing. Duplicating a Task drops the rule. Import keeps the rule from the file and never spawns.
 - History: a `recurrence` event `{ from: string | null, to: string | null }` with the rule text, rendered with `describeRecurrence`; `recurred` as above.
 
 ### Recurrence UI (tasks Vertical, web)
@@ -149,3 +149,15 @@ Reminders and notifications (planned; see the ADR), a My tasks page and the Proj
 
 - Grilled 2026-10-24.
 - Kaneo reference: `repos/kaneo/apps/api/src/scheduler/due-date-reminders.ts`, `reminder-timing.ts`, `utils/validate-dates.ts`. Kaneo has no recurrence.
+
+## As built
+
+Where the build differs from the text above:
+
+- **Names.** The Procedures are `tasks.updateDueDate`, `updateStartDate` and `updateRecurrence` (the existing `updateX` naming); each takes the text form (`YYYY-MM-DD`, ISO 8601, or the RFC 5545 string).
+- **Due before start.** The server does it: `updateDueDate` and the bulk due-date change clear a start that would come after the new due date and record a `start_date` entry; the web app only tells the user (a toast). `START_AFTER_DUE` is for setting a start after the due date (set, create, bulk, import). A duplicate copies a valid span, so it cannot fail.
+- **Ending a series** also happens when a Task enters a `canceled` Column by any path (move, bulk move, Column delete or category change, move to another Project, "duplicate" relation) and when it is archived, singly or in bulk. The rule is cleared and a `recurrence` entry written.
+- **Spawning** skips archived subtasks. "Today" for the skip is in the rule's `TZID`, else the completing user's chosen zone, else UTC. A rule on days that gets a time is written in the editor's chosen zone, else UTC.
+- **Monthly on day 31** follows RFC 5545: months without a 31st are skipped. "Last day" is `BYMONTHDAY=-1`.
+- **Import** drops a repeat rule that does not fit the task's due date and says so (`recurrence_dropped`).
+- **History** stores dates as text, so old `due_date` payloads needed no rewrite (see the ADR).

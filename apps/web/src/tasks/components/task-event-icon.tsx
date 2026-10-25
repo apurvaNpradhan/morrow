@@ -12,6 +12,7 @@ import {
   ListTree,
   SlidersHorizontal,
   Pencil,
+  Repeat,
   Tag,
   TextAlignStart,
   UserRound,
@@ -52,6 +53,9 @@ export function TaskEventIcon({
       return <Flag aria-hidden="true" className={icon} />;
     case "assignee":
       return <UserRound aria-hidden="true" className={icon} />;
+    case "recurrence":
+    case "recurred":
+      return <Repeat aria-hidden="true" className={icon} />;
     case "start_date":
     case "due_date":
       return <Calendar aria-hidden="true" className={icon} />;

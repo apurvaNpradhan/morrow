@@ -371,6 +371,22 @@ describe("MCP endpoint", () => {
         ["MOR-2", null, "2026-10-30"],
       ]),
     );
+    const rule = "DTSTART;VALUE=DATE:20261030\nRRULE:FREQ=WEEKLY;BYDAY=FR";
+    expect(
+      await run("update_tasks", {
+        projectId,
+        items: [{ ticketId: "MOR-2", recurrence: rule }],
+      }),
+    ).toEqual([{ index: 0, ticketId: "MOR-2", changed: ["recurrence"] }]);
+    const repeated = await run("list_tasks", { projectId });
+    expect(
+      repeated.tasks.find((t: { ticketId: string }) => t.ticketId === "MOR-2")
+        .recurrence,
+    ).toBe(rule);
+    await run("update_tasks", {
+      projectId,
+      items: [{ ticketId: "MOR-2", recurrence: null }],
+    });
     await run("move_task", {
       projectId,
       ticketId: "MOR-1",

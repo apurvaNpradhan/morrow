@@ -4,6 +4,7 @@ import {
   ArchiveRestore,
   CalendarArrowDown,
   CalendarDays,
+  Repeat,
   Copy,
   FolderInput,
   Trash2,
@@ -30,6 +31,7 @@ import { useSelectedIds } from "../lib/selection-store";
 import { SelectionMenuItems } from "./selection-menu-items";
 import { openDatePicker } from "../lib/date-picker-store";
 import { dueDay } from "../lib/due-date";
+import { RecurrenceItems } from "./recurrence-items";
 import { requestMoveTasks } from "../lib/move-store";
 import { requestDeleteTasks } from "./delete-task-dialog";
 import { ColumnMarker } from "./column-marker";
@@ -190,6 +192,15 @@ function TaskMenuItems({
                 onSelect={(dueDate) => void actions.setDueDate(task, dueDate)}
                 onPickDate={() => openDatePicker(task.id, "dueDate")}
               />
+            </MenuSubPopup>
+          </MenuSub>
+          <MenuSub>
+            <MenuSubTrigger>
+              <Repeat aria-hidden="true" />
+              {t("fields.repeat")}
+            </MenuSubTrigger>
+            <MenuSubPopup>
+              <RecurrenceItems task={task} />
             </MenuSubPopup>
           </MenuSub>
           <MenuSub>

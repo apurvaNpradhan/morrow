@@ -1,9 +1,10 @@
 import { taskDateDay } from "@morrow/sync-schemas";
-import { CalendarArrowDown, CalendarDays } from "lucide-react";
+import { CalendarArrowDown, CalendarDays, Repeat } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
 import { isOverdue } from "../lib/due-date";
 import { formatTaskDate } from "../lib/format-task-date";
+import { recurrenceSummary } from "../lib/recurrence-summary";
 import { DueDateText } from "./due-date-chip-text";
 import { TaskChip } from "./task-chip";
 
@@ -13,7 +14,7 @@ import { TaskChip } from "./task-chip";
  * red when the due date has passed. Clicking opens the due date's picker, or
  * the start date's when that is all there is.
  */
-export function TaskDatesChip({
+function DatesChip({
   task,
   showStart,
   showDue,
@@ -77,4 +78,19 @@ export function TaskDatesChip({
     );
   }
   return null;
+}
+
+/** The dates chip, and next to it a repeat mark when the task repeats. */
+export function TaskDatesChip(props: Parameters<typeof DatesChip>[0]) {
+  const summary = props.showDue ? recurrenceSummary(props.task) : null;
+  return (
+    <>
+      <DatesChip {...props} />
+      {summary ? (
+        <TaskChip label={summary}>
+          <Repeat aria-hidden="true" className="size-3" />
+        </TaskChip>
+      ) : null}
+    </>
+  );
 }

@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import { createProject, twoPeople } from "./helpers";
+import { createProject, drag, twoPeople } from "./helpers";
 
 /** The lane of a Column on the board. */
 const lane = (page: Page, name: string) =>
@@ -34,21 +34,6 @@ async function createTasks(page: Page, column: string, titles: string[]) {
   }
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(dialog).toBeHidden();
-}
-
-/** A real pointer drag: hold past the sensor's delay, move in steps, release. */
-async function drag(page: Page, source: Locator, target: Locator) {
-  const from = await source.boundingBox();
-  const to = await target.boundingBox();
-  if (!from || !to) throw new Error("Nothing to drag");
-  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-  await page.mouse.down();
-  await page.waitForTimeout(300);
-  await page.mouse.move(from.x + from.width / 2 + 12, from.y + 12, {
-    steps: 4,
-  });
-  await page.mouse.move(to.x + to.width / 2, to.y + 80, { steps: 20 });
-  await page.mouse.up();
 }
 
 test("tasks created in one tab appear numbered in another member's board", async ({

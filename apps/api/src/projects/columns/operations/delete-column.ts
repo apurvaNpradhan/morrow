@@ -8,6 +8,7 @@ import { projectColumnTable } from "#api/projects/tables";
 import {
   refreshBlockedCounts,
   refreshSubtaskCounts,
+  settleRecurrence,
   taskTable,
 } from "#api/tasks/index";
 import { findColumn } from "../lib/find-column";
@@ -26,7 +27,7 @@ export async function deleteColumn(
   targetColumnId: string,
 ) {
   const { txid } = await withTxid(async (tx) => {
-    await lockProject(tx, workspaceId, projectId);
+    const project = await lockProject(tx, workspaceId, projectId);
     const column = await findColumn(tx, projectId, columnId);
     if (targetColumnId === columnId) {
       throw projectError("INVALID_TARGET_COLUMN");
@@ -57,20 +58,40 @@ export async function deleteColumn(
         tasks.length,
       );
       const now = new Date();
+      const settling: Array<{
+        taskId: string;
+        before: Date | null;
+        after: Date | null;
+      }> = [];
       for (const [index, task] of tasks.entries()) {
+        const completedAt = nextCompletedAt(
+          task.completedAt,
+          column.category,
+          target.category,
+          now,
+        );
+        settling.push({
+          taskId: task.id,
+          before: task.completedAt,
+          after: completedAt,
+        });
         await tx
           .update(taskTable)
           .set({
             columnId: targetColumnId,
             position: positions[index],
-            completedAt: nextCompletedAt(
-              task.completedAt,
-              column.category,
-              target.category,
-              now,
-            ),
+            completedAt,
           })
           .where(eq(taskTable.id, task.id));
+      }
+      for (const { taskId, ...change } of settling) {
+        await settleRecurrence(
+          tx,
+          { workspaceId, project },
+          taskId,
+          { ...change, category: target.category },
+          now,
+        );
       }
       await refreshSubtaskCounts(
         tx,

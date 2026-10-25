@@ -119,6 +119,7 @@ export async function exportTasks(workspaceId: string, projectId: string) {
         priority: task.priority,
         startDate: startText(task),
         dueDate: dueText(task),
+        recurrence: task.recurrence,
         assigneeEmail,
         completedAt: task.completedAt?.toISOString() ?? null,
         archivedAt: task.archivedAt?.toISOString() ?? null,

@@ -174,7 +174,7 @@ describe("shape proxy", () => {
     // Updates carry whole rows, so a board can take in a Task moved into it.
     expect(upstream.searchParams.get("replica")).toBe("full");
     expect(upstream.searchParams.get("columns")).toBe(
-      "id,project_id,column_id,parent_id,number,title,subtask_done,subtask_total,open_blocker_count,priority,assignee_id,due_date,label_ids,field_values,comment_count,position,completed_at,archived_at,created_by,created_at,updated_at",
+      "id,project_id,column_id,parent_id,number,title,subtask_done,subtask_total,open_blocker_count,priority,assignee_id,start_at,start_has_time,due_at,due_has_time,recurrence,label_ids,field_values,comment_count,position,completed_at,archived_at,created_by,created_at,updated_at",
     );
     expect(upstream.searchParams.get("where")).toContain(
       "project_id IN (SELECT id FROM project WHERE workspace_id IN (",

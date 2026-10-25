@@ -1,4 +1,10 @@
-import { CalendarArrowDown, CalendarDays, Tag, UserRound } from "lucide-react";
+import {
+  CalendarArrowDown,
+  CalendarDays,
+  Repeat,
+  Tag,
+  UserRound,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TaskRow } from "@morrow/sync-schemas";
@@ -10,6 +16,8 @@ import {
 import { cn } from "@/design-system/cn";
 import { LabelChips, labelsOfTask } from "@/labels";
 import { dueDay } from "../lib/due-date";
+import { nextDueDate, recurrenceSummary } from "../lib/recurrence-summary";
+import { RecurrenceItems } from "./recurrence-items";
 import { fieldHeld } from "../lib/field-value";
 import { useTaskActions } from "../actions/use-task-actions";
 import { openDatePicker } from "../lib/date-picker-store";
@@ -65,7 +73,11 @@ export function TaskProperties({ task }: { task: TaskRow }) {
   });
   const showStartDate =
     task.startAt !== null || added.names.includes("startDate");
+  const showRepeat =
+    task.recurrence !== null || added.names.includes("recurrence");
   const showDueDate = task.dueAt !== null || added.names.includes("dueDate");
+  const summary = recurrenceSummary(task);
+  const nextDue = nextDueDate(task, today);
   const unsetFields = fields.filter(
     (field) => fieldHeld(field, task.fieldValues) === undefined,
   );
@@ -81,6 +93,9 @@ export function TaskProperties({ task }: { task: TaskRow }) {
     ...(showDueDate
       ? []
       : [{ sheetField: "dueDate", label: t("fields.dueDate") }]),
+    ...(showRepeat || task.parentId !== null
+      ? []
+      : [{ sheetField: "recurrence", label: t("fields.repeat") }]),
     ...unsetFields
       .filter((field) => !added.names.includes(`field:${field.id}`))
       .map((field) => ({ sheetField: `field:${field.id}`, label: field.name })),
@@ -232,6 +247,29 @@ export function TaskProperties({ task }: { task: TaskRow }) {
               onPickDate={() => openDatePicker(task.id, "dueDate")}
             />
           </FieldChipMenu>
+        </Field>
+      ) : null}
+      {showRepeat ? (
+        <Field label={t("fields.repeat")}>
+          <FieldChipMenu
+            label={t("fields.repeat")}
+            sheetField="recurrence"
+            disabled={!editable}
+            muted={!summary}
+            icon={<Repeat aria-hidden="true" className="size-3.5" />}
+            value={summary ?? t("repeat.none")}
+          >
+            <RecurrenceItems task={task} />
+          </FieldChipMenu>
+          {nextDue ? (
+            <span className="px-1.5 text-muted-foreground text-xs">
+              {t("repeat.next", {
+                date: formatTaskDate(nextDue.at, nextDue.hasTime, timeZone, {
+                  year: true,
+                }),
+              })}
+            </span>
+          ) : null}
         </Field>
       ) : null}
       {shownFields.length > 0 ? (

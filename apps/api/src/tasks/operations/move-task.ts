@@ -13,6 +13,7 @@ import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { refreshBlockedCounts } from "#api/tasks/lib/open-blocker-counts";
 import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
+import { settleRecurrence } from "#api/tasks/operations/spawn-next-occurrence";
 import { taskTable } from "#api/tasks/tables";
 
 /**
@@ -37,17 +38,18 @@ export async function moveTask(
         throw taskError("COLUMN_NOT_IN_PROJECT");
       });
       const from = await findColumn(tx, projectId, task.columnId);
+      const completedAt = nextCompletedAt(
+        task.completedAt,
+        from.category,
+        to.category,
+        new Date(),
+      );
       await tx
         .update(taskTable)
         .set({
           columnId: to.id,
           position: await freePosition(tx, to.id, target.position, taskId),
-          completedAt: nextCompletedAt(
-            task.completedAt,
-            from.category,
-            to.category,
-            new Date(),
-          ),
+          completedAt,
         })
         .where(eq(taskTable.id, taskId));
       // Open or closed is all a parent's counter looks at.
@@ -78,6 +80,11 @@ export async function moveTask(
           );
         }
       }
+      await settleRecurrence(tx, { workspaceId, project }, taskId, {
+        before: task.completedAt,
+        after: completedAt,
+        category: to.category,
+      });
     });
     return { txid };
   } catch (error) {

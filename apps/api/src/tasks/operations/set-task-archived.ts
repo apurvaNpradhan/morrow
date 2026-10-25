@@ -5,6 +5,7 @@ import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { refreshBlockedCounts } from "#api/tasks/lib/open-blocker-counts";
 import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
 import { findTask } from "#api/tasks/lib/find-task";
+import { endRecurrence } from "#api/tasks/operations/spawn-next-occurrence";
 import { taskTable } from "#api/tasks/tables";
 
 /**
@@ -32,6 +33,8 @@ export async function setTaskArchived(
         type: archived ? "archived" : "unarchived",
         data: {},
       });
+      // An archived task ends its series.
+      if (archived) await endRecurrence(tx, projectId, taskId);
     }
   });
   return { txid };

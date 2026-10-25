@@ -24,6 +24,7 @@ type Moved = Extract<
       | "priority"
       | "due_date"
       | "start_date"
+      | "recurrence"
       | "column"
       | "assignee";
   }
@@ -63,6 +64,7 @@ const isMoved = (event: TaskEvent): event is Moved =>
   event.type === "priority" ||
   event.type === "due_date" ||
   event.type === "start_date" ||
+  event.type === "recurrence" ||
   event.type === "column" ||
   event.type === "assignee";
 

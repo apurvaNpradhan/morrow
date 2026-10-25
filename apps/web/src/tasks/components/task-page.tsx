@@ -18,6 +18,8 @@ import { displayTicketId } from "../lib/task-links";
 import { useFollowMovedTask } from "../queries/use-follow-moved-task";
 import { useTicketTask } from "../queries/use-task-queries";
 import { DeleteTaskDialog } from "./delete-task-dialog";
+import { RecurrenceDialog } from "./recurrence-dialog";
+import { StopRepeatingDialog } from "./stop-repeating-dialog";
 import { TaskDateDialog } from "./task-date-dialog";
 import { MoveTasksDialog } from "./move-tasks-dialog";
 import { ProjectTaskViewProvider } from "./project-task-view-provider";
@@ -176,6 +178,8 @@ function LoadedTaskPage({
       <SelectionBar />
       <TaskFieldPicker />
       <TaskDateDialog />
+      <StopRepeatingDialog />
+      <RecurrenceDialog />
       <MoveTasksDialog />
       <DeleteTaskDialog onDeleted={leave} />
     </WorkspaceLayout>

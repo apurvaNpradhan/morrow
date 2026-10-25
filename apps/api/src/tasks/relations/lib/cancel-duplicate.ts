@@ -8,6 +8,7 @@ import { findTask } from "#api/tasks/lib/find-task";
 import { refreshBlockedCounts } from "#api/tasks/lib/open-blocker-counts";
 import { recordTaskActivity } from "#api/tasks/lib/record-task-activity";
 import { refreshSubtaskCounts } from "#api/tasks/lib/subtask-counts";
+import { endRecurrence } from "#api/tasks/operations/spawn-next-occurrence";
 import { taskTable } from "#api/tasks/tables";
 
 /**
@@ -67,4 +68,6 @@ export async function cancelDuplicate(
     data: { from: ref(from), to: ref(to) },
   });
   await recordTaskActivity(tx, "task.canceled", workspaceId, project, task);
+  // A canceled task ends its series.
+  await endRecurrence(tx, project.id, task.id);
 }

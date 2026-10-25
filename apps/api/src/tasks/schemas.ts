@@ -6,6 +6,7 @@ import {
   isTaskDateText,
   isHttpUrl,
   LINK_TITLE_MAX,
+  RECURRENCE_TEXT_MAX,
   LINK_URL_MAX,
   TASK_DESCRIPTION_MAX,
   TASK_PRIORITIES,
@@ -69,6 +70,9 @@ export const dueDate = z
 
 /** A start date: a day or a moment, as a due date. */
 export const startDate = dueDate;
+
+/** An RFC 5545 rule, `DTSTART` then `RRULE`; `parseRecurrence` checks the rest. */
+export const recurrence = z.string().min(1).max(RECURRENCE_TEXT_MAX);
 
 /** A fractional-index key; its format is checked by the operation. */
 export const position = z.string().min(1).max(64);

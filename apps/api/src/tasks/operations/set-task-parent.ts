@@ -24,6 +24,8 @@ export async function setTaskParent(
     const project = await lockProject(tx, workspaceId, projectId);
     const task = await findTask(tx, projectId, taskId);
     const next = parentId ? await findParent(tx, projectId, parentId) : null;
+    if (next && task.recurrence !== null)
+      throw taskError("SUBTASK_CANNOT_REPEAT");
     if (next) {
       // The parent and everything above it; reaching the task is a loop.
       const loop = await tx.execute(sql`

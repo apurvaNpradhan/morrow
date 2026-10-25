@@ -1,4 +1,4 @@
-import type { TaskPriority } from "@morrow/sync-schemas";
+import { parseTaskDate, type TaskPriority } from "@morrow/sync-schemas";
 import { eq } from "drizzle-orm";
 import { withTxid } from "#api/platform/sync/with-txid";
 import { lockProject } from "#api/projects/index";
@@ -14,6 +14,11 @@ import {
   startsAfterDue,
   startText,
 } from "#api/tasks/lib/task-date-columns";
+import {
+  dueOf,
+  recurrenceAfterDueChange,
+  zoneOfUser,
+} from "#api/tasks/lib/recurrence";
 import { personRef } from "#api/tasks/history/person-ref";
 import { recordTaskEvent } from "#api/tasks/history/record-task-event";
 import { taskDescriptionTable, taskTable } from "#api/tasks/tables";
@@ -63,6 +68,17 @@ export async function updateTask(
       startDate === undefined ? startFrom : normalTaskDate(startDate);
     if (startDate !== undefined) assertSpan(startTo, dueTo);
     else if (startsAfterDue(startTo, dueTo)) startTo = null;
+    // A repeating task's rule follows its due date, and goes when it is cleared.
+    const recurrenceFrom = task.recurrence;
+    const recurrenceTo =
+      dueDate === undefined || recurrenceFrom === null
+        ? recurrenceFrom
+        : recurrenceAfterDueChange(
+            recurrenceFrom,
+            dueOf(task),
+            dueTo === null ? null : parseTaskDate(dueTo),
+            await zoneOfUser(tx, actor.userId),
+          );
     const [previous] =
       description === undefined
         ? []
@@ -78,6 +94,9 @@ export async function updateTask(
         ...fields,
         ...(dueDate === undefined ? {} : dueColumns(dueDate)),
         ...(startTo === startFrom ? {} : startColumns(startTo)),
+        ...(recurrenceTo === recurrenceFrom
+          ? {}
+          : { recurrence: recurrenceTo }),
         updatedAt: new Date(),
       })
       .where(eq(taskTable.id, taskId));
@@ -112,6 +131,12 @@ export async function updateTask(
     }
     if (dueTo !== dueFrom) {
       await record({ type: "due_date", data: { from: dueFrom, to: dueTo } });
+    }
+    if (recurrenceTo !== recurrenceFrom) {
+      await record({
+        type: "recurrence",
+        data: { from: recurrenceFrom, to: recurrenceTo },
+      });
     }
     if (
       patch.assigneeId !== undefined &&

@@ -6,7 +6,14 @@ import { absoluteAssetUrls, parseTicketId } from "@morrow/sync-schemas";
 import { config } from "#api/platform/config";
 import { mcpTool } from "#api/platform/orpc/mcp-tool";
 import { resolveColumn } from "#api/projects/index";
-import { description, dueDate, priority, startDate, title } from "./schemas";
+import {
+  description,
+  dueDate,
+  priority,
+  recurrence,
+  startDate,
+  title,
+} from "./schemas";
 import {
   resolveAssigneeId,
   resolveLabelIds,
@@ -46,6 +53,14 @@ const fieldsByName = z
     'Value by Field name, for example { "Size": "Large", "Points": 5, "Target": "2026-11-01", "Reviewed": true, "Areas": ["API", "Web"] }. Choice Fields take option names (a list for multi choice), number Fields a number, date Fields YYYY-MM-DD, checkbox Fields true or false.',
   );
 
+const recurrenceHelp = [
+  "An RFC 5545 repeat rule, or null to stop repeating. Two lines: DTSTART, then RRULE.",
+  "DTSTART must be the task's due date: DTSTART;VALUE=DATE:20261030 for a due day, DTSTART;TZID=Asia/Kolkata:20261030T150000 for a due moment (its time on that zone's clock).",
+  "RRULE takes only FREQ (DAILY, WEEKLY, MONTHLY, YEARLY), INTERVAL (1-99), BYDAY (an ordinal like 2TU only with MONTHLY), BYMONTHDAY, BYMONTH, and UNTIL or COUNT (1-999), not both.",
+  'Example: "DTSTART;VALUE=DATE:20261030\nRRULE:FREQ=WEEKLY;BYDAY=FR".',
+  "The task needs a due date and cannot be a subtask. When it is moved to a done column, the next one is created with the next due date.",
+].join(" ");
+
 const createItem = z.object({
   title,
   description: description.optional(),
@@ -67,6 +82,7 @@ const updateItem = z.object({
   priority: priority.optional(),
   startDate: startDate.nullable().optional(),
   dueDate: dueDate.nullable().optional(),
+  recurrence: recurrence.nullable().optional().describe(recurrenceHelp),
   assignee: z.string().nullable().optional(),
   addLabels: z.array(z.string()).optional(),
   removeLabels: z.array(z.string()).optional(),
@@ -163,6 +179,7 @@ export const tasksMcpTools = [
             : null,
           startDate: task.startDate,
           dueDate: task.dueDate,
+          ...(task.recurrence && { recurrence: task.recurrence }),
           parent: task.parentTicketId,
           subtasks: { done: task.subtaskDone, total: task.subtaskTotal },
           openBlockers: task.openBlockerCount,
@@ -331,6 +348,14 @@ export const tasksMcpTools = [
         if (item.dueDate !== undefined) {
           await client.tasks.updateDueDate({ ...scope, dueDate: item.dueDate });
           changed.push("dueDate");
+        }
+        if (item.recurrence !== undefined) {
+          // After the due date, which the rule must begin on.
+          await client.tasks.updateRecurrence({
+            ...scope,
+            recurrence: item.recurrence,
+          });
+          changed.push("recurrence");
         }
         // After the due date: a due date moved before the old start clears it,
         // and the new start is checked against the new due date.

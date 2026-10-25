@@ -74,6 +74,7 @@ export async function createTask(input: NewTask): Promise<TaskRow> {
       assigneeId: input.assigneeId ?? null,
       ...startFields(input.startDate ?? null),
       ...dueFields(input.dueDate ?? null),
+      recurrence: null,
       labelIds: input.labelIds ?? [],
       fieldValues: input.fieldValues ?? {},
       commentCount: 0,
@@ -102,6 +103,7 @@ type TaskPatch = Partial<
     | "startHasTime"
     | "dueAt"
     | "dueHasTime"
+    | "recurrence"
     | "labelIds"
     | "parentId"
     | "fieldValues"
@@ -187,6 +189,8 @@ export async function duplicateTask(task: TaskRow, userId: string) {
       subtaskTotal: 0,
       openBlockerCount: 0,
       position: await endOfColumn(task.columnId),
+      // A copy does not repeat: the server drops the rule.
+      recurrence: null,
       archivedAt: null,
       createdBy: userId,
       createdAt: now,
