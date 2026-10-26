@@ -119,7 +119,7 @@ WORKDIR /app
 COPY --from=api-runtime --chown=appuser:appuser /app /app
 COPY --from=web-builder --chown=appuser:appuser /app/apps/web/dist /app/apps/web/dist
 
-RUN cd /app/apps/api && node -e "const fs=require('fs');for(const m of ['hono','pg','drizzle-orm','better-auth','varlock','@modelcontextprotocol/server','@orpc/server'])fs.accessSync('node_modules/'+m+'/package.json');for(const m of ['email','permissions','sync-schemas'])fs.accessSync('node_modules/@morrow/'+m+'/dist/index.js');fs.accessSync('node_modules/@morrow/i18n/en-US.json')"
+RUN cd /app/apps/api && node -e "const fs=require('fs');for(const m of ['hono','pg','drizzle-orm','better-auth','varlock','@modelcontextprotocol/server','@orpc/server'])fs.accessSync('node_modules/'+m+'/package.json');for(const m of ['email','permissions','sync-schemas','document-schema'])fs.accessSync('node_modules/@morrow/'+m+'/dist/index.js');fs.accessSync('node_modules/@morrow/i18n/en-US.json')"
 
 ENV NODE_ENV=production
 

@@ -3,6 +3,7 @@ import { activityRouter } from "#api/activity/index";
 import { adminRouter } from "#api/admin/index";
 import { assetsRouter } from "#api/storage/index";
 import { authRouter } from "#api/auth/index";
+import { documentsRouter } from "#api/documents/index";
 import { labelsRouter } from "#api/labels/index";
 import { membersRouter } from "#api/members/index";
 import { workspaceRouter } from "#api/workspace/index";
@@ -23,6 +24,7 @@ export const appRouter = {
   assets: assetsRouter,
   auth: authRouter,
   comments: commentsRouter,
+  documents: documentsRouter,
   links: linksRouter,
   activity: activityRouter,
   labels: labelsRouter,

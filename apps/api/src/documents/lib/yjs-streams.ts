@@ -40,3 +40,12 @@ export async function createPageStream(
   }
   return true;
 }
+
+/** Removes a page's stream, with its snapshots and awareness; a stream that is already gone is fine. */
+export async function deletePageStream(yjsUrl: string, target: PageStream) {
+  const removed = await fetch(streamUrl(yjsUrl, target), { method: "DELETE" });
+  await removed.body?.cancel();
+  if (!removed.ok && removed.status !== 404) {
+    throw new Error(`Deleting the page stream failed: ${removed.status}`);
+  }
+}

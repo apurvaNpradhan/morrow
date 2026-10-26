@@ -72,6 +72,9 @@ export function useWorkspacePermission() {
       canDeleteLabels: () => can.deleteLabels,
       canCreateComments: () => can.createComments,
       canDeleteComments: () => can.deleteComments,
+      canCreateDocuments: () => can.createDocuments,
+      canEditDocuments: () => can.editDocuments,
+      canDeleteDocuments: () => can.deleteDocuments,
     };
   }, [can]);
 

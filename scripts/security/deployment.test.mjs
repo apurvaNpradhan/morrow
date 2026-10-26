@@ -66,6 +66,7 @@ test("the image runs the API under varlock and serves the web build itself", () 
   assert.doesNotMatch(dockerfile, /nginx/);
   // The runtime layer checks the packages the API needs at startup.
   assert.match(dockerfile, /@modelcontextprotocol\/server/);
+  assert.match(dockerfile, /'document-schema'/);
   assert.doesNotMatch(dockerfile, /@morrow\/(mcp|libs)/);
   assert.doesNotMatch(dockerfile, /octokit/);
 });
