@@ -43,6 +43,10 @@ describe("isRetryable", () => {
     expect(isRetryable({ code: "RATE_LIMITED", status: 429 })).toBe(true);
   });
 
+  it("retries the code-less 400 the stream gives to the retry of a rate-limited write", () => {
+    expect(isRetryable({ code: null, status: 400 })).toBe(true);
+  });
+
   it("ends the session on every other refusal", () => {
     for (const code of [
       "FORBIDDEN",
