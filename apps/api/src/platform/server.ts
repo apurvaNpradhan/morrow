@@ -1,17 +1,17 @@
 import { serve } from "@hono/node-server";
 import type { createApp } from "./create-app";
 import { drainSignInEmails, reconcileAdminRoles } from "#api/auth/index";
+import { startYjsServer, stopYjsServer } from "#api/documents/index";
 import { seedDefaultWorkspaceRoles } from "#api/workspace/index";
 import { config } from "./config";
-import { startJobs, stopJobs } from "./jobs";
+import { stopJobs } from "./jobs";
 import { flushLogs, log, logFailure } from "./logger";
 
 /** Everything that needs a migrated database and the auth module. */
 async function runStartupTasks() {
   await seedDefaultWorkspaceRoles();
   await reconcileAdminRoles();
-
-  await startJobs();
+  await startYjsServer();
 }
 
 export async function startServer(
@@ -44,6 +44,9 @@ export async function startServer(
 
     log.info("api", "Shutting down");
     server.close();
+    await stopYjsServer().catch((error) =>
+      logFailure("documents.yjs-shutdown", {}, error),
+    );
     await stopJobs(10_000).catch((error) =>
       logFailure("jobs.shutdown", {}, error),
     );

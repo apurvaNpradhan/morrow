@@ -6,6 +6,7 @@ import { ORPCError } from "@orpc/server";
 import { HTTPException } from "hono/http-exception";
 import { evlog, type EvlogVariables } from "evlog/hono";
 import { authenticateApi, authRoutes } from "#api/auth/index";
+import { documentRoutes } from "#api/documents/index";
 import { mcpRoutes, mcpWellKnownRoutes } from "#api/mcp/index";
 import { storageRoutes } from "#api/storage/index";
 import { healthRoutes } from "./health";
@@ -83,6 +84,7 @@ export function createApp() {
 
   api.use("*", authenticateApi);
   api.route("/", shapeRoutes);
+  api.route("/", documentRoutes);
 
   app.route("/", mcpWellKnownRoutes);
 

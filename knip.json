@@ -7,7 +7,7 @@
 	},
 	"workspaces": {
 		".": {
-			"entry": ["scripts/**/*.mjs"],
+			"entry": ["scripts/**/*.{mjs,ts}"],
 			"ignoreDependencies": [
 				"drizzle-orm",
 				"@orpc/client",
@@ -15,7 +15,12 @@
 				"pg",
 				"better-auth",
 				"esbuild",
-				"@tanstack/intent"
+				"@tanstack/intent",
+				"@durable-streams/server",
+				"@durable-streams/y-durable-streams",
+				"lib0",
+				"y-protocols",
+				"yjs"
 			]
 		},
 		"apps/api": {
@@ -25,7 +30,7 @@
 				"vitest.*.config.ts"
 			],
 			"project": ["src/**/*.ts"],
-			"ignoreDependencies": ["@orpc/client"]
+			"ignoreDependencies": ["@orpc/client", "@durable-streams/server"]
 		},
 		"apps/web": {
 			"entry": ["src/routes/**/*.tsx", "src/**/*.test.{ts,tsx}"],

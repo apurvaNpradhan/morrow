@@ -35,6 +35,11 @@ services:
       morrow:
         condition: service_healthy
 
+  streams:
+    build: ../../docker/durable-streams
+    tmpfs:
+      - /data:uid=1001,gid=1001
+
   morrow:
     image: morrow-e2e:test
     build:
@@ -42,10 +47,11 @@ services:
       dockerfile: Dockerfile
     expose:
       - "1337"
-    environment:
+    environment: &morrow-environment
       DATABASE_URL: postgresql://morrow_e2e:morrow_e2e@postgres:5432/morrow_e2e
       ELECTRIC_URL: http://electric:3000
       ELECTRIC_SECRET: browser-tests-only-electric-secret
+      DURABLE_STREAMS_URL: http://streams:4437
       AUTH_SECRET: browser-tests-only-not-a-production-secret
       MORROW_CLIENT_URL: https://localhost:18173
       # Required in production. Nothing here uploads avatars, so these only
@@ -63,6 +69,24 @@ services:
       MORROW_EMAIL_CONSOLE: "true"
     depends_on:
       postgres:
+        condition: service_healthy
+      streams:
+        condition: service_healthy
+
+  # The same image as `morrow`, running the jobs.
+  worker:
+    image: morrow-e2e:test
+    command:
+      - ./node_modules/.bin/varlock
+      - run
+      - --
+      - node
+      - dist/worker.js
+    environment: *morrow-environment
+    healthcheck:
+      disable: true
+    depends_on:
+      morrow:
         condition: service_healthy
 
   # HTTPS and HTTP/2 for the browser (see Caddyfile); this is the published port.

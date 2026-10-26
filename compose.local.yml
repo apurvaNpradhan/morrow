@@ -43,6 +43,16 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Durable Streams: the pages' update logs. Morrow's api process reaches it
+  # at DURABLE_STREAMS_URL; nothing else needs to.
+  durable-streams:
+    build: ./docker/durable-streams
+    ports:
+      - "127.0.0.1:4437:4437"
+    volumes:
+      - durable_streams_data:/data
+    restart: unless-stopped
+
   # Dev only: HTTPS and HTTP/2 in front of the Vite dev server (see
   # docker/Caddyfile). Open https://localhost:5443.
   caddy:
@@ -140,3 +150,4 @@ volumes:
   postgres_data:
   minio_data:
   electric_data:
+  durable_streams_data:

@@ -59,10 +59,35 @@ Run this after setting up backups, and again after any change to how backups are
 
 To restore for real: stop the compose service, restore the backup into the database service from Dokploy's backup screen (or `pg_restore` / `psql` against its connection string), then start the compose service. Sessions in the backup become valid again, so a restore taken before a secret rotation brings the old sessions back.
 
+## Durable Streams (pages)
+
+Each page's live content is a stream on the `morrow-streams` container, whose
+data is the `streams_data` volume. Postgres (`document_body`) is the record: a
+lost or corrupt volume loses only the edits since the last mirror (seconds,
+at worst about 30), and no page is lost.
+
+**Nightly backup.** In Dokploy, add a volume backup for the compose service's
+`streams_data` volume: **Destination** the private `morrow-backups` bucket (as
+for Postgres), schedule `0 4 * * *`, retention **14**. The copy is taken from a
+running server, so treat it as a convenience that keeps recent edits; the
+rebuild below does not depend on it.
+
+**Rebuild after losing the volume.** Stop `morrow` and `morrow-worker`, start
+`morrow-streams` with an empty volume, then run
+`scripts/rebuild-document-streams.ts` against the production environment. It
+recreates every page's current stream from `document_body`. Start `morrow` and
+`morrow-worker` again; open editors reload.
+
+**Streams server down.** Pages stop saving and show as unavailable (the proxy
+answers 503 and the editors retry). Nothing else is affected. Restart
+`morrow-streams`; the editors resume and send what they kept.
+
 ## Background jobs
 
-Jobs run in the API process on pg-boss, in the `pgboss` schema of the same
-database; the database role must be able to create that schema on first start.
+Jobs run in the `worker` process (the `morrow-worker` container) on pg-boss, in
+the `pgboss` schema of the same database; the database role must be able to
+create that schema on first start. The `api` process only enqueues. If jobs
+stop, check that `morrow-worker` is running and read its logs.
 Finished jobs (completed or failed) are kept 7 days. To inspect trouble:
 
 ```sql

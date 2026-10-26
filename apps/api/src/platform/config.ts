@@ -72,6 +72,10 @@ export const config = {
     };
   },
 
+  get durableStreamsUrl() {
+    return text("DURABLE_STREAMS_URL") ?? "http://127.0.0.1:4437";
+  },
+
   get authSecret() {
     return process.env.AUTH_SECRET;
   },
