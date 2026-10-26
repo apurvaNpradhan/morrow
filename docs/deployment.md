@@ -5,10 +5,10 @@
 Morrow runs on one Dokploy server as three services in one Dokploy project:
 
 - **PostgreSQL**: a Dokploy database service (version 17), with daily backups to R2. Set it up first; see the [runbook](runbook.md#postgres-and-backups).
-- **Morrow and Electric**: one Dokploy **Docker Compose** service built from [`compose.dokploy.yml`](../compose.dokploy.yml). It pulls the published image; nothing is built on the server.
+- **Morrow, Electric and Durable Streams**: one Dokploy **Docker Compose** service built from [`compose.dokploy.yml`](../compose.dokploy.yml). It pulls the published images; nothing is built on the server. Morrow is one image run as two containers, `morrow` (the `api` process: HTTP, migrations, the page server) and `morrow-worker` (the `worker` process: every queue, cron and the page job). Run one replica of each.
 - **Cloudflare R2**: avatars, attachments and database backups. It is not a container.
 
-Nothing publishes a host port. Both containers `expose` their port on `dokploy-network`, where Traefik and the database service also run. Traefik terminates TLS and routes the domain to `morrow:1337`. Electric gets no domain, and Morrow reaches it at `http://morrow-electric:3000`. Morrow applies database migrations at startup, and Electric starts only once Morrow is healthy, because those migrations create the publication Electric reads. There is no Redis.
+Nothing publishes a host port. Both containers `expose` their port on `dokploy-network`, where Traefik and the database service also run. Traefik terminates TLS and routes the domain to `morrow:1337`. Electric and Durable Streams get no domain: Morrow reaches them at `http://morrow-electric:3000` and `http://morrow-streams:4437`. Morrow applies database migrations at startup. Electric and the worker start only once Morrow is healthy, because those migrations create the publication Electric reads and the tables the jobs use. There is no Redis.
 
 ### Compose service setup
 
@@ -48,6 +48,14 @@ Morrow streams live data through [Electric](https://electric-sql.com), which rea
 
 The database service needs `wal_level=logical` and `max_slot_wal_keep_size=10GB`, and the `electric` role must exist before the first deploy. The steps are in the [runbook](runbook.md#electric-sync).
 
+### Durable Streams (pages)
+
+The pages' update logs and their presence travel over [Durable Streams](https://github.com/durable-streams/durable-streams). Morrow's `api` process runs `YjsServer` on `127.0.0.1:4438` inside the container, in front of the `morrow-streams` container, and the browser reaches both only through `/api/documents/yjs/*`, which checks the session's access to the page on every request. Nothing else reaches the streams server.
+
+`morrow-streams` is the Caddy-based server binary from the `durable-streams` GitHub releases, built by [`docker/durable-streams/Dockerfile`](../docker/durable-streams/Dockerfile) with the release version and the SHA-256 of each archive pinned in it, and published by the image workflow as `ghcr.io/apurvanpradhan/morrow-streams`. Its data lives in the `streams_data` volume. To upgrade, change the three `DS_*` arguments from the new release's `checksums.txt`. `DURABLE_STREAMS_URL` is set in the compose file; Morrow does not start in production without it.
+
+The volume is backed up nightly to R2 (see the [runbook](runbook.md#durable-streams-pages)). Postgres is the record of the pages, so a lost volume is rebuilt from it.
+
 ### Cloudflare R2
 
 Use two buckets, each with its own API token scoped to that bucket (Object Read & Write):
@@ -85,7 +93,7 @@ The web app calls oRPC procedures over `/rpc`; there is no REST or OpenAPI view.
 
 ## Local compose
 
-`compose.local.yml` starts the app, a disposable Postgres service (with logical replication on) and Electric. It is for local use only; production uses `compose.dokploy.yml`. It exposes the app at `http://localhost:1337`, Postgres on port `5432` and Electric on `3010`:
+`compose.local.yml` starts the app, a disposable Postgres service (with logical replication on), Electric and Durable Streams (`localhost:4437`). `pnpm dev` runs the `api` and `worker` processes next to them. It is for local use only; production uses `compose.dokploy.yml`. It exposes the app at `http://localhost:1337`, Postgres on port `5432` and Electric on `3010`:
 
 ```sh
 docker compose -f compose.local.yml up --build

@@ -5,7 +5,7 @@ export default defineConfig({
     tasks: {
       compile: {
         command:
-          "esbuild src/index.ts --bundle --platform=node --outdir=dist --format=esm --packages=external --external:fs --external:path --external:crypto --external:os --external:util --external:stream --external:buffer --external:events --external:url --external:querystring --external:http --external:https --external:net --external:tls --external:zlib",
+          "esbuild src/index.ts src/worker.ts --bundle --platform=node --outdir=dist --format=esm --packages=external --external:fs --external:path --external:crypto --external:os --external:util --external:stream --external:buffer --external:events --external:url --external:querystring --external:http --external:https --external:net --external:tls --external:zlib",
         dependsOn: [
           { task: "build", from: ["dependencies", "devDependencies"] },
         ],

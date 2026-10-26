@@ -7,26 +7,34 @@ let started: Promise<PgBoss> | undefined;
 let stopped = false;
 
 /**
- * pg-boss gets its own small pool so polling workers can't starve request
- * handling. It owns the `pgboss` schema and migrates it on start.
+ * The pg-boss of the `worker` process, which runs the queues' workers, the
+ * maintenance and the schedules. It gets its own small pool so polling workers
+ * can't starve request handling, owns the `pgboss` schema and migrates it on
+ * start.
  */
 export function startBoss(): Promise<PgBoss> {
   stopped = false;
-  return connect();
+  return connect({ works: true });
 }
 
-/** The running pg-boss for enqueueing; starts it on first use, but never after shutdown. */
+/**
+ * The running pg-boss for enqueueing; starts it on first use, but never after
+ * shutdown. In the `api` process it only sends: no workers, no maintenance, no
+ * schedules.
+ */
 export function bossForEnqueue(): Promise<PgBoss> {
   if (stopped) return Promise.reject(new Error("Jobs are stopped"));
-  return connect();
+  return connect({ works: false });
 }
 
-function connect(): Promise<PgBoss> {
+function connect({ works }: { works: boolean }): Promise<PgBoss> {
   started ??= (async () => {
     const boss = new PgBoss({
       connectionString: config.databaseUrl,
       max: 3,
       schema: "pgboss",
+      supervise: works,
+      schedule: works,
     });
     boss.on("error", (error) => logFailure("jobs.boss", {}, error));
     await boss.start();

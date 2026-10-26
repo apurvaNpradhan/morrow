@@ -69,3 +69,49 @@ test("the image runs the API under varlock and serves the web build itself", () 
   assert.doesNotMatch(dockerfile, /@morrow\/(mcp|libs)/);
   assert.doesNotMatch(dockerfile, /octokit/);
 });
+
+test("the production Compose file validates and publishes no port", () => {
+  const config = composeConfig(
+    "compose.dokploy.yml",
+    "ELECTRIC_DATABASE_URL=postgresql://electric:x@db:5432/morrow\nELECTRIC_SECRET=secret\n",
+  );
+  for (const [name, service] of Object.entries(config.services)) {
+    assert.equal(service.ports, undefined, `${name} publishes a port`);
+  }
+});
+
+test("the worker is the api's image running the worker entry point", () => {
+  const config = composeConfig(
+    "compose.dokploy.yml",
+    "ELECTRIC_DATABASE_URL=postgresql://electric:x@db:5432/morrow\nELECTRIC_SECRET=secret\n",
+  );
+  const { "morrow-worker": worker, morrow } = config.services;
+  assert.equal(worker.image, morrow.image);
+  assert.ok(worker.command.includes("dist/worker.js"));
+  assert.ok(!morrow.command);
+  assert.equal(
+    morrow.environment.DURABLE_STREAMS_URL,
+    worker.environment.DURABLE_STREAMS_URL,
+  );
+});
+
+test("Durable Streams has a volume and no domain-facing port", () => {
+  const config = composeConfig(
+    "compose.dokploy.yml",
+    "ELECTRIC_DATABASE_URL=postgresql://electric:x@db:5432/morrow\nELECTRIC_SECRET=secret\n",
+  );
+  const streams = config.services["morrow-streams"];
+  assert.ok(streams.volumes.some((volume) => volume.target === "/data"));
+  assert.equal(streams.ports, undefined);
+});
+
+test("the Durable Streams image pins its release and checks the download", () => {
+  const dockerfile = readFileSync(
+    path.join(root, "docker/durable-streams/Dockerfile"),
+    "utf8",
+  );
+  assert.match(dockerfile, /DS_VERSION=\d+\.\d+\.\d+/);
+  assert.match(dockerfile, /DS_SHA256_AMD64=[0-9a-f]{64}/);
+  assert.match(dockerfile, /DS_SHA256_ARM64=[0-9a-f]{64}/);
+  assert.match(dockerfile, /sha256sum -c/);
+});

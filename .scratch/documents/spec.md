@@ -111,6 +111,12 @@ The decisions are in [ADR 0014](../../docs/adr/0014-documents-on-yjs-and-durable
   - `liveMode: "long-poll"` for page updates. Each poll comes back through the proxy and checks access again, so a removed member stops receiving within one poll (about 30 s).
   - Awareness is SSE. The proxy closes each awareness connection after 60 s, and the provider reconnects and is checked again.
 - The proxy is exempt from `compress-responses.ts` for these routes and gets its own body limit (1 MB plus framing). Other routes keep `MAX_IMAGE_REQUEST_BYTES`.
+- As built in `apps/api/src/documents/` (MOR-76):
+  - The browser's provider uses `baseUrl = {origin}/api/documents/yjs/{workspaceId}` and `docId = {docId}/g{generation}`; the proxy forwards to `YjsServer` at `/v1/yjs/morrow/docs/{docId}/g{generation}`.
+  - The provider PUTs to "create" the document. The proxy answers that PUT from the stream's existence (200, or 404), so the browser can neither create nor delete a stream; `createPageStream` (server side) creates it, with the empty document.
+  - Page updates accept only `live=long-poll`; `live=sse` is for the `default` awareness stream, which the proxy ends after 60 s.
+  - The access check (`YjsAccessCheck`) and the per-update check (`YjsUpdateCheck`, called once per decoded lib0 frame) are injected into `createYjsRoutes`. Until MOR-77 the production wiring refuses every page and accepts every update.
+  - Durable Streams is published by the image workflow as `ghcr.io/<repo>-streams`, built from `docker/durable-streams/` with the release version and archive checksums pinned. The nightly volume backup is a Dokploy volume backup (runbook), not code.
 - `y-indexeddb` keeps the page's `Y.Doc` per user (`morrow:{userId}:doc:{docId}:g{n}`). Unsent edits survive a reload and are sent on the next visit. `cleanupSyncedCollections()` deletes every such database at sign-out. There is no `beforeunload` guard.
 
 ### Write path (`api`, stateless)

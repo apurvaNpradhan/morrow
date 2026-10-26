@@ -1,15 +1,16 @@
-# Production stack for a Dokploy "Docker Compose" service: Morrow and Electric.
-# Postgres is a separate Dokploy database service and storage is Cloudflare R2,
-# so neither is here. Setup: docs/deployment.md.
+# Production stack for a Dokploy "Docker Compose" service: Morrow (an `api` and
+# a `worker` process from one image), Electric and Durable Streams. Postgres is
+# a separate Dokploy database service and storage is Cloudflare R2, so neither
+# is here. Setup: docs/deployment.md.
 #
-# Both services join `dokploy-network`, where the database service and Traefik
-# live; turn Isolated Deployments off, or neither could reach the database.
+# Every service joins `dokploy-network`, where the database service and Traefik
+# live; turn Isolated Deployments off, or none could reach the database.
 # Nothing is published on the host: Traefik routes the domain to `morrow:1337`
-# and Electric is reachable only on the internal network.
+# and Electric and Durable Streams are reachable only on the internal network.
 #
-# Dokploy writes its Environment tab to `.env` beside this file. Morrow reads
-# all of it (varlock validates it at startup against .env.schema); Electric
-# gets only the three values it needs.
+# Dokploy writes its Environment tab to `.env` beside this file. Morrow and its
+# worker read all of it (varlock validates it at startup against .env.schema);
+# Electric gets only the three values it needs.
 
 x-logging: &logging
   driver: json-file
@@ -27,6 +28,7 @@ services:
     environment:
       NODE_ENV: production
       ELECTRIC_URL: http://morrow-electric:3000
+      DURABLE_STREAMS_URL: http://morrow-streams:4437
     expose:
       - "1337"
     # The image's check, polled every 2s while starting so Electric need not
@@ -38,8 +40,55 @@ services:
       retries: 3
       start_period: 120s
       start_interval: 2s
-    # Shutdown stops background jobs (up to 10s) and drains sign-in emails.
+    # Shutdown drains sign-in emails and closes the page server.
     stop_grace_period: 30s
+    depends_on:
+      morrow-streams:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+    logging: *logging
+
+  # The same image running every pg-boss queue and cron and the page job. One
+  # replica. It starts after `morrow`, whose startup migrations create the
+  # tables its jobs use. It serves no HTTP, so the image's check is off.
+  morrow-worker:
+    image: ghcr.io/apurvanpradhan/morrow:${MORROW_IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    command:
+      - ./node_modules/.bin/varlock
+      - run
+      - --
+      - node
+      - --enable-source-maps
+      - dist/worker.js
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DURABLE_STREAMS_URL: http://morrow-streams:4437
+    healthcheck:
+      disable: true
+    # Shutdown lets running jobs finish (up to 10s).
+    stop_grace_period: 30s
+    depends_on:
+      morrow:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+    logging: *logging
+
+  # The update logs of the pages (Durable Streams). No domain: only `morrow`
+  # reaches it. Its volume is backed up nightly (docs/runbook.md); Postgres is
+  # the record, and a lost volume is rebuilt from it.
+  morrow-streams:
+    image: ghcr.io/apurvanpradhan/morrow-streams:${MORROW_STREAMS_IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    expose:
+      - "4437"
+    volumes:
+      - streams_data:/data
     networks:
       - dokploy-network
     logging: *logging
@@ -70,6 +119,7 @@ services:
 
 volumes:
   electric_data:
+  streams_data:
 
 networks:
   dokploy-network:

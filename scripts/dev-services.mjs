@@ -1,4 +1,5 @@
-// Starts the local Postgres, MinIO (S3 for avatars), Electric (sync) and Caddy
+// Starts the local Postgres, MinIO (S3 for avatars), Electric (sync), Durable
+// Streams (the pages' update logs) and Caddy
 // (HTTPS/HTTP2 for the dev server), makes
 // the buckets and applies migrations. Safe to re-run; `pnpm dev` runs it first.
 import { spawnSync } from "node:child_process";
@@ -46,7 +47,16 @@ const compose = [
   "compose.local.yml",
 ];
 
-run("docker", [...compose, "up", "-d", "--wait", "postgres", "minio", "caddy"]);
+run("docker", [
+  ...compose,
+  "up",
+  "-d",
+  "--wait",
+  "postgres",
+  "minio",
+  "durable-streams",
+  "caddy",
+]);
 // A volume created before Electric existed has no `electric` role; the init
 // script only runs on a fresh volume, so apply it again (it is idempotent).
 run("docker", [
