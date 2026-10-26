@@ -236,25 +236,40 @@ describe("page permissions", () => {
     const theirs = await setup();
     const theirPage = await theirs.addDocument();
 
+    // Started one at a time: a call that rejects before it is awaited is an unhandled rejection.
     const attempts = [
-      mine.client.documents.update({
-        ...mine.base,
-        documentId: theirPage.id,
-        title: "x",
-      }),
-      mine.client.documents.archive({ ...mine.base, documentId: theirPage.id }),
-      mine.client.documents.restore({ ...mine.base, documentId: theirPage.id }),
-      mine.client.documents.delete({ ...mine.base, documentId: theirPage.id }),
-      mine.client.documents.move({
-        ...mine.base,
-        documentId: theirPage.id,
-        parentId: null,
-        projectId: null,
-        position: positionAt(3),
-      }),
+      () =>
+        mine.client.documents.update({
+          ...mine.base,
+          documentId: theirPage.id,
+          title: "x",
+        }),
+      () =>
+        mine.client.documents.archive({
+          ...mine.base,
+          documentId: theirPage.id,
+        }),
+      () =>
+        mine.client.documents.restore({
+          ...mine.base,
+          documentId: theirPage.id,
+        }),
+      () =>
+        mine.client.documents.delete({
+          ...mine.base,
+          documentId: theirPage.id,
+        }),
+      () =>
+        mine.client.documents.move({
+          ...mine.base,
+          documentId: theirPage.id,
+          parentId: null,
+          projectId: null,
+          position: positionAt(3),
+        }),
     ];
     for (const attempt of attempts) {
-      expect((await rejection(attempt)).code).toBe("NOT_FOUND");
+      expect((await rejection(attempt())).code).toBe("NOT_FOUND");
     }
     expect((await documentRow(theirPage.id))?.title).toBe("Page");
   });

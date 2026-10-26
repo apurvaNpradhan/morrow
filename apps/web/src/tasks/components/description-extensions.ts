@@ -39,14 +39,18 @@ const NOT_IN_DESCRIPTIONS = new Set([
 
 /**
  * The editing behaviour every text editor of the app has: the cursors, list
- * keys, undo and the empty line after a last block. None of it is schema.
+ * keys, undo and the empty line after a last block. None of it is schema. A
+ * collaborative editor leaves out the last two: its undo is Yjs's, which
+ * reverts only your own changes, and an empty line added on its own would be
+ * written by every client that opens the page.
  */
-export const editingExtensions = (): Extensions => [
+export const editingExtensions = (
+  options: { collaborative?: boolean } = {},
+): Extensions => [
   Dropcursor,
   Gapcursor,
   ListKeymap,
-  UndoRedo,
-  TrailingNode,
+  ...(options.collaborative ? [] : [UndoRedo, TrailingNode]),
 ];
 
 /**

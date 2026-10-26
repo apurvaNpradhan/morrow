@@ -18,10 +18,10 @@ type SyncedCollection = {
 };
 
 const syncedCollections: SyncedCollection[] = [];
-const cleanupHooks: Array<() => void> = [];
+const cleanupHooks: Array<() => void | Promise<void>> = [];
 
-/** Runs `hook` after the synced collections are cleared, for caches built on top of them. */
-export function onSyncedCollectionsCleared(hook: () => void) {
+/** Runs `hook` after the synced collections are cleared, for caches and local copies built on top of them. */
+export function onSyncedCollectionsCleared(hook: () => void | Promise<void>) {
   cleanupHooks.push(hook);
 }
 
@@ -74,5 +74,5 @@ export async function cleanupSyncedCollections(): Promise<void> {
     syncedCollections.map((collection) => collection.cleanup()),
   );
   await finishLocalWipe();
-  for (const hook of cleanupHooks) hook();
+  await Promise.all(cleanupHooks.map((hook) => hook()));
 }

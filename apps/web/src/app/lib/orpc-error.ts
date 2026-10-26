@@ -63,6 +63,15 @@ const DOMAIN_KEYS = new Map(
     RELATION_TASK_NOT_IN_WORKSPACE: "common:errors.relationTaskNotInWorkspace",
     MOVE_TOO_LARGE: "common:errors.taskMoveTooLarge",
     MOVE_SAME_PROJECT: "common:errors.taskMoveSameProject",
+    INVALID_DOCUMENT_ID: "common:errors.documentInvalidId",
+    DOCUMENT_ID_TAKEN: "common:errors.documentIdTaken",
+    DOCUMENT_ARCHIVED: "common:errors.documentArchived",
+    DOCUMENT_NOT_ARCHIVED: "common:errors.documentNotArchived",
+    DOCUMENT_ARCHIVED_WITH_ANCESTOR:
+      "common:errors.documentArchivedWithAncestor",
+    DOCUMENT_PARENT_ARCHIVED: "common:errors.documentParentArchived",
+    DOCUMENT_CYCLE: "common:errors.documentCycle",
+    CLIENT_ID_TAKEN: "common:errors.documentClientIdTaken",
   } satisfies Record<string, string>),
 );
 

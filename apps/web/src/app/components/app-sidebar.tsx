@@ -11,6 +11,7 @@ import {
   useSidebar,
 } from "@/design-system/ui/sidebar";
 import { VersionDisplay } from "./version-display";
+import { SidebarDocuments } from "@/documents";
 import { SidebarProjects } from "@/projects";
 import { SearchButton } from "@/search";
 import { useActiveWorkspace, WorkspaceSwitcher } from "@/workspace";
@@ -34,9 +35,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SearchButton />
         </WorkspaceSwitcher>
       </SidebarHeader>
-      <SidebarContent className="overflow-hidden gap-1 py-1">
+      <SidebarContent className="gap-1 overflow-y-auto py-1">
         <NavMain />
         {workspace ? <SidebarProjects workspace={workspace} /> : null}
+        {workspace ? <SidebarDocuments workspace={workspace} /> : null}
       </SidebarContent>
       <SidebarFooter>
         <NavSecondary />
