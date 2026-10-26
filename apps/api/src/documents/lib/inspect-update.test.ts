@@ -287,6 +287,27 @@ describe("inspectUpdate", () => {
     expect((await inspectUpdate(embed, lookup)).problem).toMatch(/Unsupported/);
   });
 
+  it("admits y-tiptap's position-migration map and bounds its entries", async () => {
+    const store = `__tiptap_position_migrations:root:${DOCUMENT_FRAGMENT}`;
+    const write = (value: unknown) => {
+      const doc = new Y.Doc();
+      const updates: Uint8Array[] = [];
+      doc.on("update", (update: Uint8Array) => updates.push(update));
+      doc.getMap(store).set("1:2", value);
+      return updates[0]!;
+    };
+
+    const ok = write({ version: 1, client: 1, clock: 2, seen: [[1, 2]] });
+    const large = write({ blob: "x".repeat(100_000) });
+    const huge = write({ blob: "x".repeat(600_000) });
+    const scalar = write("x");
+
+    expect((await inspectUpdate(ok, lookup)).problem).toBeNull();
+    expect((await inspectUpdate(large, lookup)).problem).toBeNull();
+    expect((await inspectUpdate(huge, lookup)).problem).toMatch(/migration/);
+    expect((await inspectUpdate(scalar, lookup)).problem).toMatch(/migration/);
+  });
+
   it("refuses bytes that are not an update", async () => {
     expect(
       (await inspectUpdate(Uint8Array.of(255, 255, 255, 1), lookup)).problem,
