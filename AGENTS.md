@@ -20,7 +20,7 @@ Before editing code for a substantial task (not for ticket or doc work):
 - Keep routine work simple. Solve the problem with the smallest model that makes the behavior clear. Read the relevant code first, but do not keep complexity just because it is already there.
 - Keep modules small. Give each file one responsibility: one component per file, pure helpers and types next to the code that uses them, tests beside them. Do not extract one-line wrappers.
 - Keep views fast. Data-heavy views should not move or render more data than they need.
-- No options for hypothetical operators. Product decisions are fixed in code; do not add flags, alternate providers or deployment modes. Single process, no Redis, one origin
+- No options for hypothetical operators. Product decisions are fixed in code; do not add flags, alternate providers or deployment modes. One image running two processes (`api` and `worker`), with Postgres, Electric and Durable Streams; no Redis; one origin
 
 ## Sync
 
