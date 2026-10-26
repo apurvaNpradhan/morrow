@@ -18,6 +18,11 @@ export {
   workspaceUserTable,
 } from "#api/members/tables";
 export { activityTable } from "#api/activity/tables";
+export {
+  documentBodyTable,
+  documentClientTable,
+  documentTable,
+} from "#api/documents/tables";
 export { labelTable } from "#api/labels/tables";
 export {
   projectColumnTable,

@@ -110,3 +110,46 @@ describe("migration: comment permissions for existing roles", () => {
     expect(await permissionOf("viewer")).toEqual({ comment: [] });
   });
 });
+
+describe("migration: document permissions for existing roles", () => {
+  const step = grantRolesStep("0037_documents.sql");
+
+  it("gives viewers none, members create and update, and admins everything", async () => {
+    const { workspace } = await createWorkspaceMember();
+    await roleRow(workspace.id, "viewer", { workspace: ["read"] });
+    await roleRow(workspace.id, "member", { workspace: ["read"] });
+    await roleRow(workspace.id, "admin", { workspace: ["read"] });
+
+    await db.execute(sql.raw(step));
+
+    expect(await permissionOf("viewer")).toEqual({
+      workspace: ["read"],
+      document: [],
+    });
+    expect(await permissionOf("member")).toEqual({
+      workspace: ["read"],
+      document: ["create", "update"],
+    });
+    expect(await permissionOf("admin")).toEqual({
+      workspace: ["read"],
+      document: ["create", "update", "delete"],
+    });
+  });
+
+  it("leaves custom roles, edited grants and malformed rows alone", async () => {
+    const { workspace } = await createWorkspaceMember();
+    await roleRow(workspace.id, "custom", { workspace: ["read"] });
+    await roleRow(workspace.id, "member", { document: ["create"] });
+    await roleRow(workspace.id, "admin", "not json");
+
+    await db.execute(sql.raw(step));
+
+    expect(await permissionOf("custom")).toEqual({ workspace: ["read"] });
+    expect(await permissionOf("member")).toEqual({ document: ["create"] });
+    const [admin] = await db
+      .select({ permission: schema.workspaceRoleTable.permission })
+      .from(schema.workspaceRoleTable)
+      .where(eq(schema.workspaceRoleTable.role, "admin"));
+    expect(admin?.permission).toBe("not json");
+  });
+});

@@ -149,6 +149,36 @@ describe("the Yjs proxy", () => {
     );
   });
 
+  it("tells a rate-limited writer when to come back", async () => {
+    const limited = new Hono<{ Variables: { userId: string } }>();
+    limited.use("*", async (c, next) => {
+      c.set("userId", "ada");
+      return next();
+    });
+    limited.route(
+      "/api",
+      createYjsRoutes({
+        upstreamUrl: () => yjsBase,
+        access: async () => null,
+        checkUpdate: async () => ({
+          status: 429,
+          code: "RATE_LIMITED",
+          message: "slow down",
+          retryAfterSeconds: 7,
+        }),
+      }),
+    );
+
+    const response = await limited.request(`/api/documents/yjs/${PATH}`, {
+      method: "POST",
+      body: new Uint8Array([1, 0]),
+    });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("7");
+    expect(await response.json()).toMatchObject({ code: "RATE_LIMITED" });
+  });
+
   it("refuses an anonymous request", async () => {
     const { app } = createApp();
     const response = await app.request(

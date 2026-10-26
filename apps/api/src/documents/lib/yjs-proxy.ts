@@ -3,11 +3,12 @@ import { Hono } from "hono";
 import { boundedRequestBody } from "#api/platform/http/bounded-request-body";
 import { logFailure } from "#api/platform/logger";
 import { decodeFramedUpdates } from "./yjs-frames";
-import type {
-  YjsAccessCheck,
-  YjsRefusal,
-  YjsTarget,
-  YjsUpdateCheck,
+import {
+  refusal,
+  type YjsAccessCheck,
+  type YjsRefusal,
+  type YjsTarget,
+  type YjsUpdateCheck,
 } from "./yjs-access";
 
 /** The `YjsServer` service every page lives under. */
@@ -23,7 +24,8 @@ export const YJS_MAX_REQUEST_BYTES = 1024 * 1024 + 16 * 1024;
  */
 export const AWARENESS_MAX_MS = 60_000;
 
-const ID = /^[a-z0-9]{1,64}$/;
+const WORKSPACE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+const DOCUMENT_ID = /^[a-z0-9]{1,64}$/;
 const GENERATION = /^g([1-9]\d{0,8})$/;
 
 const FORWARDED_REQUEST_HEADERS = [
@@ -51,17 +53,26 @@ export type YjsProxyDependencies = {
 
 type Variables = { Variables: { userId: string; user: User | null } };
 
-const refusal = (r: YjsRefusal) =>
-  Response.json({ code: r.code, message: r.message }, { status: r.status });
+const refuse = (r: YjsRefusal) =>
+  Response.json(
+    { code: r.code, message: r.message },
+    {
+      status: r.status,
+      headers:
+        r.retryAfterSeconds === undefined
+          ? undefined
+          : { "retry-after": String(r.retryAfterSeconds) },
+    },
+  );
 
 const invalid = (message: string) =>
-  refusal({ status: 400, code: "INVALID_REQUEST", message });
+  refuse({ status: 400, code: "INVALID_UPDATE", message });
 
 function parseTarget(params: Record<string, string>): YjsTarget | null {
   const generation = GENERATION.exec(params.generation ?? "")?.[1];
   const { workspaceId, docId } = params;
   if (!generation || !workspaceId || !docId) return null;
-  if (!ID.test(workspaceId) || !ID.test(docId)) return null;
+  if (!WORKSPACE_ID.test(workspaceId) || !DOCUMENT_ID.test(docId)) return null;
   return { workspaceId, docId, generation: Number(generation) };
 }
 
@@ -131,11 +142,7 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
   routes.all(path, async (c) => {
     const target = parseTarget(c.req.param());
     if (!target) {
-      return refusal({
-        status: 404,
-        code: "DOCUMENT_NOT_FOUND",
-        message: "There is no such page",
-      });
+      return refuse(refusal("DOCUMENT_NOT_FOUND", "There is no such page"));
     }
     const method = c.req.method;
     const url = new URL(c.req.url);
@@ -165,7 +172,7 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
       mode: isWrite ? "write" : "read",
     } as const;
     const denied = await access(request);
-    if (denied) return refusal(denied);
+    if (denied) return refuse(denied);
 
     const upstream = new URL(
       `/v1/yjs/${YJS_SERVICE}/docs/${target.docId}/g${target.generation}`,
@@ -180,11 +187,7 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
       try {
         updates = decodeFramedUpdates(body);
       } catch {
-        return refusal({
-          status: 400,
-          code: "INVALID_UPDATE",
-          message: "The update is not framed",
-        });
+        return refuse(refusal("INVALID_UPDATE", "The update is not framed"));
       }
       for (const update of updates) {
         const rejected = await checkUpdate({
@@ -192,7 +195,7 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
           kind: awareness === null ? "document" : "awareness",
           update,
         });
-        if (rejected) return refusal(rejected);
+        if (rejected) return refuse(rejected);
       }
     }
 

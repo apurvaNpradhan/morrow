@@ -11,6 +11,7 @@ import { TASK_PRIORITIES } from "./tasks.js";
 
 export * from "./assets.js";
 export * from "./comments.js";
+export * from "./documents.js";
 export * from "./fields.js";
 export * from "./task-events.js";
 export * from "./labels.js";
@@ -336,3 +337,32 @@ export const taskRelationsShape = shape(
 );
 
 export type TaskRelationRow = z.infer<typeof taskRelationsShape.schema>;
+
+/**
+ * The tree of Documents of the Workspaces the user belongs to, archived ones
+ * included (they are hidden, not removed). A Document's content is not synced:
+ * it is a Yjs document on Durable Streams. `generation` names its current
+ * stream; `overLimit` is set while its content is over 1 MB. A Document keeps
+ * the `projectId` of its whole subtree, or none at the Workspace root.
+ */
+export const documentsShape = shape(
+  "documents",
+  z.object({
+    id: z.string(),
+    workspaceId: z.string(),
+    projectId: z.string().nullable(),
+    parentId: z.string().nullable(),
+    position: z.string(),
+    title: z.string(),
+    icon: z.string().nullable(),
+    generation: z.number(),
+    overLimit: z.boolean(),
+    archivedAt: z.date().nullable(),
+    archivedRootId: z.string().nullable(),
+    createdBy: z.string().nullable(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  }),
+);
+
+export type DocumentRow = z.infer<typeof documentsShape.schema>;

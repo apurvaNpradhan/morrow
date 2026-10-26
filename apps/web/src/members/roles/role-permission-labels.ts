@@ -10,6 +10,7 @@ export const RESOURCE_LABELS = new Map(
     workspace: "Workspace",
     project: "Projects",
     task: "Tasks",
+    document: "Pages",
   } satisfies Record<string, string>),
 );
 
@@ -117,6 +118,20 @@ export const PERMISSION_LABELS = new Map(
     "task:assign": {
       label: "Assign tasks",
       description: "Assign tasks to other members.",
+    },
+    "document:create": {
+      label: "Create pages",
+      description: "Add pages to the workspace and to projects.",
+    },
+    "document:update": {
+      label: "Edit pages",
+      description:
+        "Write in pages together with others, and rename, move, archive and restore them.",
+    },
+    "document:delete": {
+      label: "Delete pages",
+      description:
+        "Permanently delete pages. Their sub-pages move up one level.",
     },
   } satisfies Record<string, { label: string; description: string }>),
 );

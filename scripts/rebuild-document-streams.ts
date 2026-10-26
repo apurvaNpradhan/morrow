@@ -6,30 +6,14 @@
 //   pnpm --filter @morrow/api exec varlock run -- tsx ../../scripts/rebuild-document-streams.ts
 //
 // It skips a stream that already exists, so it can be run again.
-import { createPageStream } from "../apps/api/src/documents/lib/yjs-streams";
 import { startYjsServer, stopYjsServer } from "../apps/api/src/documents/index";
-
-type PageToRebuild = { docId: string; generation: number; update: Uint8Array };
-
-/** The pages and the Yjs state of their stored content. Filled in with the `documents` tables. */
-async function pagesToRebuild(): Promise<PageToRebuild[]> {
-  return [];
-}
+import { rebuildDocumentStreams } from "../apps/api/src/documents/lib/rebuild-streams";
 
 const yjsUrl = await startYjsServer();
-let created = 0;
-let skipped = 0;
 try {
-  for (const { docId, generation, update } of await pagesToRebuild()) {
-    const wasCreated = await createPageStream(
-      yjsUrl,
-      { docId, generation },
-      update,
-    );
-    if (wasCreated) created += 1;
-    else skipped += 1;
-  }
+  const { created, skipped } = await rebuildDocumentStreams(yjsUrl);
+  console.log(`Rebuilt ${created} page streams; ${skipped} already existed.`);
 } finally {
   await stopYjsServer();
+  process.exit(0);
 }
-console.log(`Rebuilt ${created} page streams; ${skipped} already existed.`);
