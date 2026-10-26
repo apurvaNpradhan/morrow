@@ -1,20 +1,7 @@
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import Placeholder from "@tiptap/extension-placeholder";
-import {
-  Table,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@tiptap/extension-table";
-import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Markdown } from "@tiptap/markdown";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { common, createLowlight } from "lowlight";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/design-system/cn";
-import { AssetImage } from "../attachments/asset-image";
-import { AttachmentCardWithView } from "../attachments/attachment-card-view";
 import {
   AttachmentUploads,
   pickFiles,
@@ -26,10 +13,8 @@ import { useAttachmentUploads } from "../attachments/use-attachment-uploads";
 import { looksLikeMarkdown } from "../lib/looks-like-markdown";
 import { BubbleLinkEditor } from "./bubble-link-editor";
 import { DescriptionCharacterCount } from "./description-character-count";
+import { descriptionExtensions } from "./description-extensions";
 import { SlashCommands } from "./slash-extension";
-import { TicketReference } from "./ticket-reference";
-
-const lowlight = createLowlight(common);
 
 /**
  * The markdown description editor: headings, bold, italic, strike, inline
@@ -87,31 +72,10 @@ export function DescriptionMarkdownEditor({
   const attachReady = useRef(onAttachReady);
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        underline: false,
-        codeBlock: false,
-        link: {
-          openOnClick: "whenNotEditable",
-          autolink: true,
-          // Only what the link field itself accepts; no `javascript:` from a paste.
-          isAllowedUri: (url) => /^(https?:\/\/|mailto:)/i.test(url),
-          HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
-        },
-      }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      CodeBlockLowlight.configure({ lowlight }),
-      Table,
-      TableRow,
-      TableHeader,
-      TableCell,
+      ...descriptionExtensions(placeholder ?? ""),
       SlashCommands,
-      TicketReference,
-      AssetImage,
-      AttachmentCardWithView,
       AttachmentUploads,
       Markdown,
-      Placeholder.configure({ placeholder: placeholder ?? "" }),
     ],
     content: value,
     contentType: "markdown",

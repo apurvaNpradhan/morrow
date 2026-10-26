@@ -7,7 +7,7 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/design-system/ui/dialog";
-import { assetPath } from "./asset-markdown";
+import { assetPath } from "@morrow/document-schema";
 
 /**
  * A file shown in a frame, using the browser's own viewer: PDF, plain text,

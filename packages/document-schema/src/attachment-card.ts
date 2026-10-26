@@ -1,9 +1,9 @@
-import { Node } from "@tiptap/react";
-import { assetPath } from "./asset-markdown";
-import { attachmentCardTokenizer } from "./attachment-markdown";
+import { Node } from "@tiptap/core";
+import { assetPath } from "./asset-links";
+import { attachmentCardTokenizer } from "./asset-tokenizers";
 
 /**
- * A file on its own line in a description or comment. One block atom whose
+ * A file on its own line in a description or page. One block atom whose
  * markdown is `[name](/api/asset/id "type size")`, so any other reader sees a
  * working link. The editor draws it with `AttachmentCardView`.
  */

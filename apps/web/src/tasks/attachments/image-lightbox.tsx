@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Dialog, DialogPopup, DialogTitle } from "@/design-system/ui/dialog";
-import { assetPath } from "./asset-markdown";
-import { assetIdOf } from "./asset-markdown";
+import { assetPath } from "@morrow/document-schema";
+import { assetIdOf } from "@morrow/document-schema";
 
 /** An uploaded image at its natural size, capped to the window, with a link to the original. */
 export function ImageLightbox({

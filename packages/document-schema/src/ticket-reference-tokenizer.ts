@@ -1,5 +1,5 @@
 import { parseTicketId, ticketId } from "@morrow/sync-schemas";
-import type { MarkdownTokenizer } from "@tiptap/react";
+import type { MarkdownTokenizer } from "@tiptap/core";
 
 /**
  * A ticket id in running text: uppercase only, so ordinary prose such as

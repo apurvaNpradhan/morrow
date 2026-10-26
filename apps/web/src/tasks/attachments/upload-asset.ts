@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/client";
 import { ASSET_MAX_BYTES } from "@morrow/sync-schemas";
 import { rpc } from "@/app/lib/orpc";
-import type { UploadedAsset } from "./asset-markdown";
+import type { UploadedAsset } from "@morrow/document-schema";
 
 /** Sends the file to the signed URL with real progress, which `fetch` cannot report. */
 function putFile(

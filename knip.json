@@ -42,6 +42,9 @@
 		"packages/sync-schemas": {
 			"ignoreDependencies": ["@morrow/typescript-config", "vite"]
 		},
+		"packages/document-schema": {
+			"ignoreDependencies": ["@morrow/typescript-config", "vite"]
+		},
 		"packages/email": {}
 	}
 }

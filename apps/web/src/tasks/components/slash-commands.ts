@@ -1,3 +1,4 @@
+import "@tiptap/extension-table";
 import type { Editor, Range } from "@tiptap/react";
 import { pickFiles } from "../attachments/attachment-uploads";
 
