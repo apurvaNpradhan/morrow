@@ -37,6 +37,27 @@ const MAX_ATTRIBUTE_TEXT = 4_000;
 /** y-tiptap writes a mark that may overlap itself as `name--hash`. */
 const markName = (key: string) => key.replace(/--[A-Za-z0-9+/=_-]*$/, "");
 
+/**
+ * y-tiptap keeps, beside the fragment, a map of where moved text went, so a
+ * cursor or comment anchored in text a split or merge moved still resolves.
+ * It holds numbers and ids only and is read by no one but the editor.
+ */
+const POSITION_MIGRATIONS = `__tiptap_position_migrations:root:${DOCUMENT_FRAGMENT}`;
+// An entry grows with the edit that wrote it (deleting a long selection lists
+// every moved position) and holds the editor's state vector, so a real page
+// writes tens of kilobytes. The update as a whole is limited elsewhere.
+const MAX_POSITION_MIGRATION_BYTES = 512_000;
+
+function positionMigration(content: Y.Item["content"], key: string | null) {
+  if (key === null || !(content instanceof Y.ContentAny)) return false;
+  if (content.arr.length !== 1) return false;
+  const value = content.arr[0];
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  return JSON.stringify(value).length <= MAX_POSITION_MIGRATION_BYTES;
+}
+
 function plainValue(value: unknown): boolean {
   if (value === null || value === undefined) return true;
   if (typeof value === "string") return value.length <= MAX_ATTRIBUTE_TEXT;
@@ -102,9 +123,19 @@ export async function inspectUpdate(
 
     if (
       typeof struct.parent === "string" &&
+      struct.parent === POSITION_MIGRATIONS
+    ) {
+      if (!positionMigration(content, struct.parentSub)) {
+        return refuse("Unsupported position migration");
+      }
+      continue;
+    }
+
+    if (
+      typeof struct.parent === "string" &&
       struct.parent !== DOCUMENT_FRAGMENT
     ) {
-      return refuse("Content outside the page");
+      return refuse(`Content outside the page (in "${struct.parent}")`);
     }
 
     if (content instanceof Y.ContentString) continue;
