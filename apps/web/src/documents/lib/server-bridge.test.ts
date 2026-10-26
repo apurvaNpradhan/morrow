@@ -22,12 +22,12 @@ class FakeLink extends ObservableV2<{ status: (status: string) => void }> {
   }
 }
 
-function open() {
+function open(canSend?: () => boolean) {
   const page = new Y.Doc();
   const server = new Y.Doc();
   const link = new FakeLink(server);
-  bridgeToServer(page, server, link);
-  return { page, server, link };
+  const bridge = bridgeToServer(page, server, link, canSend);
+  return { page, server, link, bridge };
 }
 
 /** The server's stream as another browser reads it. */
@@ -90,5 +90,17 @@ describe("bridgeToServer", () => {
     Y.applyUpdate(server, Y.encodeStateAsUpdate(remote), "server");
     link.connect();
     expect(link.sent).toHaveLength(0);
+  });
+
+  it("holds edits while the client id is unregistered and sends them on flush", () => {
+    let registered = false;
+    const { page, link, bridge } = open(() => registered);
+    link.connect();
+    page.getText("t").insert(0, "typed with a new id");
+    expect(link.sent).toHaveLength(0);
+
+    registered = true;
+    bridge.flush();
+    expect(replayed(link).getText("t").toString()).toBe("typed with a new id");
   });
 });
