@@ -56,10 +56,13 @@ export function refusalOf(error: unknown): PageRefusal {
 
 /**
  * Whether the editor keeps its edits and tries again: a dropped connection,
- * a 5xx and `RATE_LIMITED`. Every other refusal ends the session.
+ * a 5xx, `RATE_LIMITED`, and any failure that carries no refusal code. The
+ * last case includes the 400 the stream gives to the retry of a write the
+ * rate limit turned down; the proxy's own refusals always carry a code.
  */
 export function isRetryable({ code, status }: PageRefusal): boolean {
   return (
+    code === null ||
     code === "RATE_LIMITED" ||
     status === null ||
     status === 429 ||
