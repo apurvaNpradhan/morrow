@@ -123,6 +123,27 @@ describe("openPage", () => {
   });
 });
 
+describe("a client id Yjs replaces", () => {
+  it("is registered before the page writes with it", async () => {
+    const session = openPage(options);
+    await settled(session);
+    mocks.registerClient.mockClear();
+
+    // Yjs does this when it receives structs that carry the doc's own id.
+    session.doc.clientID = 777;
+    session.doc.getText("t").insert(0, "x");
+
+    await vi.waitFor(() =>
+      expect(mocks.registerClient).toHaveBeenCalledWith({
+        workspaceId: "w1",
+        documentId: "d1",
+        clientId: 777,
+      }),
+    );
+    session.destroy();
+  });
+});
+
 describe("the terminal reset", () => {
   it("ends the session, drops the stored copy and forgets the client id on a refusal that will repeat", async () => {
     const session = openPage(options);

@@ -24,28 +24,42 @@ type Link = {
  *
  * What is sent is therefore only this user's own edits: the server already
  * holds everyone else's.
+ *
+ * While `canSend` is false nothing goes out (the page is writing with a Yjs
+ * client id the server does not know yet); `flush` sends what was held.
  */
-export function bridgeToServer(page: Y.Doc, server: Y.Doc, link: Link) {
+export function bridgeToServer(
+  page: Y.Doc,
+  server: Y.Doc,
+  link: Link,
+  canSend: () => boolean = () => true,
+) {
   const toPage = (update: Uint8Array, origin: unknown) => {
     if (origin === FROM_PAGE) return;
     Y.applyUpdate(page, update, FROM_SERVER);
   };
   const toServer = (update: Uint8Array, origin: unknown) => {
-    if (origin === FROM_SERVER || !link.connected) return;
+    if (origin === FROM_SERVER || !link.connected || !canSend()) return;
     Y.applyUpdate(server, update, FROM_PAGE);
   };
-  const sendUnsent = (status: string) => {
-    if (status !== "connected") return;
+  const sendUnsent = () => {
+    if (!link.connected || !canSend()) return;
     const update = Y.encodeStateAsUpdate(page, Y.encodeStateVector(server));
     // An update with no structs and no deletions is two zero bytes.
     if (update.length > 2) Y.applyUpdate(server, update, FROM_PAGE);
   };
   server.on("update", toPage);
   page.on("update", toServer);
-  link.on("status", sendUnsent);
-  return () => {
-    server.off("update", toPage);
-    page.off("update", toServer);
-    link.off("status", sendUnsent);
+  const onStatus = (status: string) => {
+    if (status === "connected") sendUnsent();
+  };
+  link.on("status", onStatus);
+  return {
+    flush: sendUnsent,
+    stop() {
+      server.off("update", toPage);
+      page.off("update", toServer);
+      link.off("status", onStatus);
+    },
   };
 }

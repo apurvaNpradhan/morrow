@@ -47,7 +47,10 @@ export function openPage(options: OpenPageOptions) {
   let state: PageState = { phase: "loading" };
   let destroyed = false;
   let provider: YjsProvider | null = null;
-  let unbridge: (() => void) | null = null;
+  let bridge: ReturnType<typeof bridgeToServer> | null = null;
+  // The client id the server knows for this tab; Yjs may swap the doc's own.
+  let registeredId: number | null = null;
+  let registering = false;
 
   const persistence = new IndexeddbPersistence(
     pageDatabaseName(userId, documentId, generation),
@@ -69,6 +72,7 @@ export function openPage(options: OpenPageOptions) {
           documentId,
           clientId: doc.clientID,
         });
+        registeredId = doc.clientID;
         writeClientId(userId, documentId, doc.clientID);
         return true;
       } catch (error) {
@@ -90,8 +94,8 @@ export function openPage(options: OpenPageOptions) {
 
   function end(refusal: PageRefusal) {
     if (destroyed || state.phase === "ended") return;
-    unbridge?.();
-    unbridge = null;
+    bridge?.stop();
+    bridge = null;
     provider?.destroy();
     provider = null;
     forgetClientId(userId, documentId);
@@ -111,6 +115,7 @@ export function openPage(options: OpenPageOptions) {
         // Edits typed offline were written with this id, which is already
         // registered; confirm it in the background and write at once.
         doc.clientID = kept;
+        registeredId = kept;
         writable = true;
         void registerClientId().then((registered) => {
           if (!registered && state.phase === "ready") {
@@ -131,7 +136,23 @@ export function openPage(options: OpenPageOptions) {
       docId: `${documentId}/g${generation}`,
       liveMode: "long-poll",
     });
-    unbridge = bridgeToServer(doc, server, provider);
+    bridge = bridgeToServer(
+      doc,
+      server,
+      provider,
+      () => !canEdit || doc.clientID === registeredId,
+    );
+    // Yjs gives the doc a new client id when it receives structs that carry
+    // its own, which a kept id can meet if the stored copy was dropped. Edits
+    // written under the new id are held until the server knows it.
+    doc.on("afterTransaction", () => {
+      if (!canEdit || registering || doc.clientID === registeredId) return;
+      registering = true;
+      void registerClientId().then((registered) => {
+        registering = false;
+        if (registered) bridge?.flush();
+      });
+    });
     provider.on("error", (error) => {
       const refusal = refusalOf(error);
       if (!isRetryable(refusal)) end(refusal);
@@ -151,7 +172,7 @@ export function openPage(options: OpenPageOptions) {
     destroy() {
       destroyed = true;
       listeners.clear();
-      unbridge?.();
+      bridge?.stop();
       provider?.destroy();
       void persistence.destroy();
       server.destroy();
