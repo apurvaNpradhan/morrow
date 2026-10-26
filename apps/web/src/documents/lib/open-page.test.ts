@@ -123,6 +123,16 @@ describe("openPage", () => {
   });
 });
 
+describe("registering the client id", () => {
+  it("stops asking when the page is gone or refused, and leaves the page read-only", async () => {
+    mocks.registerClient.mockRejectedValue(new ORPCError("NOT_FOUND"));
+    const session = openPage(options);
+    expect(await settled(session)).toEqual({ phase: "ready", writable: false });
+    expect(mocks.registerClient).toHaveBeenCalledTimes(1);
+    session.destroy();
+  });
+});
+
 describe("a client id Yjs replaces", () => {
   it("is registered before the page writes with it", async () => {
     const session = openPage(options);
