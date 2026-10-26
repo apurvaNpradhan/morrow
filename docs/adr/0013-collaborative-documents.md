@@ -1,6 +1,6 @@
 # 0013. Collaborative documents
 
-Status: accepted (2026-10-24). Amends [0001](0001-electric-tanstack-db-sync.md): a document's edits are not synced through Electric. Builds on [0005](0005-task-descriptions-apart.md), [0009](0009-local-database.md) and [0010](0010-attachments.md). Spec: `.scratch/documents/spec.md`.
+Status: superseded by [0014](0014-documents-on-yjs-and-durable-streams.md) (2026-10-26). Never built. Was: accepted (2026-10-24). Amends [0001](0001-electric-tanstack-db-sync.md): a document's edits are not synced through Electric. Builds on [0005](0005-task-descriptions-apart.md), [0009](0009-local-database.md) and [0010](0010-attachments.md). Spec: `.scratch/documents/spec.md`.
 
 ## Context
 
