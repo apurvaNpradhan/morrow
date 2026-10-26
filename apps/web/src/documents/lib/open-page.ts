@@ -6,6 +6,7 @@ import * as Y from "yjs";
 import { env } from "@/app/lib/env";
 import { rpc } from "@/app/lib/orpc";
 import { detailCode } from "@/app/lib/orpc-error";
+import { createBackoff } from "./backoff";
 import { isRetryable, refusalOf, type PageRefusal } from "./page-refusal";
 import {
   forgetClientId,
@@ -22,6 +23,9 @@ const SERVER_FAULTS = new Set([
   "SERVICE_UNAVAILABLE",
   "GATEWAY_TIMEOUT",
 ]);
+
+/** How many times to ask the server to register a client id before leaving the page read-only. */
+const REGISTER_ATTEMPTS = 5;
 
 /** How long to wait before asking again after a registration failed without an answer. */
 const REGISTER_RETRY_MS = 3000;
@@ -60,6 +64,10 @@ export function openPage(options: OpenPageOptions) {
   // The client id the server knows for this tab; Yjs may swap the doc's own.
   let registeredId: number | null = null;
   let registering = false;
+  // Set when the server gave a final answer, so typing does not ask again.
+  let registrationRefused = false;
+  const backoff = createBackoff();
+  let resume: ReturnType<typeof setTimeout> | undefined;
 
   const persistence = new IndexeddbPersistence(
     pageDatabaseName(userId, documentId, generation),
@@ -73,7 +81,7 @@ export function openPage(options: OpenPageOptions) {
 
   /** Makes the Yjs client id this tab writes with known to the server, choosing another if it is taken. */
   async function registerClientId(): Promise<boolean> {
-    for (;;) {
+    for (let attempt = 1; ; attempt++) {
       if (destroyed) return false;
       try {
         await rpc.documents.registerClient({
@@ -91,15 +99,17 @@ export function openPage(options: OpenPageOptions) {
         }
         // An answer below 500 (not found, forbidden, archived) will not change.
         if (error instanceof ORPCError && !SERVER_FAULTS.has(error.code)) {
+          registrationRefused = true;
           return false;
         }
         // No answer, or a server error: keep the edits and ask again.
-        if (isRetryable(refusalOf(error))) {
+        if (attempt < REGISTER_ATTEMPTS && isRetryable(refusalOf(error))) {
           await new Promise((resolve) =>
             setTimeout(resolve, REGISTER_RETRY_MS),
           );
           continue;
         }
+        registrationRefused = true;
         return false;
       }
     }
@@ -109,6 +119,7 @@ export function openPage(options: OpenPageOptions) {
     if (destroyed || state.phase === "ended") return;
     bridge?.stop();
     bridge = null;
+    clearTimeout(resume);
     provider?.destroy();
     provider = null;
     forgetClientId(userId, documentId);
@@ -153,13 +164,20 @@ export function openPage(options: OpenPageOptions) {
       doc,
       server,
       provider,
-      () => !canEdit || doc.clientID === registeredId,
+      () => !backoff.holding() && (!canEdit || doc.clientID === registeredId),
     );
     // Yjs gives the doc a new client id when it receives structs that carry
     // its own, which a kept id can meet if the stored copy was dropped. Edits
     // written under the new id are held until the server knows it.
     doc.on("afterTransaction", () => {
-      if (!canEdit || registering || doc.clientID === registeredId) return;
+      if (
+        !canEdit ||
+        registering ||
+        registrationRefused ||
+        doc.clientID === registeredId
+      ) {
+        return;
+      }
       registering = true;
       void registerClientId().then((registered) => {
         registering = false;
@@ -168,7 +186,15 @@ export function openPage(options: OpenPageOptions) {
     });
     provider.on("error", (error) => {
       const refusal = refusalOf(error);
-      if (!isRetryable(refusal)) end(refusal);
+      if (!isRetryable(refusal)) return end(refusal);
+      // The provider reconnects at once; wait before sending again, and then
+      // send everything the server still lacks in one go.
+      const wait = backoff.fail();
+      clearTimeout(resume);
+      resume = setTimeout(() => bridge?.flush(), wait + 50);
+    });
+    provider.on("synced", (synced) => {
+      if (synced) backoff.succeed();
     });
     if (state.phase === "loading") setState({ phase: "ready", writable });
   }
@@ -186,6 +212,7 @@ export function openPage(options: OpenPageOptions) {
       destroyed = true;
       listeners.clear();
       bridge?.stop();
+      clearTimeout(resume);
       provider?.destroy();
       void persistence.destroy();
       server.destroy();

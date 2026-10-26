@@ -1,7 +1,7 @@
 import type { User } from "better-auth/types";
 import { Hono } from "hono";
 import { boundedRequestBody } from "#api/platform/http/bounded-request-body";
-import { logFailure } from "#api/platform/logger";
+import { log, logFailure } from "#api/platform/logger";
 import { decodeFramedUpdates } from "./yjs-frames";
 import {
   refusal,
@@ -183,6 +183,10 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
     let body: Uint8Array<ArrayBuffer> | undefined;
     if (isWrite) {
       body = new Uint8Array(await c.req.arrayBuffer());
+      // A write with nothing in it carries no update. The stream server turns
+      // it down with a 400, which the provider answers by reconnecting and
+      // writing again; a 204 is the stream protocol's "already have it".
+      if (body.byteLength === 0) return new Response(null, { status: 204 });
       let updates: Uint8Array[];
       try {
         updates = decodeFramedUpdates(body);
@@ -195,7 +199,13 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
           kind: awareness === null ? "document" : "awareness",
           update,
         });
-        if (rejected) return refuse(rejected);
+        if (rejected) {
+          log.warn(
+            "documents",
+            `Update refused: ${rejected.code} ${rejected.message}`,
+          );
+          return refuse(rejected);
+        }
       }
     }
 
@@ -226,6 +236,14 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
       return Response.json(
         { code: "UNAVAILABLE", message: "Pages are unavailable" },
         { status: 503 },
+      );
+    }
+
+    if (isWrite && !response.ok) {
+      const detail = await response.clone().text();
+      log.warn(
+        "documents",
+        `Upstream refused a write: ${response.status} ${detail}`,
       );
     }
 
