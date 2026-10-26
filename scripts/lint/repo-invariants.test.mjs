@@ -71,3 +71,36 @@ test("the lockfile keeps the catalog the workspace declares", () => {
   const declared = /^catalog:/m.test(read("pnpm-workspace.yaml"));
   assert.equal(/^catalogs:/m.test(read("pnpm-lock.yaml")), declared);
 });
+
+test("the libraries that must be one copy are installed once", () => {
+  // Two copies of ProseMirror's model or of Yjs break `instanceof` checks and
+  // make documents unreadable across the editor, the schema package and the API.
+  const lock = read("pnpm-lock.yaml");
+  const packages = lock.slice(
+    lock.indexOf("\npackages:\n"),
+    lock.indexOf("\nsnapshots:\n"),
+  );
+  for (const name of [
+    "prosemirror-model",
+    "prosemirror-transform",
+    "prosemirror-state",
+    "yjs",
+  ]) {
+    const versions = [
+      ...packages.matchAll(new RegExp(`^  '?${name}@([^:'()]+)'?:$`, "gm")),
+    ].map((match) => match[1]);
+    assert.ok(versions.length <= 1, `${name} is installed as ${versions}`);
+  }
+});
+
+test("the image builds the document schema package", () => {
+  const dockerfile = read("Dockerfile");
+  for (const line of [
+    "COPY packages/document-schema/package.json ./packages/document-schema/",
+    "COPY packages/document-schema ./packages/document-schema",
+    "WORKDIR /app/packages/document-schema",
+    "COPY --from=api-builder /app/packages/document-schema ./packages/document-schema",
+  ]) {
+    assert.ok(dockerfile.includes(line), `Dockerfile has: ${line}`);
+  }
+});

@@ -1,9 +1,9 @@
-import { mergeAttributes, Node } from "@tiptap/react";
-import { imageDimensions } from "./asset-markdown";
-import { assetImageTokenizer } from "./attachment-markdown";
+import { mergeAttributes, Node } from "@tiptap/core";
+import { imageDimensions } from "./asset-links";
+import { assetImageTokenizer } from "./asset-tokenizers";
 
 /**
- * An uploaded image in a description or comment. One atom in the text whose
+ * An uploaded image in a description or page. One atom in the text whose
  * markdown is `![name](/api/asset/id?w=..&h=..)`; the size in the link lets the
  * browser keep room for it while it loads.
  */

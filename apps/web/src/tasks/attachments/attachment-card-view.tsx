@@ -16,8 +16,8 @@ import {
   VideoPlayerTimeDisplay,
   VideoPlayerTimeRange,
 } from "@/design-system/ui/video-player";
-import { assetPath } from "./asset-markdown";
-import { AttachmentCard } from "./attachment-card";
+import { assetPath } from "@morrow/document-schema";
+import { AttachmentCard } from "@morrow/document-schema";
 import { FilePreview } from "./file-preview";
 import { FileTypeIcon } from "./file-type-icon";
 import { formatBytes } from "./format-bytes";

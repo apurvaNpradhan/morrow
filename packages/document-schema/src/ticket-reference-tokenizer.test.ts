@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { ticketReferenceTokenizer } from "./ticket-reference-markdown";
+import { ticketReferenceTokenizer } from "./ticket-reference-tokenizer";
 
 const { start, tokenize } = ticketReferenceTokenizer;
 const find = (src: string) => (start as (src: string) => number)(src);

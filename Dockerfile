@@ -11,6 +11,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/email/package.json ./packages/email/
 COPY packages/permissions/package.json ./packages/permissions/
 COPY packages/sync-schemas/package.json ./packages/sync-schemas/
+COPY packages/document-schema/package.json ./packages/document-schema/
 COPY packages/i18n/package.json ./packages/i18n/
 COPY apps/api/package.json ./apps/api/
 
@@ -20,6 +21,7 @@ COPY packages/typescript-config ./packages/typescript-config
 COPY packages/email ./packages/email
 COPY packages/permissions ./packages/permissions
 COPY packages/sync-schemas ./packages/sync-schemas
+COPY packages/document-schema ./packages/document-schema
 COPY packages/i18n ./packages/i18n
 COPY apps/api ./apps/api
 
@@ -30,6 +32,9 @@ WORKDIR /app/packages/permissions
 RUN pnpm run build
 
 WORKDIR /app/packages/sync-schemas
+RUN pnpm run build
+
+WORKDIR /app/packages/document-schema
 RUN pnpm run build
 
 WORKDIR /app/apps/api
@@ -47,6 +52,7 @@ COPY --from=api-builder /app/packages/typescript-config/package.json ./packages/
 COPY --from=api-builder /app/packages/email/package.json ./packages/email/
 COPY --from=api-builder /app/packages/permissions/package.json ./packages/permissions/
 COPY --from=api-builder /app/packages/sync-schemas/package.json ./packages/sync-schemas/
+COPY --from=api-builder /app/packages/document-schema/package.json ./packages/document-schema/
 COPY --from=api-builder /app/packages/i18n/package.json ./packages/i18n/
 
 RUN sed -i 's/"prepare": "husky"/"prepare": ""/g' package.json && \
@@ -59,6 +65,7 @@ COPY --from=api-builder /app/apps/api/drizzle ./apps/api/drizzle
 COPY --from=api-builder /app/packages/email ./packages/email
 COPY --from=api-builder /app/packages/permissions ./packages/permissions
 COPY --from=api-builder /app/packages/sync-schemas ./packages/sync-schemas
+COPY --from=api-builder /app/packages/document-schema ./packages/document-schema
 COPY --from=api-builder /app/packages/i18n ./packages/i18n
 
 FROM --platform=$BUILDPLATFORM node:24.19.0-alpine AS web-builder
@@ -75,6 +82,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/typescript-config ./packages/typescript-config
 COPY packages/permissions ./packages/permissions
 COPY packages/sync-schemas ./packages/sync-schemas
+COPY packages/document-schema ./packages/document-schema
 COPY packages/i18n ./packages/i18n
 COPY apps/web ./apps/web
 
@@ -84,6 +92,9 @@ WORKDIR /app/packages/permissions
 RUN pnpm run build
 
 WORKDIR /app/packages/sync-schemas
+RUN pnpm run build
+
+WORKDIR /app/packages/document-schema
 RUN pnpm run build
 
 # Public, build-time settings (see .env.schema). The web app is static, so these

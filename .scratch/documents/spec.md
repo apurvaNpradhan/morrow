@@ -79,6 +79,11 @@ The decisions are in [ADR 0014](../../docs/adr/0014-documents-on-yjs-and-durable
   - collaboration: Collaboration (on the page's `Y.Doc`, fragment `default`), CollaborationCaret, and y-tiptap's undo, so undo reverts only your own changes;
   - new in v1: UniqueID, DragHandleReact, Details (`persist: false`), Mention, `[[page]]` link, FileHandler, Highlight, Typography, Emoji;
   - the outline is built from headings and their ids, not the TableOfContents extension.
+- As built in `packages/document-schema` (MOR-75):
+  - The block id attribute is `blockId` (`data-block-id`), because `attachmentCard` already has an `id` of its own. Tiptap's UniqueID is set to `attributeName: "blockId"` when slice 3 wires it.
+  - The list is made of the individual node and mark packages, not StarterKit. The browser adds Dropcursor, Gapcursor, ListKeymap, UndoRedo and TrailingNode on top (`descriptionExtensions`), and the task description editor leaves out `details`, `mention`, `pageLink` and `blockIds`.
+  - Markdown: details is GitHub's `<details>`/`<summary>` form; a mention is Tiptap's `[@ id="…" label="…"]`; a page link is `[[pageId|title]]`.
+  - `attributeProblem(name, attrs, refs)` is the one entry point the write check will call for the validators.
 - Block ids: a client gives ids only to blocks created by its own local transactions, never in a transaction that came from y-sync. The page job repairs missing and duplicate ids as `system`.
 - Plugins must not write on their own. A reader or Viewer that emits an update is refused and reset, then emits it again, in a loop. A test lists every allowed `appendTransaction` and asserts that opening a page, receiving a remote update and being a reader emit no Yjs update.
 - Readers and archived pages get `editable: false`.

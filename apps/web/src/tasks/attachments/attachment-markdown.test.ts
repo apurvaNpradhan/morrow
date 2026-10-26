@@ -1,9 +1,8 @@
+import { AssetImage, AttachmentCard } from "@morrow/document-schema";
 import { Markdown } from "@tiptap/markdown";
 import { Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { afterEach, describe, expect, it } from "vite-plus/test";
-import { AssetImage } from "./asset-image";
-import { AttachmentCard } from "./attachment-card";
 
 let editor: Editor | undefined;
 afterEach(() => editor?.destroy());

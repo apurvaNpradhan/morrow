@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import { Plugin, Selection } from "@tiptap/pm/state";
 import { Extension, type Editor } from "@tiptap/react";
-import type { UploadedAsset } from "./asset-markdown";
-import { assetPath } from "./asset-markdown";
+import type { UploadedAsset } from "@morrow/document-schema";
+import { assetPath } from "@morrow/document-schema";
 import {
   createPlaceholderElement,
   placeholders,

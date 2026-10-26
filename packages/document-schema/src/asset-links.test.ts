@@ -5,7 +5,7 @@ import {
   imageDimensions,
   imageMarkdown,
   parseCardTitle,
-} from "./asset-markdown";
+} from "./asset-links";
 
 const image = {
   id: "abc123",

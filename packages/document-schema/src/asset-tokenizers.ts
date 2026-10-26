@@ -1,5 +1,5 @@
-import type { MarkdownTokenizer } from "@tiptap/react";
-import { assetIdOf, assetPath, parseCardTitle } from "./asset-markdown";
+import type { MarkdownTokenizer } from "@tiptap/core";
+import { assetIdOf, assetPath, parseCardTitle } from "./asset-links";
 
 /** An asset link, relative or absolute (an agent writes absolute ones). */
 const ASSET_URL = String.raw`(?:https?:\/\/[^/\s)]+)?\/api\/asset\/[a-z0-9]+`;
