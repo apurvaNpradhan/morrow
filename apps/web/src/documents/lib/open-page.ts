@@ -15,6 +15,14 @@ import {
 } from "./page-storage";
 import { bridgeToServer } from "./server-bridge";
 
+/** The API's codes for a fault on its side, which a later request may not meet. */
+const SERVER_FAULTS = new Set([
+  "INTERNAL_SERVER_ERROR",
+  "BAD_GATEWAY",
+  "SERVICE_UNAVAILABLE",
+  "GATEWAY_TIMEOUT",
+]);
+
 /** How long to wait before asking again after a registration failed without an answer. */
 const REGISTER_RETRY_MS = 3000;
 
@@ -82,7 +90,9 @@ export function openPage(options: OpenPageOptions) {
           continue;
         }
         // An answer below 500 (not found, forbidden, archived) will not change.
-        if (error instanceof ORPCError && error.status < 500) return false;
+        if (error instanceof ORPCError && !SERVER_FAULTS.has(error.code)) {
+          return false;
+        }
         // No answer, or a server error: keep the edits and ask again.
         if (isRetryable(refusalOf(error))) {
           await new Promise((resolve) =>
