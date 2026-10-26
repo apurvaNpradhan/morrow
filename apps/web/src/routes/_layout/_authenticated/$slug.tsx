@@ -9,6 +9,7 @@ import {
   workspaceInvitationCollection,
   workspaceMemberUserCollection,
 } from "@/members";
+import { documentCollection } from "@/documents";
 import { labelCollection } from "@/labels";
 import {
   projectCollection,
@@ -64,6 +65,7 @@ export const Route = createFileRoute("/_layout/_authenticated/$slug")({
       loadSyncedCollection(projectColumnCollection),
       loadSyncedCollection(projectFieldCollection),
       loadSyncedCollection(labelCollection),
+      loadSyncedCollection(documentCollection),
     ]);
   },
   component: WorkspaceLayout,

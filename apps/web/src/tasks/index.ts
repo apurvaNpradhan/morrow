@@ -8,3 +8,8 @@ export { openCreateTask } from "./lib/create-task-store";
 export { preloadProjectTasks } from "./lib/preload-project-tasks";
 export { preloadTicketTask } from "./lib/preload-ticket-task";
 export { preloadTaskDescriptionEditor } from "./components/task-description-editor";
+/**
+ * The editing pieces pages share with descriptions, loaded on demand: they
+ * bring in Tiptap, which the first screen must not wait for.
+ */
+export const loadEditingPieces = () => import("./components/editing-pieces");

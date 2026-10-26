@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Archive, Settings } from "lucide-react";
+import { Archive, FileText, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { WorkspaceLayout } from "@/app/components/workspace-layout";
 import { PageTitle } from "@/design-system/page-title";
@@ -99,6 +99,19 @@ function LoadedProjectTasks({
                 {t("list.archived")}
               </Badge>
             ) : null}
+            <Button
+              variant="ghost"
+              size="xs"
+              render={
+                <Link
+                  to="/$slug/projects/$key/documents"
+                  params={{ slug: workspace.slug, key: project.key }}
+                />
+              }
+            >
+              <FileText aria-hidden="true" />
+              <span className="max-md:sr-only">{t("board.pages")}</span>
+            </Button>
             {permission.canManageProjects() ? (
               <Button
                 variant="ghost"

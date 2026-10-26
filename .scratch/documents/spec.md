@@ -118,6 +118,13 @@ The decisions are in [ADR 0014](../../docs/adr/0014-documents-on-yjs-and-durable
   - The access check (`YjsAccessCheck`) and the per-update check (`YjsUpdateCheck`, called once per decoded lib0 frame) are injected into `createYjsRoutes`. Until MOR-77 the production wiring refuses every page and accepts every update.
   - Durable Streams is published by the image workflow as `ghcr.io/<repo>-streams`, built from `docker/durable-streams/` with the release version and archive checksums pinned. The nightly volume backup is a Dokploy volume backup (runbook), not code.
 - `y-indexeddb` keeps the page's `Y.Doc` per user (`morrow:{userId}:doc:{docId}:g{n}`). Unsent edits survive a reload and are sent on the next visit. `cleanupSyncedCollections()` deletes every such database at sign-out. There is no `beforeunload` guard.
+- As built in `apps/web/src/documents/` (MOR-77):
+  - The provider sends only the edits made while it is connected, so unsent text (typed offline, or kept in IndexedDB) would never leave the browser. The provider therefore drives a second `Y.Doc` that always equals the server's, and `server-bridge.ts` joins it to the page's `Y.Doc`: it forwards changes both ways while connected and, on each (re)connect, sends what the page has and the server lacks. That diff holds only this user's own client ids.
+  - The tab's Yjs client id is kept in session storage, not shared across tabs (two tabs writing with one id would corrupt the page). With a kept id the page is writable at once and the id is confirmed in the background; without one the page waits for `documents.registerClient`, which picks a new id on `CLIENT_ID_TAKEN`.
+  - The editor is read-only until the `Y.Doc` has content, because the server writes the first paragraph.
+  - Tiptap's `UniqueID` (`attributeName: "blockId"`) mints ids only for the user's own transactions. Its first-sync numbering is switched off (it would write on opening). The plugin allowlist test lists the plugins that append transactions and shows that opening, a remote update and a reader emit no update.
+  - A terminal refusal (any code except a dropped connection, a 5xx and `RATE_LIMITED`) ends the session: the editor is read-only, the typed text is offered for copying, the IndexedDB copy and the kept client id are dropped, and Reload starts from the server's page.
+  - The sidebar, the Documents tab and the page route are `/$slug/pages/$documentId` and `/$slug/projects/$key/documents`. An archived page leaves the tree; archiving offers Undo, and there is no archived-pages list yet.
 
 ### Write path (`api`, stateless)
 

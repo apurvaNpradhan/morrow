@@ -127,7 +127,15 @@
 			"relationCycle": "That would make a task wait on itself.",
 			"relationTaskNotInWorkspace": "That task isn't in this workspace.",
 			"taskMoveTooLarge": "At most 500 tasks can move at once.",
-			"taskMoveSameProject": "Some of those tasks are already in that project."
+			"taskMoveSameProject": "Some of those tasks are already in that project.",
+			"documentInvalidId": "That page id is not valid.",
+			"documentIdTaken": "A page with that id already exists.",
+			"documentArchived": "The page is archived, so it can't be changed.",
+			"documentNotArchived": "The page isn't archived.",
+			"documentArchivedWithAncestor": "A page above it is archived. Restore that page first.",
+			"documentParentArchived": "The page can't move into an archived page.",
+			"documentCycle": "A page can't move into its own subpages.",
+			"documentClientIdTaken": "That editing session is already in use."
 		}
 	},
 	"auth": {
@@ -1191,7 +1199,8 @@
 			"notFoundDescription": "It may have been deleted, or its key may have changed.",
 			"backToProjects": "All projects",
 			"archivedNotice": "This project is archived and read-only.",
-			"settings": "Project settings"
+			"settings": "Project settings",
+			"pages": "Pages"
 		},
 		"switcher": {
 			"label": "Switch project",
@@ -1960,6 +1969,84 @@
 			"deleteConfirm": "Delete label",
 			"deleteSuccess": "Label deleted",
 			"deleteError": "Couldn't delete the label."
+		}
+	},
+	"documents": {
+		"untitled": "Untitled",
+		"titleLabel": "Page title",
+		"archivedNotice": "This page is archived. It is read-only.",
+		"overLimitNotice": "This page has grown past its size limit. Remove some content before adding more.",
+		"notFound": {
+			"title": "Page not found",
+			"description": "It may have been deleted, or you may not have access to it.",
+			"back": "Back to the workspace"
+		},
+		"sidebar": {
+			"title": "Pages"
+		},
+		"project": {
+			"title": "{{name}} · Pages",
+			"tasks": "Tasks",
+			"newPage": "New page",
+			"empty": "No pages in this project yet."
+		},
+		"tree": {
+			"label": "Pages",
+			"add": "Add a page to {{name}}",
+			"expand": "Expand {{name}}",
+			"collapse": "Collapse {{name}}",
+			"renameLabel": "Page title",
+			"createError": "Couldn't add the page.",
+			"renameError": "Couldn't rename the page.",
+			"moveError": "Couldn't move the page."
+		},
+		"menu": {
+			"label": "Actions for {{name}}",
+			"addSubpage": "Add a subpage",
+			"rename": "Rename",
+			"copyLink": "Copy link",
+			"linkCopied": "Link copied",
+			"copyFailed": "Couldn't copy the link.",
+			"archive": "Archive",
+			"archived": "Page archived",
+			"undo": "Undo",
+			"archiveError": "Couldn't archive the page.",
+			"restoreError": "Couldn't restore the page.",
+			"delete": "Delete",
+			"deleteError": "Couldn't delete the page."
+		},
+		"delete": {
+			"title": "Delete {{name}}?",
+			"description": "This deletes the page for good, with its history. Its subpages move up one level.",
+			"confirm": "Delete page"
+		},
+		"editor": {
+			"placeholder": "Write something, or press / for blocks",
+			"label": "Page text"
+		},
+		"ended": {
+			"title": {
+				"FORBIDDEN": "You can no longer edit this page",
+				"DOCUMENT_ARCHIVED": "This page was archived",
+				"DOCUMENT_NOT_FOUND": "This page is gone",
+				"DOCUMENT_TOO_LARGE": "This page is too large",
+				"SCHEMA_MISMATCH": "This page has a newer version",
+				"INVALID_UPDATE": "Something you typed could not be saved",
+				"UNKNOWN": "Your changes could not be saved"
+			},
+			"description": {
+				"FORBIDDEN": "Your role changed. Copy what you typed if you need it, then reload.",
+				"DOCUMENT_ARCHIVED": "Archived pages are read-only. Copy what you typed if you need it, then reload.",
+				"DOCUMENT_NOT_FOUND": "It was deleted or you left the workspace. Copy what you typed if you need it, then reload.",
+				"DOCUMENT_TOO_LARGE": "A page can hold about 1 MB of text. Copy what you typed if you need it, then reload.",
+				"SCHEMA_MISMATCH": "Morrow was updated while you were editing. Copy what you typed if you need it, then reload.",
+				"INVALID_UPDATE": "The page was set back to the saved version so it stays consistent. Copy what you typed if you need it, then reload.",
+				"UNKNOWN": "Copy what you typed if you need it, then reload to start from the saved page."
+			},
+			"unsentLabel": "What you typed",
+			"copy": "Copy text",
+			"copied": "Copied",
+			"reload": "Reload page"
 		}
 	}
 }
