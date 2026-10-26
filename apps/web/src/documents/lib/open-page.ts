@@ -1,4 +1,5 @@
 import { YjsProvider } from "@durable-streams/y-durable-streams";
+import { ORPCError } from "@orpc/client";
 import * as random from "lib0/random";
 import { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs";
@@ -80,6 +81,8 @@ export function openPage(options: OpenPageOptions) {
           doc.clientID = random.uint32();
           continue;
         }
+        // An answer below 500 (not found, forbidden, archived) will not change.
+        if (error instanceof ORPCError && error.status < 500) return false;
         // No answer, or a server error: keep the edits and ask again.
         if (isRetryable(refusalOf(error))) {
           await new Promise((resolve) =>
