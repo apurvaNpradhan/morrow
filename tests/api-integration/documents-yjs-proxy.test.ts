@@ -244,6 +244,19 @@ describe("the Yjs proxy", () => {
     expect(response.status).toBe(413);
   });
 
+  it("takes a write with nothing in it as already done, not as an error", async () => {
+    const response = await fetch(`${origin}/api/documents/yjs/${PATH}`, {
+      method: "POST",
+      headers: {
+        "x-test-user": "ada",
+        "content-type": "application/octet-stream",
+      },
+      body: new Uint8Array(0),
+    });
+
+    expect(response.status).toBe(204);
+  });
+
   it("refuses a body that is not lib0 framed", async () => {
     const response = await fetch(`${origin}/api/documents/yjs/${PATH}`, {
       method: "POST",
