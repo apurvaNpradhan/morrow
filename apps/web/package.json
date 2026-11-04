@@ -27,7 +27,7 @@
 		"@morrow/document-schema": "workspace:*",
 		"@morrow/i18n": "workspace:*",
 		"@morrow/sync-schemas": "workspace:*",
-		"@orpc/client": "2.0.0-beta.43",
+		"@orpc/client": "2.0.0-beta.48",
 		"@orpc/tanstack-query": "2.0.0-beta.43",
 		"@paralleldrive/cuid2": "^3.3.0",
 		"@sentry/react": "^11.1.0",

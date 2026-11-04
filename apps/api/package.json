@@ -65,7 +65,7 @@
   },
   "devDependencies": {
     "@durable-streams/server": "0.3.9",
-    "@orpc/client": "2.0.0-beta.43",
+    "@orpc/client": "2.0.0-beta.48",
     "@tiptap/core": "^3.32.0",
     "@tiptap/extension-collaboration": "^3.32.0",
     "@tiptap/extension-list": "^3.32.0",
