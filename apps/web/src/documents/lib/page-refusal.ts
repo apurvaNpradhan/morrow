@@ -56,16 +56,20 @@ export function refusalOf(error: unknown): PageRefusal {
 
 /**
  * Whether the editor keeps its edits and tries again: a dropped connection,
- * a 5xx, `RATE_LIMITED`, and any failure that carries no refusal code. The
- * last case includes the 400 the stream gives to the retry of a write the
- * rate limit turned down; the proxy's own refusals always carry a code.
+ * a 5xx, `RATE_LIMITED`, and a 400, 408 or 429 that carries no refusal code.
+ * The last case includes the 400 the stream gives to the retry of a write the
+ * rate limit turned down; the proxy's own refusals always carry a code. Any
+ * other answer without a code (a signed-out 401, a 413 from the body limit)
+ * will not change by waiting, so it ends the session.
  */
 export function isRetryable({ code, status }: PageRefusal): boolean {
-  return (
-    code === null ||
-    code === "RATE_LIMITED" ||
-    status === null ||
-    status === 429 ||
-    status >= 500
-  );
+  if (code === "RATE_LIMITED" || status === null) return true;
+  if (status >= 500) return true;
+  return code === null && (status === 400 || status === 408 || status === 429);
+}
+
+/** The wait a refused write's `retry-after` header asks for, in milliseconds; 0 when it has none. */
+export function retryAfterMs(error: unknown): number {
+  const seconds = Number(asRecord(asRecord(error).headers)["retry-after"]);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 0;
 }

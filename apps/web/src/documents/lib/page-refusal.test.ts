@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { isRetryable, refusalOf } from "./page-refusal";
+import { isRetryable, refusalOf, retryAfterMs } from "./page-refusal";
 
 describe("refusalOf", () => {
   it("reads the code from a fetch error's body", () => {
@@ -47,6 +47,12 @@ describe("isRetryable", () => {
     expect(isRetryable({ code: null, status: 400 })).toBe(true);
   });
 
+  it("ends the session on a code-less answer that waiting will not change", () => {
+    expect(isRetryable({ code: null, status: 401 })).toBe(false);
+    expect(isRetryable({ code: null, status: 403 })).toBe(false);
+    expect(isRetryable({ code: null, status: 413 })).toBe(false);
+  });
+
   it("ends the session on every other refusal", () => {
     for (const code of [
       "FORBIDDEN",
@@ -57,5 +63,20 @@ describe("isRetryable", () => {
     ] as const) {
       expect(isRetryable({ code, status: 400 })).toBe(false);
     }
+  });
+});
+
+describe("retryAfterMs", () => {
+  it("reads the seconds a refused write is told to wait", () => {
+    const limited = (retryAfter?: string) =>
+      Object.assign(new Error("slow down"), {
+        status: 429,
+        headers: retryAfter === undefined ? {} : { "retry-after": retryAfter },
+      });
+
+    expect(retryAfterMs(limited("3"))).toBe(3000);
+    expect(retryAfterMs(limited())).toBe(0);
+    expect(retryAfterMs(limited("soon"))).toBe(0);
+    expect(retryAfterMs(new TypeError("Failed to fetch"))).toBe(0);
   });
 });

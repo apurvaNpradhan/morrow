@@ -19,6 +19,7 @@ import { BlurSaveInput, useProjectsWithoutSuspense } from "@/projects";
 import { useWorkspacePermission } from "@/workspace";
 import { updateDocument } from "../actions/document-actions";
 import { useDocuments } from "../queries/use-documents";
+import { ChildPageList } from "./child-page-list";
 
 const PageEditor = lazy(() =>
   import("./page-editor").then((m) => ({ default: m.PageEditor })),
@@ -77,7 +78,7 @@ export function DocumentPage({
     <>
       <PageTitle title={title} />
       <WorkspaceLayout title={title}>
-        <div className="mx-auto w-full max-w-3xl px-6 py-8">
+        <div className="mx-auto w-full max-w-[708px] px-4 pt-16 pb-32 sm:px-0 sm:pt-24">
           {archived ? (
             <p className="mb-4 rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
               {t("archivedNotice")}
@@ -94,7 +95,7 @@ export function DocumentPage({
             value={document.title}
             readOnly={!canEdit || archived}
             isAcceptable={() => true}
-            className="mb-4 border-0 px-0 text-3xl font-semibold shadow-none focus-visible:ring-0"
+            className="mb-6 h-auto border-0 bg-transparent px-0 py-1 text-4xl font-bold tracking-tight shadow-none focus-visible:ring-0 md:text-[2.5rem]"
             onCommit={(next) =>
               updateDocument(document.id, { title: next }).catch(
                 (error: unknown) =>
@@ -112,6 +113,12 @@ export function DocumentPage({
               readOnly={!canEdit || archived}
             />
           </Suspense>
+          <ChildPageList
+            slug={workspace.slug}
+            pages={index.childrenOf(document.id, {
+              projectId: document.projectId,
+            })}
+          />
         </div>
       </WorkspaceLayout>
     </>

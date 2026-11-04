@@ -7,7 +7,12 @@ import { env } from "@/app/lib/env";
 import { rpc } from "@/app/lib/orpc";
 import { detailCode } from "@/app/lib/orpc-error";
 import { createBackoff } from "./backoff";
-import { isRetryable, refusalOf, type PageRefusal } from "./page-refusal";
+import {
+  isRetryable,
+  refusalOf,
+  retryAfterMs,
+  type PageRefusal,
+} from "./page-refusal";
 import {
   forgetClientId,
   pageDatabaseName,
@@ -120,6 +125,9 @@ export function openPage(options: OpenPageOptions) {
     bridge?.stop();
     bridge = null;
     clearTimeout(resume);
+    // After its "error" event the provider disconnects and calls `connect()`
+    // again, which would bring a destroyed provider back to life.
+    if (provider) provider.connect = async () => {};
     provider?.destroy();
     provider = null;
     forgetClientId(userId, documentId);
@@ -187,9 +195,10 @@ export function openPage(options: OpenPageOptions) {
     provider.on("error", (error) => {
       const refusal = refusalOf(error);
       if (!isRetryable(refusal)) return end(refusal);
-      // The provider reconnects at once; wait before sending again, and then
-      // send everything the server still lacks in one go.
-      const wait = backoff.fail();
+      // The provider reconnects at once; wait before sending again (at least
+      // as long as a rate limit's `retry-after` asks), and then send
+      // everything the server still lacks in one go.
+      const wait = backoff.fail(retryAfterMs(error));
       clearTimeout(resume);
       resume = setTimeout(() => bridge?.flush(), wait + 50);
     });

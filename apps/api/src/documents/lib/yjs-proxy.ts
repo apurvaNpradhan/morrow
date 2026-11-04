@@ -65,6 +65,16 @@ const refuse = (r: YjsRefusal) =>
     },
   );
 
+/**
+ * A refused write. The provider's producer reads any 403 on a POST as a stale
+ * producer epoch and resends at once under the next epoch, with no wait, so a
+ * `FORBIDDEN` write would loop until the rate limit; it reads a 409 as a gap
+ * in its sequence numbers, which `DOCUMENT_ARCHIVED` and `SCHEMA_MISMATCH`
+ * would be taken for. Both are sent as a 422 instead; the body keeps the code.
+ */
+const refuseWrite = (r: YjsRefusal) =>
+  refuse(r.status === 403 || r.status === 409 ? { ...r, status: 422 } : r);
+
 const invalid = (message: string) =>
   refuse({ status: 400, code: "INVALID_UPDATE", message });
 
@@ -172,7 +182,7 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
       mode: isWrite ? "write" : "read",
     } as const;
     const denied = await access(request);
-    if (denied) return refuse(denied);
+    if (denied) return isWrite ? refuseWrite(denied) : refuse(denied);
 
     const upstream = new URL(
       `/v1/yjs/${YJS_SERVICE}/docs/${target.docId}/g${target.generation}`,
@@ -200,11 +210,14 @@ export function createYjsRoutes(dependencies: YjsProxyDependencies) {
           update,
         });
         if (rejected) {
-          log.warn(
-            "documents",
-            `Update refused: ${rejected.code} ${rejected.message}`,
-          );
-          return refuse(rejected);
+          // A rate limit answers every write of a busy editor, so it is not logged.
+          if (rejected.code !== "RATE_LIMITED") {
+            log.warn(
+              "documents",
+              `Update refused: ${rejected.code} ${rejected.message}`,
+            );
+          }
+          return refuseWrite(rejected);
         }
       }
     }

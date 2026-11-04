@@ -141,7 +141,12 @@ export const documentUpdateCheck: YjsUpdateCheck = async ({
         ),
       );
     if (registered.length !== findings.clientIds.size) {
-      return refusal("FORBIDDEN", "The update is not written by you");
+      const known = new Set(registered.map((row) => row.clientId));
+      const missing = [...findings.clientIds].filter((id) => !known.has(id));
+      return refusal(
+        "FORBIDDEN",
+        `The update is not written by you (unregistered client ids: ${missing.join(", ")})`,
+      );
     }
   }
 

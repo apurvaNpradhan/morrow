@@ -299,13 +299,17 @@ describe("inspectUpdate", () => {
 
     const ok = write({ version: 1, client: 1, clock: 2, seen: [[1, 2]] });
     const large = write({ blob: "x".repeat(100_000) });
-    const huge = write({ blob: "x".repeat(600_000) });
+    const huge = write({ blob: "x".repeat(2_200_000) });
     const scalar = write("x");
 
     expect((await inspectUpdate(ok, lookup)).problem).toBeNull();
     expect((await inspectUpdate(large, lookup)).problem).toBeNull();
-    expect((await inspectUpdate(huge, lookup)).problem).toMatch(/migration/);
-    expect((await inspectUpdate(scalar, lookup)).problem).toMatch(/migration/);
+    expect((await inspectUpdate(huge, lookup)).problem).toMatch(
+      /Position migration/,
+    );
+    expect((await inspectUpdate(scalar, lookup)).problem).toMatch(
+      /Position migration/,
+    );
   });
 
   it("refuses bytes that are not an update", async () => {
