@@ -24,7 +24,7 @@ export type YjsRefusalCode = keyof typeof YJS_REFUSALS;
 
 /** Why a request is refused. */
 export type YjsRefusal = {
-  status: (typeof YJS_REFUSALS)[YjsRefusalCode] | 503;
+  status: (typeof YJS_REFUSALS)[YjsRefusalCode] | 422 | 503;
   code: string;
   message: string;
   /** Seconds until a `RATE_LIMITED` writer may try again. */

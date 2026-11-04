@@ -1,6 +1,5 @@
 # Morrow
 
-
 A personal workspace platform, run as a single instance. Morrow is the core that future domains build on: accounts, workspaces, members, roles, activity, and an MCP endpoint for AI assistants.
 
 - **Accounts:** sign up with an emailed code, Google or GitHub. Turnstile CAPTCHA, rate limiting, disposable-email rejection and a workspace limit protect the open sign-up; `REGISTRATION_OPEN=false` closes it. Administrators are the emails listed in `ADMIN_EMAILS`.
@@ -16,7 +15,17 @@ Needs Node.js 24.11+ (or 26+), pnpm 10.32.1 and Docker. `pnpm dev:services` star
 1. Copy `.env.sample` to `.env` in the repository root and set `AUTH_SECRET` (`openssl rand -hex 32`, keep it stable) and your email in `ADMIN_EMAILS`. Every variable is declared in [`.env.schema`](.env.schema); `pnpm exec varlock load` validates your setup with secrets masked. A stale key in `.env` that the schema no longer declares (for example `DISCORD_CLIENT_ID`) fails validation: delete it.
 2. `pnpm install && pnpm dev`, then open https://localhost:5443. Caddy serves the dev server over HTTP/2 (the sync long-polls need it) with a certificate from [mkcert](https://github.com/FiloSottile/mkcert): install it and run `mkcert -install` once (it needs `certutil` for Firefox); `pnpm dev` makes the certificate. The dev server proxies `/api` to the API on port 1337.
 
-With no `RESEND_API_KEY` outside production, emails are printed to the API log: copy the sign-in code from there. Set `VITE_API_URL` in `.env` only to point the web app at an API hosted elsewhere. Run checks with `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm test:integration` (needs a disposable database whose name ends in `_test`).
+With no `RESEND_API_KEY` outside production, emails are printed to the API log: copy the sign-in code from there. Set `VITE_API_URL` in `.env` only to point the web app at an API hosted elsewhere.
+
+### Checks
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm lint` | Run lint and formatting checks |
+| `pnpm typecheck` | Check TypeScript types |
+| `pnpm test` | Run package tests |
+| `pnpm test:integration` | Run integration tests; requires a disposable database whose name ends in `_test` |
+| `pnpm test:security` | Run security and lint-rule tests |
 
 ## Deploy
 

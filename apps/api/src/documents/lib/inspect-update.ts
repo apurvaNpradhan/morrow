@@ -4,6 +4,7 @@ import {
   isBlockId,
   type WorkspaceRefs,
 } from "@morrow/document-schema";
+import { DOCUMENT_MAX_BYTES } from "@morrow/sync-schemas";
 import * as Y from "yjs";
 import { DOCUMENT_FRAGMENT } from "./empty-document";
 
@@ -43,19 +44,29 @@ const markName = (key: string) => key.replace(/--[A-Za-z0-9+/=_-]*$/, "");
  * It holds numbers and ids only and is read by no one but the editor.
  */
 const POSITION_MIGRATIONS = `__tiptap_position_migrations:root:${DOCUMENT_FRAGMENT}`;
-// An entry grows with the edit that wrote it (deleting a long selection lists
-// every moved position) and holds the editor's state vector, so a real page
-// writes tens of kilobytes. The update as a whole is limited elsewhere.
-const MAX_POSITION_MIGRATION_BYTES = 512_000;
+// An entry lists every position an edit moved, about 500 bytes of JSON per
+// block deleted whatever its length (a split or join writes under 1 KB, a
+// 1,000-block delete about 500 KB), and the update holding it is limited to
+// DOCUMENT_MAX_BYTES elsewhere. The JSON text of an entry is about a third
+// larger than its encoding, so twice that limit only stops an entry far larger
+// than any update can carry.
+const MAX_POSITION_MIGRATION_BYTES = 2 * DOCUMENT_MAX_BYTES;
 
-function positionMigration(content: Y.Item["content"], key: string | null) {
-  if (key === null || !(content instanceof Y.ContentAny)) return false;
-  if (content.arr.length !== 1) return false;
+/** Why a position-migration entry is refused, or null when it passes. */
+function positionMigrationProblem(
+  content: Y.Item["content"],
+  key: string | null,
+) {
+  if (key === null) return "has no key";
+  if (!(content instanceof Y.ContentAny) || content.arr.length !== 1) {
+    return `is a ${content.constructor.name}`;
+  }
   const value = content.arr[0];
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
+    return "is not an object";
   }
-  return JSON.stringify(value).length <= MAX_POSITION_MIGRATION_BYTES;
+  const size = JSON.stringify(value).length;
+  return size <= MAX_POSITION_MIGRATION_BYTES ? null : `is ${size} bytes`;
 }
 
 function plainValue(value: unknown): boolean {
@@ -125,9 +136,8 @@ export async function inspectUpdate(
       typeof struct.parent === "string" &&
       struct.parent === POSITION_MIGRATIONS
     ) {
-      if (!positionMigration(content, struct.parentSub)) {
-        return refuse("Unsupported position migration");
-      }
+      const problem = positionMigrationProblem(content, struct.parentSub);
+      if (problem) return refuse(`Position migration ${problem}`);
       continue;
     }
 

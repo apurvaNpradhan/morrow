@@ -90,7 +90,7 @@ function OpenPageEditor({
       ) : null}
       <EditorContent
         editor={editor}
-        className="morrow-tiptap-content text-sm [&_.ProseMirror]:min-h-64 [&_.ProseMirror]:outline-none"
+        className="morrow-tiptap-content text-base leading-relaxed [&_.ProseMirror]:min-h-64 [&_.ProseMirror]:outline-none"
       />
       {editor ? <BubbleLinkEditor editor={editor} /> : null}
     </>

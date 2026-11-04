@@ -12,14 +12,24 @@ let running: YjsServer | undefined;
  */
 export async function startYjsServer(port = YJS_SERVER_PORT) {
   if (running) return running.url;
-  const server = new YjsServer({
-    host: "127.0.0.1",
-    port,
-    dsServerUrl: config.durableStreamsUrl,
-  });
-  await server.start();
-  running = server;
-  return server.url;
+  // Under `tsx watch` the previous process may still be shutting down and
+  // holding the port, so wait for it instead of crashing the restart.
+  for (let attempt = 0; ; attempt++) {
+    const server = new YjsServer({
+      host: "127.0.0.1",
+      port,
+      dsServerUrl: config.durableStreamsUrl,
+    });
+    try {
+      await server.start();
+      running = server;
+      return server.url;
+    } catch (error) {
+      const inUse = (error as NodeJS.ErrnoException).code === "EADDRINUSE";
+      if (!inUse || port === 0 || attempt >= 20) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
 }
 
 export async function stopYjsServer() {

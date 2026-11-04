@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/client";
 import { ObservableV2 } from "lib0/observable";
+import type * as Y from "yjs";
 import {
   afterEach,
   beforeEach,
@@ -15,6 +16,10 @@ const mocks = vi.hoisted(() => ({
   providers: [] as Array<{
     emit: (event: string, args: unknown[]) => void;
     destroyed: boolean;
+    connected: boolean;
+    connects: number;
+    doc: Y.Doc;
+    connect: () => Promise<void>;
   }>,
 }));
 
@@ -37,9 +42,15 @@ vi.mock("@durable-streams/y-durable-streams", () => ({
   }> {
     connected = false;
     destroyed = false;
-    constructor() {
+    connects = 0;
+    doc: Y.Doc;
+    constructor(options: { doc: Y.Doc }) {
       super();
+      this.doc = options.doc;
       mocks.providers.push(this as unknown as (typeof mocks.providers)[number]);
+    }
+    async connect() {
+      this.connects += 1;
     }
     destroy() {
       this.destroyed = true;
@@ -209,6 +220,80 @@ describe("the terminal reset", () => {
       phase: "ended",
       refusal: { code: "SCHEMA_MISMATCH" },
     });
+    session.destroy();
+  });
+
+  it("does not let the provider reconnect after the session ended", async () => {
+    const session = openPage(options);
+    await settled(session);
+    const provider = mocks.providers[0]!;
+
+    provider.emit("error", [
+      Object.assign(new Error("Unprocessable"), {
+        status: 422,
+        json: { code: "FORBIDDEN" },
+      }),
+    ]);
+    // The provider calls this after its "error" event, whatever the handler did.
+    await provider.connect();
+
+    expect(session.getState()).toMatchObject({
+      phase: "ended",
+      refusal: { code: "FORBIDDEN", status: 422 },
+    });
+    expect(provider.connects).toBe(0);
+    session.destroy();
+  });
+
+  it.each([
+    ["FORBIDDEN", 422],
+    ["INVALID_UPDATE", 400],
+    ["DOCUMENT_TOO_LARGE", 413],
+    ["SCHEMA_MISMATCH", 422],
+    ["DOCUMENT_ARCHIVED", 422],
+  ])(
+    "ends the session on %s (%i) and stops the provider",
+    async (code, status) => {
+      const session = openPage(options);
+      await settled(session);
+      const provider = mocks.providers[0]!;
+
+      provider.emit("error", [
+        Object.assign(new Error("refused"), { status, json: { code } }),
+      ]);
+
+      expect(session.getState()).toMatchObject({ phase: "ended" });
+      expect(provider.destroyed).toBe(true);
+      session.destroy();
+    },
+  );
+});
+
+describe("the rate limit", () => {
+  it("holds writes for as long as retry-after asks, then sends what the server lacks", async () => {
+    // Before the session, which reads the clock when it is opened.
+    vi.useFakeTimers({ toFake: ["setTimeout", "Date"] });
+    const session = openPage(options);
+    await settled(session);
+    const provider = mocks.providers[0]!;
+    provider.connected = true;
+    const sent: Uint8Array[] = [];
+    provider.doc.on("update", (update: Uint8Array) => sent.push(update));
+
+    provider.emit("error", [
+      Object.assign(new Error("slow down"), {
+        status: 429,
+        json: { code: "RATE_LIMITED" },
+        headers: { "retry-after": "7" },
+      }),
+    ]);
+    session.doc.getText("t").insert(0, "typed while waiting");
+
+    expect(sent).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(6_900);
+    expect(sent).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(sent).toHaveLength(1);
     session.destroy();
   });
 });
