@@ -81,7 +81,7 @@
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {
-		"@babel/core": "^8.0.6",
+		"@babel/core": "^8.0.10",
 		"@morrow/api": "workspace:*",
 		"@morrow/permissions": "workspace:*",
 		"@orpc/server": "2.0.0-beta.43",
