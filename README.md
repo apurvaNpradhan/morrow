@@ -1,12 +1,51 @@
 # Morrow
 
-A personal workspace platform, run as a single instance. Morrow is the core that future domains build on: accounts, workspaces, members, roles, activity, and an MCP endpoint for AI assistants.
+**A real-time, local-first workspace for projects, tasks and docs.** Kanban boards and lists, rich tasks, collaborative pages and role-based workspaces. Every change shows up instantly across tabs and teammates, and an MCP endpoint lets AI assistants work with your tasks.
 
-- **Accounts:** sign up with an emailed code, Google or GitHub. Turnstile CAPTCHA, rate limiting, disposable-email rejection and a workspace limit protect the open sign-up; `REGISTRATION_OPEN=false` closes it. Administrators are the emails listed in `ADMIN_EMAILS`.
-- **Workspaces:** invitations, members and editable roles.
-- **Activity:** workspace and member changes are recorded and listed per workspace.
-- **API and MCP:** oRPC procedures under `/rpc`, and an HTTP MCP endpoint authorized with OAuth.
-- **One origin:** a single image serves the API and web app, backed by PostgreSQL (Dokploy database), R2 for files, no Redis.
+Built with React + TanStack on the web, Hono + oRPC + PostgreSQL on the server, ElectricSQL + TanStack DB for sync and Yjs for collaborative editing.
+
+<p align="center">
+  <img src="docs/screenshots/02-board.png" width="100%" alt="Kanban board" />
+</p>
+
+## Features
+
+- **Projects and views:** Kanban board and grouped list views, custom workflows (columns), filters, sorting, progress, project icons, colours and backgrounds, and JSON import/export.
+- **Tasks:** ticket ids (e.g. `WEB-5`), priority, assignees, start and due dates, recurring tasks, workspace labels, typed custom fields (single and multi choice, number, checkbox, text, date, URL), subtasks, relations, comments and a per-task history.
+- **Collaborative pages:** a Tiptap editor on Yjs CRDTs with tables, task lists and code blocks, organised in a page tree per project or workspace, with offline editing.
+- **Local-first sync:** ElectricSQL streams Postgres changes into TanStack DB collections persisted to in-browser SQLite, so reads are instant and writes are optimistic.
+- **Workspaces and permissions:** email invitations, members, built-in and custom roles with per-permission toggles, and a workspace activity feed.
+- **Search and keyboard:** a Ctrl+K command palette with full-text search across tasks and comments, and `G`-prefixed navigation hotkeys.
+- **AI assistants:** an HTTP MCP endpoint authorised with OAuth, so assistants such as Claude can read and manage workspace tasks.
+- **Accounts:** emailed sign-in codes, Google and GitHub OAuth, Turnstile CAPTCHA, rate limiting, disposable-email rejection, data export and account deletion.
+
+## Screenshots
+
+| Board | List view |
+| :---: | :---: |
+| <img src="docs/screenshots/02-board.png" width="420" /> | <img src="docs/screenshots/03-list.png" width="420" /> |
+| **Task detail** | **Subtasks, comments and history** |
+| <img src="docs/screenshots/04-task-detail.png" width="420" /> | <img src="docs/screenshots/05-task-activity.png" width="420" /> |
+| **Collaborative page** | **Checklist page** |
+| <img src="docs/screenshots/06-document.png" width="420" /> | <img src="docs/screenshots/07-checklist.png" width="420" /> |
+| **Command palette search** | **Custom fields** |
+| <img src="docs/screenshots/11-command-palette.png" width="420" /> | <img src="docs/screenshots/12-fields.png" width="420" /> |
+| **Roles and permissions** | **Members** |
+| <img src="docs/screenshots/08-roles.png" width="420" /> | <img src="docs/screenshots/09-members.png" width="420" /> |
+| **Workspace activity** | **Light mode** |
+| <img src="docs/screenshots/10-home-activity.png" width="420" /> | <img src="docs/screenshots/13-board-light.png" width="420" /> |
+
+## Tech stack
+
+| Area     | Stack                                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------------------- |
+| Web      | React 19, TanStack Router, Query and DB, Tailwind CSS, Base UI, Tiptap, Yjs, wa-sqlite, i18next, Vite    |
+| API      | Hono, oRPC, Better Auth (+ OAuth provider for MCP), Drizzle ORM, PostgreSQL, Model Context Protocol SDK  |
+| Sync     | ElectricSQL (Postgres logical replication), TanStack DB, Durable Streams for Yjs documents              |
+| Platform | Docker on Dokploy, S3-compatible storage (Cloudflare R2), Sentry, background worker                      |
+| Quality  | TypeScript, Vitest, Playwright end-to-end tests, Vite+ lint/format, knip, commitlint, GitHub Actions     |
+
+Architecture decisions are recorded in [docs/adr](docs/adr); domain terms in [CONTEXT.md](CONTEXT.md); sync design in [docs/sync.md](docs/sync.md).
 
 ## Develop
 
